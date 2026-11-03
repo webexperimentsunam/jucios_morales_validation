@@ -18,7 +18,13 @@
   <style id="experiment-appearance">
   body { background-color: #ffffff; }
   .jspsych-display-element:not(body) { background-color: transparent; }
-</style><link href="https://unpkg.com/jspsych@8.2.2/css/jspsych.css" rel="stylesheet" type="text/css"><script src="https://unpkg.com/jspsych@8.2.2"></script><script src="https://unpkg.com/jspsych-expbuilder-plugin-dynamic@1.0.8/dist/index.iife.js"></script><link rel="stylesheet" href="https://unpkg.com/@jspsych/plugin-survey@4.0.0/css/survey.css" data-dynamic-styles="true"><script src="https://unpkg.com/@jspsych/plugin-fullscreen@2.1.0" data-dynamic-plugins="true"></script><script src="https://unpkg.com/@jspsych/plugin-preload@2.1.0" data-dynamic-plugins="true"></script></head>
+</style><link href="https://unpkg.com/jspsych@8.2.2/css/jspsych.css" rel="stylesheet" type="text/css"><script src="https://unpkg.com/jspsych@8.2.2"></script><script src="https://unpkg.com/jspsych-expbuilder-plugin-dynamic@1.0.8/dist/index.iife.js"></script><link rel="stylesheet" href="https://unpkg.com/@jspsych/plugin-survey@4.0.0/css/survey.css" data-dynamic-styles="true"><script src="https://unpkg.com/@jspsych/plugin-fullscreen@2.1.0" data-dynamic-plugins="true"></script><script src="https://unpkg.com/@jspsych/plugin-preload@2.1.0" data-dynamic-plugins="true"></script><style id="expbuilder-responsive-shell">
+  html, body { margin: 0; padding: 0; min-width: 320px; width: 100%; }
+  button { touch-action: manipulation; }
+  @media (max-width: 600px) {
+    body.jspsych-display-element { min-height: 100dvh; }
+  }
+</style></head>
   <body>
     
   
@@ -160,4 +166,4 @@
   emit("runtime-ready", { version: api.version });
   return api;
 })(window, document);
-</script><script src="./experiment.js"></script></body></html>
+</script><script src="./responsive-layout.js"></script><script src="./experiment.js"></script></body></html>
