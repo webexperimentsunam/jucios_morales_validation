@@ -1,0 +1,64 @@
+{
+  "experimentID": "e9493936-a5e7-4970-8759-520d2b4689d0",
+  "practice": 3,
+  "main": 480,
+  "build": "standalone-jspsych-v4",
+  "files": {
+    "README.md": {
+      "sha256": "5f1bd6b4002747f8c19e918ae36e5394a584cd46d1bbfbc834bd8770c05e3335",
+      "size": 7413
+    },
+    "data/definition.json": {
+      "sha256": "ddcda6ccc5d4989db83e3768d59be3b745f011ef36463a3a9c799ebd5a42432a",
+      "size": 20850
+    },
+    "data/main.json": {
+      "sha256": "a6b5423b5a3d17a2eeafdeec0e7c30a09ef485d30376741e1c7f3599a45d1933",
+      "size": 78923
+    },
+    "data/practice.json": {
+      "sha256": "8155bd9dff9c22d311ebcb00d3af21146cf820356ca147953356edf3598713a1",
+      "size": 303
+    },
+    "experiment.js": {
+      "sha256": "767e5ccb1153b39618f3cc93f5fe3661deefa1ec4d764ae86eca88382d7343ca",
+      "size": 11911
+    },
+    "img/Mona.png": {
+      "sha256": "0b2d59fe1311a0219ce30047f00134d39635ecd5049a23c56e74d04288a8cedb",
+      "size": 30324
+    },
+    "img/Mono.png": {
+      "sha256": "376abc85ccc2683ea16fcec54326fc0881fb3a6fa5e390b8df64882a1defdce6",
+      "size": 18472
+    },
+    "img/WhatsApp Image 2026-10-26 at 10.53.21.jpeg": {
+      "sha256": "7beebc7a113814c2ca1d4910a67c5978a8695afb5b3d07fd9c130c2c65991efb",
+      "size": 14053
+    },
+    "img/WhatsApp Image 2026-10-26 at 10.53.22 (1).jpeg": {
+      "sha256": "d07702e19859294484ac86d86b32bc4485e87e8037c83db0b50fd6925d1ec17d",
+      "size": 10281
+    },
+    "img/WhatsApp Image 2026-10-26 at 10.53.22.jpeg": {
+      "sha256": "0e3fa7af79d64ded2d4dbbf1cf9e3ebec3a48d227994d3344539ae1e211be7a3",
+      "size": 8839
+    },
+    "index.html": {
+      "sha256": "e59de72e4b9455d33311023f9a8547dec80777fffffddffe8a6bd6233ef47cfe",
+      "size": 847
+    },
+    "screen-plugin.js": {
+      "sha256": "f5e95559c2163fb22bc44c8d6ee197a68f85f23b5c5d0324591ef8694315b663",
+      "size": 16606
+    },
+    "storage.js": {
+      "sha256": "e33f96a204a83ba689b07ca85421033925c65d1ab6b07ac9a5c62e44966b38f9",
+      "size": 8157
+    },
+    "styles.css": {
+      "sha256": "b59c66b86d94575c37ac127e2935c255c18fd04bda3e7a63836d437b3e225853",
+      "size": 7779
+    }
+  }
+}

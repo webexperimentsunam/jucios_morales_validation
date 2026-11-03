@@ -1,44 +1,81 @@
-# Validación — versión experimental para GitHub Pages
+# Validación de materiales — reconstrucción independiente
 
-## Qué contiene
+Sitio estático para GitHub Pages. Reconstruido a partir de `F_Validacion-backup.zip` y del código publicado del experimento de referencia. **No incluye las nueve sesiones previas**, y no requiere el plugin visual `jspsych-expbuilder-plugin-dynamic`.
 
-- `index.html`: interfaz y dependencias jsPsych/ExpBuilder tomadas del ejemplo funcional publicado.
-- `experiment.js`: navegación, instrucciones, consentimiento, ensayos, ramificaciones y guardado, adaptados a Validación.
-- `data/estimulos_*.json`: **480 registros** del bucle principal, divididos sin cambiar su orden ni su contenido.
-- `img/`: cinco imágenes originales del respaldo.
-- `.nojekyll`: permite servir los archivos estáticos en GitHub Pages.
+## Contenido y equivalencia
 
-El identificador del experimento es **e9493936-a5e7-4970-8759-520d2b4689d0** (no se mezclan resultados con el experimento de ejemplo: `7f4f984c-de8c-47f4-8144-b6284a011f97`).
+- jsPsych 8.2.2 (CDN) y plugin propio `screen-plugin.js` con formularios, navegación y escalas accesibles.
+- Consentimiento en cuatro páginas, con acciones de continuar, regresar, aceptar o rechazar.
+- Cuestionario sociodemográfico con **las seis preguntas originales**; mantiene los nombres de las preguntas.
+- Tres ensayos de práctica: origen `data/practice.json`.
+- Cuatrocientas ochenta afirmaciones experimentales: origen `data/main.json`, mezcladas al azar por sesión.
+- Cuatro escalas obligatorias por ensayo. Rangos originales: moralidad/competencia de −4 a 4; informatividad/credibilidad de 0 a 8. El participante debe mover cada control antes de seguir.
+- Identificadores originales en los datos (`builder_id`, `loop_id`, `ID`, `ID_Asociado`, `Versión Final`, `Orden`, y nombres de las escalas). Conserva el alias `Informatividad_copy_response` de la cuarta escala de práctica y agrega `Credibilidad_response` para facilitar la interpretación.
+- Los 5 archivos de imagen originales en `img/`.
 
-## Publicación
+**Nota experimental importante:** en la práctica el eje de competencia aparece `Incapaz — Capaz`, pero en la tarea principal el respaldo original dice `Capaz — Incapaz`. Esto se ha conservado literalmente. Revisa si esa inversión fue intencional antes de recopilar datos.
 
-1. Crea un repositorio nuevo en GitHub para Validación.
-2. Sube **el contenido de esta carpeta**, no el ZIP de respaldo original ni sus resultados históricos. `index.html` debe quedar en la raíz del repositorio.
-3. En Settings → Pages, selecciona Deploy from a branch → `main` → `/ (root)` → Save.
-4. Abre la URL de GitHub Pages, observa la consola del navegador (F12) y comprueba que cargan los 9 archivos JSON y las cinco imágenes.
+## Publicar
 
-## Comprobación imprescindible antes de recopilar datos reales
+1. Haz una copia del repositorio antiguo si todavía necesitas el otro experimento.
+2. Descomprime este ZIP y sube **los archivos de su interior** (no el ZIP) a la raíz del repositorio GitHub Pages. Deben quedar `index.html`, `styles.css`, `experiment.js`, `screen-plugin.js`, `storage.js`, `data/`, `img/`.
+3. En GitHub: **Settings → Pages → Deploy from a branch → main → / (root)**.
+4. Abre la URL y recarga forzando los archivos nuevos (`Ctrl+Shift+R`).
+5. Revisa en móvil y escritorio, y realiza una sesión piloto antes de difundir el enlace.
 
-**La configuración de Firebase y el proveedor de Google Drive del segundo experimento se reutilizan como plantilla, no como garantía de permisos.** Aunque el identificador de Validación ya existe en tu respaldo local, puede no estar registrado en el backend público (`test-e4cf9`) con permisos de escritura y conexión a tu cuenta de Google Drive.
+No mezcles `responsive-layout.js` ni `experiment-theme.css` de las versiones anteriores. No forman parte de esta reconstrucción.
 
-- Haz **una sola sesión piloto** usando datos inventados, nunca datos de participantes reales.
-- Comprueba que `createSession()` devuelve respuesta satisfactoria de `apiData` y que crea una sesión con el identificador de Validación.
-- Completa un recorrido del experimento y comprueba que la respuesta a `apiDataComplete` tiene `success: true`.
-- Revisa en el destino de Google Drive / panel de ExpBuilder que el archivo de resultados del experimento **Validación** realmente apareció, con el ID y número de ensayos correctos. Verifica que los datos del otro experimento siguen separados.
-- Si aparece `400`, `403` o `404`, o falla Firebase RTDB, es necesario registrar/configurar Validación en el sistema público de ExpBuilder. **No reutilices el ID del ejemplo ni abras permisos globales para evitarlo.**
+## Pruebas sin enviar datos a Firebase
 
-## Guardado y límites
+Abre la URL publicada añadiendo:
 
-Se respeta el mecanismo del ejemplo funcional: las respuestas pasan primero a IndexedDB y se envían al servicio público de ExpBuilder en **una carga final** (`batchSize=0`) hacia `apiDataComplete`, que declara usar Google Drive. Los archivos JSON de estímulos se descargan de GitHub Pages, **no son archivos de resultados**. Es imprescindible comprobar que esta carga final acepta el tamaño de los datos producidos por cientos de ensayos. No se ha probado con el backend remoto desde este entorno.
+`?demo=1&limit=2`
 
-Si una carga falla, el sistema conserva los ensayos pendientes en IndexedDB hasta su plazo de caducidad (3 días en la plantilla). **No cierres el navegador antes de verificar la confirmación del guardado**. Para estudios con participantes reales convendría sustituir la carga final única por lotes con confirmación y reintentos, después de verificar la API.
+La prueba muestra las cuatro pantallas de consentimiento, el cuestionario, tres ensayos de práctica y **dos** enunciados de la tarea principal, sin crear una sesión remota ni enviar respuestas. Aparecerá una barra marrón de «MODO DE PRUEBA». La copia local se puede descargar al finalizar. Para una sesión real, abre la URL sin esos parámetros.
 
-Los archivos jsPsych y ExpBuilder dependen de CDN externos y requieren conexión a Internet. La creación manual del repositorio evita el límite de 1 MiB que ExpBuilder aplica a la subida directa de `index.html`; no modifica el backend.
+## Dónde y cómo se guardan los datos
 
-## Verificaciones estáticas realizadas
+Al hacer clic en «Acepto participar», la aplicación solicita una sesión en el endpoint que ya utilizaba el código original:
 
-- Se conservaron 14 definiciones de pantalla/ensayo y 2 bucles mediante el código generado original.
-- Los 480 registros se reconstruyen en el mismo orden. El aleatorizador original se deja intacto.
-- Las cinco imágenes se incluyen por separado.
-- No se incluyen `sessionResults` ni otros datos históricos del respaldo.
-- La prueba de sintaxis JavaScript y de correspondencia JSON se realiza durante la preparación; **no equivale a una prueba de navegador ni de guardado remoto**.
+- `POST https://us-central1-test-e4cf9.cloudfunctions.net/apiData` con `experimentID`, `sessionId`, `uid` y `batchSize: 0`.
+- Actualización de estado en Firebase Realtime Database, ruta `sessions/<experimentID>/<sessionId>`.
+- Cada pantalla terminada añade un registro a una **copia local de IndexedDB** (nombre `validacion-rebuild-v1`). Si el navegador se cierra, al abrirlo de nuevo se ofrece reanudar o exportar un respaldo.
+- Al finalizar, se envían los registros como `trialsData` a `POST https://us-central1-test-e4cf9.cloudfunctions.net/apiDataComplete` con `storage: 'googledrive'`, exactamente el mecanismo de almacenamiento del experimento publicado previamente.
+- **El sistema solo muestra guardado confirmado cuando esa API devuelve éxito**. Si falla, ofrece reintentar y descargar copia JSON. Se conservan los datos locales hasta que el servidor confirma.
+
+No se incrusta ninguna clave privada de Google Drive en GitHub Pages; su conexión debe estar autorizada en el backend existente. La configuración pública de Firebase y el UID fueron recuperados del experimento publicado, pero **copiar los archivos no garantiza permisos**. Los estados de Firebase Realtime Database y el archivo final de Google Drive deben confirmarse en una sesión piloto real.
+
+El navegador privado/incógnito puede borrar la copia local al cerrar sus ventanas. La recuperación solo funciona en el mismo navegador y perfil. No uses un navegador privado para una sesión larga hasta haber comprobado el envío final.
+
+## Comprobación de la sesión piloto real
+
+1. Haz una sesión completa desde el enlace sin `demo=1`.
+2. En la consola ejecuta `window.ValidacionDiagnostics` para revisar el estado del guardado; no compartas públicamente datos de participantes.
+3. Debe aparecer una solicitud exitosa a `apiData` y otra a `apiDataComplete` al finalizar.
+4. Confirma que en Google Drive apareció el archivo de la sesión, que contiene registros de las 480 afirmaciones, tres ensayos y las pantallas introductorias (aproximadamente 494 filas en un recorrido sin regresos).
+5. Confirma que los cuatro valores por afirmación, el identificador del estímulo y el identificador de la sesión no son nulos.
+6. Confirma en Firebase que la sesión figura como completada. Si las reglas de Realtime Database impiden registrar estado, revisa los permisos **en el backend**, no publiques reglas de lectura/escritura abiertas.
+7. Comprueba que la aplicación puede recuperar una sesión parcialmente completada tras recargar.
+
+## Revisión científica/ética antes de reclutar
+
+- El consentimiento original contiene los marcadores **`[Investigador/a responsable]`** y **`[correo institucional]`**. Debes sustituirlos por datos reales y revisar el texto, incluyendo la referencia a copias firmadas para una aplicación en línea.
+- El consentimiento declara una duración aproximada de 30–45 minutos, aunque la tarea contiene 480 afirmaciones con cuatro respuestas cada una. Verifica empíricamente esa duración.
+- Las respuestas del cuestionario sociodemográfico incluyen fecha de nacimiento. Verifica la necesidad de ese dato, las autorizaciones y el acceso restringido en Google Drive.
+- Revisa especialmente la inversión semántica del eje Competencia mencionada arriba.
+
+## Archivos
+
+- `index.html`: HTML básico y carga de scripts.
+- `styles.css`: diseño responsive sin posiciones absolutas.
+- `screen-plugin.js`: plugin jsPsych con las pantallas, escalas, consentimiento y cuestionario.
+- `experiment.js`: secuencia de ensayos, aleatorización y lógica de reanudación.
+- `storage.js`: IndexedDB, Firebase Realtime Database y API de Google Drive.
+- `data/definition.json`: textos originales, componentes, preguntas, etiquetas e IDs.
+- `data/practice.json`: tres afirmaciones de práctica.
+- `data/main.json`: 480 afirmaciones principales, con IDs y columna Orden.
+- `img/`: logotipos e imágenes originales.
+
+## Alcance de las pruebas realizadas
+
+Se verificó con Node la sintaxis de los tres archivos JavaScript. Pruebas locales con un **motor jsPsych simulado** recorrieron todo el experimento (494 registros sin regresos), comprobaron los nombres de las cuatro respuestas, la validación de escalas, la apariencia a 320 y 1440 px y la solicitud a una **API simulada**. No se pudo ejecutar una sesión completa con la CDN real de jsPsych ni confirmar escrituras reales en Google Drive desde este entorno. Se requiere la sesión piloto descrita arriba.
