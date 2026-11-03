@@ -1,186 +1,339 @@
 /*
-  Escalado uniforme tipo "lienzo fijo" para experimentos de ExpBuilder/jsPsych.
-  - Toma 1920x1080 como tamano de referencia.
-  - Convierte medidas inline en vw/vh a px de referencia.
-  - Escala todo el contenido como una sola imagen manteniendo proporciones.
-  - No modifica la logica experimental ni el guardado de datos.
-*/
-(function (global, document) {
+ * Validación — interfaz adaptable, versión 2.
+ * El plugin original de ExpBuilder conserva el control de respuestas, ramificaciones y guardado.
+ * Las vistas HTML independientes se comunican únicamente con los controles nativos del plugin.
+ * En caso de incompatibilidad de un control se muestra el renderizador nativo sin alterar datos.
+ */
+(function (global, doc) {
   'use strict';
+  const ROOT_ID = 've-responsive-root';
+  const AXES = [
+    {key:'Moralidad', title:'Moralidad', left:'Malo', right:'Bueno'},
+    {key:'Competencia', title:'Competencia', left:'Incapaz', right:'Capaz'},
+    {key:'Informatividad', title:'Informatividad', left:'Poco informativo', right:'Muy informativo'},
+    {key:'Credibilidad', title:'Credibilidad', left:'Poco creíble', right:'Muy creíble'}
+  ];
+  let token = 0;
+  let activeRoot = null;
 
-  const BASE_W = 1920;
-  const BASE_H = 1080;
-  const SHELL_ID = 'expbuilder-fixed-shell';
-  const STAGE_ID = 'expbuilder-fixed-stage';
-  const MANAGED_ATTR = 'data-expbuilder-stage-managed';
-  const ORIGINAL_STYLE_ATTR = 'data-expbuilder-original-style';
-
-  function ensureBaseStyles() {
-    if (document.getElementById('expbuilder-fixed-scale-styles')) return;
-    const style = document.createElement('style');
-    style.id = 'expbuilder-fixed-scale-styles';
-    style.textContent = `
-      html, body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background: #ffffff;
-      }
-      body.jspsych-display-element {
-        min-height: 100vh;
-        min-height: 100dvh;
-      }
-      #${SHELL_ID} {
-        position: fixed;
-        inset: 0;
-        overflow: hidden;
-        background: transparent;
-        z-index: 0;
-      }
-      #${STAGE_ID} {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: ${BASE_W}px;
-        height: ${BASE_H}px;
-        transform-origin: top left;
-        overflow: hidden;
-        background: transparent;
-      }
-      #${STAGE_ID} .jspsych-content,
-      #${STAGE_ID} .jspsych-display-element,
-      #${STAGE_ID} .jspsych-content-wrapper {
-        max-width: none !important;
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  function ensureShell() {
-    ensureBaseStyles();
-    let shell = document.getElementById(SHELL_ID);
-    let stage = document.getElementById(STAGE_ID);
-    if (!shell) {
-      shell = document.createElement('div');
-      shell.id = SHELL_ID;
-      stage = document.createElement('div');
-      stage.id = STAGE_ID;
-      shell.appendChild(stage);
-      document.body.appendChild(shell);
-    }
-    if (!stage) {
-      stage = document.createElement('div');
-      stage.id = STAGE_ID;
-      shell.appendChild(stage);
-    }
-    return { shell, stage };
-  }
-
-  function convertUnits(styleText) {
-    if (!styleText || typeof styleText !== 'string') return styleText;
-    return styleText
-      .replace(/(-?\d*\.?\d+)vw/g, (_, n) => `${((parseFloat(n) / 100) * BASE_W).toFixed(3)}px`)
-      .replace(/(-?\d*\.?\d+)vh/g, (_, n) => `${((parseFloat(n) / 100) * BASE_H).toFixed(3)}px`)
-      .replace(/(-?\d*\.?\d+)vmin/g, (_, n) => {
-        const base = Math.min(BASE_W, BASE_H);
-        return `${((parseFloat(n) / 100) * base).toFixed(3)}px`;
-      })
-      .replace(/(-?\d*\.?\d+)vmax/g, (_, n) => {
-        const base = Math.max(BASE_W, BASE_H);
-        return `${((parseFloat(n) / 100) * base).toFixed(3)}px`;
-      });
-  }
-
-  function convertNodeStyle(node) {
-    if (!(node instanceof global.Element)) return;
-    if (node.id === SHELL_ID || node.id === STAGE_ID) return;
-
-    const original = node.getAttribute(ORIGINAL_STYLE_ATTR) ?? node.getAttribute('style');
-    if (original != null && !node.hasAttribute(ORIGINAL_STYLE_ATTR)) {
-      node.setAttribute(ORIGINAL_STYLE_ATTR, original);
-    }
-    if (original != null) {
-      const converted = convertUnits(original);
-      if (converted !== node.getAttribute('style')) node.setAttribute('style', converted);
-    }
-
-    if (node.tagName === 'STYLE' && !node.hasAttribute(ORIGINAL_STYLE_ATTR)) {
-      const css = node.textContent || '';
-      node.setAttribute(ORIGINAL_STYLE_ATTR, css);
-      node.textContent = convertUnits(css);
-    } else if (node.tagName === 'STYLE' && node.hasAttribute(ORIGINAL_STYLE_ATTR)) {
-      node.textContent = convertUnits(node.getAttribute(ORIGINAL_STYLE_ATTR) || '');
-    }
-  }
-
-  function convertTree(root) {
-    if (!(root instanceof global.Node)) return;
-    if (root.nodeType === global.Node.ELEMENT_NODE) convertNodeStyle(root);
-    if (root.querySelectorAll) {
-      root.querySelectorAll('*').forEach(convertNodeStyle);
-      root.querySelectorAll('style').forEach(convertNodeStyle);
-    }
-  }
-
-  function moveManagedNodesIntoStage() {
-    const { stage } = ensureShell();
-    const bodyChildren = Array.from(document.body.children);
-    for (const child of bodyChildren) {
-      if (child.id === SHELL_ID) continue;
-      if (child.tagName === 'SCRIPT') continue;
-      if (child.tagName === 'STYLE') continue;
-      if (child.id === 'expbuilder-runtime-error') continue; // keep fatal overlay outside the stage
-      if (!child.hasAttribute(MANAGED_ATTR)) child.setAttribute(MANAGED_ATTR, '1');
-      stage.appendChild(child);
-      convertTree(child);
-    }
-    // Ajusta tambien estilos dentro del propio stage (por si jsPsych reutiliza nodos).
-    convertTree(stage);
-  }
-
-  function layoutStage() {
-    const { stage } = ensureShell();
-    const vw = Math.max(1, global.innerWidth || document.documentElement.clientWidth || BASE_W);
-    const vh = Math.max(1, global.innerHeight || document.documentElement.clientHeight || BASE_H);
-    const scale = Math.min(vw / BASE_W, vh / BASE_H);
-    const offsetX = Math.max(0, (vw - BASE_W * scale) / 2);
-    const offsetY = Math.max(0, (vh - BASE_H * scale) / 2);
-    stage.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
-  }
-
-  let observerStarted = false;
-  function installFixedCanvas() {
-    ensureShell();
-    moveManagedNodesIntoStage();
-    layoutStage();
-
-    if (!observerStarted) {
-      const observer = new MutationObserver(() => {
-        moveManagedNodesIntoStage();
-        layoutStage();
-      });
-      observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
-      observerStarted = true;
-      global.addEventListener('resize', layoutStage, { passive: true });
-      global.addEventListener('orientationchange', layoutStage, { passive: true });
-      document.addEventListener('fullscreenchange', layoutStage);
-    }
-  }
-
-  // Mantener la API esperada por experiment.js, pero sin reescalar componente por componente.
-  global.ExpBuilderResponsive = {
-    install: function () {
-      installFixedCanvas();
-    },
-    relayout: layoutStage,
-    convertTree,
+  const elem = (tag, cls, text) => {
+    const el = doc.createElement(tag);
+    if (cls) el.className = cls;
+    if (text !== undefined) el.textContent = text;
+    return el;
   };
+  const compY = (c) => Number(c && c.coordinates && c.coordinates.y || 0);
+  const listSorted = (list) => (list || []).slice().sort((a,b) => compY(b)-compY(a));
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', installFixedCanvas, { once: true });
-  } else {
-    installFixedCanvas();
+  function cleanup() {
+    ++token;
+    if (activeRoot) { activeRoot.remove(); activeRoot=null; }
+    doc.body.classList.remove('ve-redesigned-active','ve-survey-native');
   }
-})(window, document);
+
+  function nativeCandidates() {
+    // El jsPsych original permanece en el DOM hasta terminar el ensayo.
+    const origin = Array.from(doc.querySelectorAll('.jspsych-content-wrapper'));
+    const selectors = origin.length ? origin : [doc.body];
+    const inOrigin = (sel) => selectors.flatMap(root=>Array.from(root.querySelectorAll(sel)));
+    const ranges = inOrigin('input[type="range"]');
+    const buttons = inOrigin('button, input[type="button"], input[type="submit"], [role="button"]');
+    return {ranges,buttons};
+  }
+
+  function nativeButton(buttons,label,used) {
+    const want = String(label).trim().toLocaleLowerCase('es');
+    return buttons.find(b=>{
+      if (used.has(b)) return false;
+      const v= String(b.tagName==='INPUT' ? b.value : b.textContent).trim().toLocaleLowerCase('es');
+      return v===want;
+    });
+  }
+
+  function matchedButtons(buttonComponents,native) {
+    const out = [];
+    const used=new Set();
+    for (const component of buttonComponents) {
+      for (const choice of (component.choices || [])) {
+        const actual = nativeButton(native.buttons,choice,used);
+        if (!actual) return null;
+        used.add(actual);
+        out.push({component,label:String(choice),actual});
+      }
+    }
+    return out;
+  }
+
+  function header(name) {
+    const head = elem('header','ve-heading');
+    const eyebrow = elem('span','ve-eyebrow',name.includes('Consentimiento') ? 'Información para participantes' : name === 'Ensayo' ? 'Práctica' : name === 'Behavioral Statements' ? 'Evaluación' : 'Estudio de investigación');
+    const brand = elem('span','ve-brand','UNAM · Facultad de Psicología');
+    head.append(eyebrow,brand);
+    return head;
+  }
+
+  function startPage(name, isTask) {
+    const root = elem('main'); root.id=ROOT_ID; root.setAttribute('aria-label',name);
+    const page = elem('div',`ve-page ${isTask ? 've-task-page' : ''}`);
+    page.appendChild(header(name));
+    root.appendChild(page);
+    return {root,page};
+  }
+
+  function addImages(target, components) {
+    if (!components.length) return;
+    const media=elem('div','ve-media');
+    for (const c of components) {
+      if (!c.stimulus) continue;
+      const img=elem('img'); img.src=c.stimulus; img.alt='Logotipo institucional';
+      img.loading='eager';
+      media.appendChild(img);
+    }
+    if (media.childElementCount) target.appendChild(media);
+  }
+
+  function addText(target, text, kind) {
+    const raw=String(text ?? '').trim();
+    if (!raw) return;
+    const tag=kind==='h1'?'h1':kind==='h2'?'h2':'p';
+    const className=kind==='h1'?'ve-h1':kind==='h2'?'ve-h2':'ve-text';
+    const node=elem(tag,className,raw);
+    target.appendChild(node);
+  }
+
+  function getTextParts(components,name,target) {
+    let first=true;
+    for (const c of components) {
+      if (c.type==='ImageComponent') continue;
+      if (c.type==='HtmlComponent') {
+        // Conservar su texto visible, no inyectar HTML sin sanitizar.
+        const div=elem('div','ve-text');
+        try { const parsed=new DOMParser().parseFromString(String(c.stimulus||''),'text/html'); div.textContent=(parsed.body.textContent||'').trim(); }
+        catch (_) { div.textContent=String(c.stimulus||'').replace(/<[^>]+>/g,''); }
+        if (div.textContent) target.appendChild(div);
+        continue;
+      }
+      if (c.type!=='TextComponent') continue;
+      const value = String(c.text ?? '').trim();
+      if (!value) continue;
+      if (name==='Bienvenida' && first) {
+        const [welcome, ...rest] = value.split(/\n\s*\n/);
+        addText(target,welcome,'h1');
+        if (rest.length) addText(target,rest.join('\n\n'),'p');
+        first=false;
+        continue;
+      }
+      const simple = value.length<=85 && !value.includes('\n\n');
+      const kind = first && simple ? 'h1' : (simple && value.length<=62 ? 'h2' : 'p');
+      addText(target,value,kind);
+      first=false;
+    }
+  }
+
+  function footer(page, buttons, touched) {
+    const box = elem('footer','ve-footer');
+    const hint=elem('span','ve-hint',touched ? 'Mueve las cuatro escalas para habilitar «Siguiente».' : '');
+    box.appendChild(hint);
+    const rendered = [];
+    for (const {label,actual} of buttons) {
+      const button=elem('button','ve-button',label);
+      button.type='button';
+      if (/regresar/i.test(label)) button.classList.add('ve-button-secondary');
+      if (/no acepto|salir/i.test(label)) button.classList.add('ve-button-decline');
+      button.addEventListener('click', () => {
+        if (button.disabled) return;
+        // El plugin original activa la ramificación, la recogida de datos y el guardado.
+        actual.click();
+      });
+      rendered.push(button);
+      box.appendChild(button);
+    }
+    page.appendChild(box);
+    return {hint,rendered};
+  }
+
+  function renderInformation(trial, buttons) {
+    const name=String(trial.data && trial.data.trial_name || 'Información');
+    const {root,page}=startPage(name,false);
+    const body=elem('section','ve-body');
+    const components=listSorted(trial.components || []);
+    const images=components.filter(c=>c.type==='ImageComponent');
+    if (images.length) {
+      body.classList.add('ve-welcome');
+      addImages(body,images);
+    }
+    getTextParts(components,name,body);
+    page.appendChild(body);
+    footer(page,buttons,false);
+    return root;
+  }
+
+  function detectAxis(slider,index,trialName) {
+    const name = String(slider.name || '');
+    if (name==='Informatividad_copy') return AXES[3]; // Nombre histórico del componente, NO de la dimensión.
+    const category = AXES.find(c=>c.key===name);
+    if (category) return category;
+    return AXES[index] || {title:name || `Escala ${index+1}`,left:String(slider.min),right:String(slider.max)};
+  }
+
+  // Identifica cada control nativo por su posición vertical en el diseño original;
+  // nunca intercambia valores ni etiquetas aunque el array de componentes tenga otro orden.
+  function matchedSliders(components,nativeRanges) {
+    if (!nativeRanges || nativeRanges.length !== components.length) return null;
+    const byModel=listSorted(components);
+    const byDOM=nativeRanges.slice().sort((a,b)=>a.getBoundingClientRect().top-b.getBoundingClientRect().top);
+    const entries = byModel.map((component,i)=>({component,native:byDOM[i]}));
+    // Cuando el control original contiene datos de rango, corroboramos la correspondencia.
+    for (const e of entries) {
+      const nativeMin=Number(e.native.min),nativeMax=Number(e.native.max);
+      if (Number.isFinite(nativeMin) && Number.isFinite(nativeMax) &&
+          (nativeMin!==Number(e.component.min) || nativeMax!==Number(e.component.max))) return null;
+    }
+    return entries;
+  }
+
+  function synchronizeInput(from,to) {
+    const descriptor=Object.getOwnPropertyDescriptor(global.HTMLInputElement.prototype,'value');
+    if (descriptor && descriptor.set) descriptor.set.call(to,from.value); else to.value=from.value;
+    to.dispatchEvent(new Event('input',{bubbles:true}));
+    to.dispatchEvent(new Event('change',{bubbles:true}));
+  }
+
+  function renderRatings(trial, buttonMatches,sliderMatches) {
+    const name=String(trial.data && trial.data.trial_name || 'Evaluación');
+    const {root,page}=startPage(name,true);
+    const body=elem('section','ve-task-body');
+    const label=elem('div','ve-task-label',name==='Ensayo'?'Ensayo de práctica':'Valoración de afirmaciones');
+    body.appendChild(label);
+    const texts=listSorted((trial.components || []).filter(c=>c.type==='TextComponent'));
+    const statement=texts.find(c=>c.name==='TextComponent_1') || texts[0];
+    addText(body,statement && statement.text || '', 'h1');
+    const statementNode=body.querySelector('h1');
+    if (statementNode) statementNode.className='ve-statement';
+    const grid=elem('div','ve-rating-grid');
+    const touched = new Set();
+    const byComponent=new Map(sliderMatches.map(e=>[e.component,e.native]));
+    const statuses=[];
+    const sorted=sliderMatches.map(x=>x.component).sort((a,b)=>{
+      const ia=AXES.findIndex(z=>z.key===(a.name==='Informatividad_copy'?'Credibilidad':a.name));
+      const ib=AXES.findIndex(z=>z.key===(b.name==='Informatividad_copy'?'Credibilidad':b.name));
+      return ia-ib;
+    });
+    for (let i=0; i<sorted.length; i++) {
+      const c=sorted[i], actual=byComponent.get(c), axis=detectAxis(c,i,name);
+      const card=elem('section','ve-rating');
+      const title=elem('div','ve-rating-title',axis.title);
+      const extremes=elem('div','ve-rating-extremes');
+      extremes.append(elem('span','',axis.left),elem('span','',axis.right));
+      const slider=elem('input','ve-slider');
+      slider.type='range'; slider.min=String(c.min ?? 0);slider.max=String(c.max ?? 100);
+      slider.step=String(c.step ?? 1); slider.value=String(c.slider_start ?? 0);
+      slider.id='ve-scale-'+i;
+      slider.setAttribute('aria-label',`${axis.title}: ${axis.left} a ${axis.right}`);
+      slider.setAttribute('aria-valuetext',slider.value);
+      const ticks=elem('div','ve-ticks');
+      const labels = Array.isArray(c.labels) && c.labels.length ? c.labels : Array.from({length:Number(c.max)-Number(c.min)+1},(_,k)=>String(Number(c.min)+k));
+      for (const v of labels) ticks.appendChild(elem('span','',String(v)));
+      const status=elem('div','ve-scale-status','Selecciona una puntuación');
+      const requireMovement = c.require_movement === true;
+      const mark = () => {
+        if (!touched.has(c)) touched.add(c);
+        card.dataset.touched='true';
+        status.textContent=`Respuesta: ${slider.value}`;
+        slider.setAttribute('aria-valuetext',slider.value);
+        synchronizeInput(slider,actual);
+        updateFooter();
+      };
+      slider.addEventListener('input',mark);
+      slider.addEventListener('change',mark);
+      card.append(title,extremes,slider,ticks,status);
+      grid.appendChild(card);
+      statuses.push({component:c,requireMovement});
+    }
+    body.appendChild(grid);page.appendChild(body);
+    const buttons=footer(page,buttonMatches,true);
+    function updateFooter() {
+      const missing=statuses.filter(item=>item.requireMovement&&!touched.has(item.component)).length;
+      const next=buttons.rendered.find(b=>/siguiente/i.test(b.textContent));
+      if (next) next.disabled=missing>0;
+      buttons.hint.textContent=missing>0?`Faltan ${missing} ${missing===1?'valoración':'valoraciones'} por responder.`:'Todas las escalas están completas.';
+    }
+    updateFooter();
+    return root;
+  }
+
+  function show(trial) {
+    cleanup();
+    const ownToken=token;
+    if (!trial || !Array.isArray(trial.response_components)) return;
+    const response=trial.response_components;
+    if (response.some(c=>c.type==='SurveyComponent')) {
+      doc.body.classList.add('ve-survey-native');
+      return; // SurveyJS y su sistema de validaciones se conservan completamente.
+    }
+    const native=nativeCandidates();
+    const buttons=response.filter(c=>c.type==='ButtonResponseComponent');
+    const buttonMatches=matchedButtons(buttons,native);
+    if (!buttonMatches) {
+      console.warn('Validación: no se encontraron botones nativos; se conserva la pantalla original.');
+      return false;
+    }
+    const sliders=response.filter(c=>c.type==='SliderResponseComponent');
+    let root;
+    if (sliders.length) {
+      const matched=matchedSliders(sliders,native.ranges);
+      if (!matched) {
+        console.warn('Validación: controles de escala incompatibles; se conserva la pantalla original para proteger los datos.');
+        return false;
+      }
+      root=renderRatings(trial,buttonMatches,matched);
+    } else {
+      root=renderInformation(trial,buttonMatches);
+    }
+    if (ownToken!==token) return;
+    activeRoot=root;
+    doc.body.appendChild(root);
+    doc.body.classList.add('ve-redesigned-active');
+    root.focus({preventScroll:true});
+    return true;
+  }
+
+  function install(timeline) {
+    const recurse=(nodes)=>{
+      for (const node of nodes || []) {
+        if (!node || typeof node!=='object') continue;
+        if (node.type===global.DynamicPlugin) {
+          const origStart=node.on_start,origLoad=node.on_load,origFinish=node.on_finish;
+          node.on_start=function(trial) {
+            cleanup();
+            if (typeof origStart==='function') origStart.call(this,trial);
+            node.__veTrial=trial;
+          };
+          node.on_load=function() {
+            if (typeof origLoad==='function') origLoad.call(this);
+            const activeTrial=node.__veTrial;
+            const tryDisplay=(n)=>{
+              if (node.__veTrial!==activeTrial) return;
+              try {
+                if (show(activeTrial)) return;
+                if (n<2) global.setTimeout(()=>tryDisplay(n+1),100);
+              } catch(err) {
+                cleanup();
+                console.warn('Validación: pantalla original activada por fallo del rediseño',err);
+              }
+            };
+            global.requestAnimationFrame(()=>tryDisplay(0));
+          };
+          node.on_finish=function(data) {
+            cleanup();
+            if (typeof origFinish==='function') origFinish.call(this,data);
+          };
+        }
+        if (Array.isArray(node.timeline)) recurse(node.timeline);
+      }
+    };
+    recurse(timeline);
+  }
+
+  global.ExpBuilderResponsive={ install, cleanup, showPreview:show };
+})(window,document);
