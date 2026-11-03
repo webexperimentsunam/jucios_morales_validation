@@ -4846,7 +4846,7 @@ data: {
   
 window.ExpBuilderNavigation?.registerTrial(1793649983720, Final$20$Experimento_procedure);
 
-    window.ExpBuilderResponsive.install(timeline);
+    window.ExpBuilderResponsive.install(timeline, DynamicPlugin);
     window.ExpBuilderNavigation?.attach(jsPsych, timeline);
     jsPsych.run(timeline);
 
