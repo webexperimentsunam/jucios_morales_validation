@@ -2,26 +2,64 @@
 (function (win,doc) {
   'use strict';
   const ID='validacion-bienvenida';
-  const diagnostics={version:'5.0', installed:0, started:0, rendered:0, clicks:0, fallbacks:0, lastProblem:null};
+  const diagnostics={version:'6.0', installed:0, started:0, rendered:0, clicks:0, finished:0, fallbacks:0, nativeFound:0, nativeTag:null, nativeClass:null, forwarded:0, lastProblem:null, candidates:[]};
   win.ValidacionBienvenidaDiagnostics=diagnostics;
-  let active=false, current=null, observation=null, timer=null, deadline=null;
+  let active=false, current=null, observation=null, timer=null, deadline=null, clickWatch=null;
   const el=(tag,cls,txt)=>{const node=doc.createElement(tag);if(cls)node.className=cls;if(txt!==undefined)node.textContent=txt;return node;};
   const clean=()=>{
     active=false;
     if(observation){observation.disconnect();observation=null;}
     if(timer){clearInterval(timer);timer=null;}
     if(deadline){clearTimeout(deadline);deadline=null;}
+    if(clickWatch){clearTimeout(clickWatch);clickWatch=null;}
     doc.getElementById(ID)?.remove();
     current=null;
   };
-  function findNativeContinue(){
-    const els=doc.querySelectorAll('.jspsych-content button, .jspsych-content input[type="button"], .jspsych-content input[type="submit"], button, input[type="button"], input[type="submit"]');
-    for(const btn of els){
-      if(btn.closest('#'+ID)) continue;
-      const text=(btn.tagName==='INPUT'?btn.value:btn.textContent).trim().replace(/\s+/g,' ').toLowerCase();
-      if(text==='continuar' && !btn.disabled) return btn;
+  // ExpBuilder dibuja la respuesta con su propio plugin. No hay garantía de que
+  // sea un elemento <button>: puede ser un div, span u otro componente anidado.
+  // Se busca el texto real, dentro de la pantalla de jsPsych, sin modificar
+  // el nodo nativo ni sus escuchas de eventos.
+  function inspectCandidates(){
+    const scope = doc.querySelector('.jspsych-content') ||
+      doc.querySelector('#jspsych-content') ||
+      doc.querySelector('.jspsych-display-element:not(body)') || doc.body;
+    const all = [];
+    const walker = doc.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
+    while(walker.nextNode()){
+      const t=walker.currentNode;
+      const parent=t.parentElement;
+      if(!parent || parent.closest('#'+ID+',script,style,noscript,template')) continue;
+      const value=t.nodeValue.replace(/\s+/g,' ').trim();
+      if(!/continuar/i.test(value)) continue;
+      const normalized=value.toLocaleLowerCase('es-MX');
+      const exact=normalized==='continuar';
+      const rect=parent.getBoundingClientRect();
+      const css=win.getComputedStyle(parent);
+      const isVisible=rect.width>0 && rect.height>0 && css.display!=='none' && css.visibility!=='hidden';
+      const clickable=parent.closest('button,input,[role="button"],[data-choice],[data-component-id],[class*="ButtonResponse"],[class*="button"],[class*="Button"]');
+      all.push({parent,clickable,exact,isVisible,rect,
+        text:value,tag:parent.tagName,className:typeof parent.className==='string'?parent.className.slice(0,120):''});
     }
-    return null;
+    // Fallback para controles input, que no tienen nodos de texto.
+    for(const input of scope.querySelectorAll('input[type="button"],input[type="submit"]')){
+      const value=String(input.value||'').trim().toLocaleLowerCase('es-MX');
+      if(value==='continuar') all.push({parent:input,clickable:input,exact:true,isVisible:input.getBoundingClientRect().width>0,
+        text:input.value,tag:input.tagName,className:input.className||''});
+    }
+    diagnostics.candidates=all.map(x=>({text:x.text,tag:x.tag,cls:x.className,exact:x.exact,visible:x.isVisible})).slice(0,12);
+    return all;
+  }
+  function findNativeContinue(){
+    const matches=inspectCandidates().filter(x=>x.exact && x.isVisible);
+    if(!matches.length) return null;
+    // Priorizar un control localizado antes que una coincidencia genérica.
+    matches.sort((a,b)=>Number(!!b.clickable)-Number(!!a.clickable));
+    const chosen=matches[0];
+    const native=chosen.parent; // Un click sobre el texto burbujea al controlador nativo.
+    diagnostics.nativeFound++;
+    diagnostics.nativeTag=native.tagName;
+    diagnostics.nativeClass=(typeof native.className==='string'?native.className:'').slice(0,120);
+    return native;
   }
   function sourceData(trial, authored){
     const array=(trial && Array.isArray(trial.components))?trial.components:authored?.components||[];
@@ -61,13 +99,24 @@
       if(!active||next.disabled)return;
       diagnostics.clicks++;
       next.disabled=true;
-      nativeButton.click(); // El motor ExpBuilder registra la respuesta y avanza.
-      // El on_finish nativo eliminará el overlay y dejará la siguiente pantalla intacta.
-      setTimeout(()=>{if(active)next.disabled=false;},900);
+      // Enviar el evento al elemento que ExpBuilder dibujó, sin invocar a jsPsych.finishTrial.
+      // De este modo el registro de datos/ramificaciones sigue a cargo del plugin.
+      diagnostics.forwarded++;
+      nativeButton.click();
+      // Si el plugin no termina, mostrar la interfaz nativa en vez de bloquear el estudio.
+      clickWatch=setTimeout(()=>{
+        if(active){
+          diagnostics.lastProblem='Se encontró Continuar, pero el plugin no avanzó tras el click reenviado';
+          diagnostics.fallbacks++;
+          console.warn('[Validación Bienvenida]',diagnostics.lastProblem);
+          clean();
+        }
+      },2500);
     });
     footer.appendChild(next);card.append(header,main,footer);overlay.appendChild(card);
     doc.body.appendChild(overlay);
     diagnostics.rendered++;
+    diagnostics.lastProblem=null;
   }
   function begin(trial,authored){
     clean();active=true;current={trial,authored};diagnostics.started++;
@@ -91,8 +140,8 @@
     timer=setInterval(scan,120);
     deadline=setTimeout(()=>{
       if(!doc.getElementById(ID)){
-        diagnostics.lastProblem='No se encontró el botón original Continuar';diagnostics.fallbacks++;
-        console.warn('[Validación Bienvenida] No se encontró Continuar nativo. Se conserva el diseño de ExpBuilder.');
+        diagnostics.lastProblem='No se encontró un elemento visible con texto Continuar';diagnostics.fallbacks++;
+        console.warn('[Validación Bienvenida] No se encontró Continuar nativo. Se conserva el diseño de ExpBuilder.',diagnostics.candidates);
       }
       observation?.disconnect();observation=null;
       clearInterval(timer);timer=null;deadline=null;
@@ -117,7 +166,7 @@
             if(!active)begin(null,authored || sourceByTrial.get(node) || null);
             return ret;
           };
-          node.on_finish=function(data){clean();return oldFinish?.call(this,data);};
+          node.on_finish=function(data){diagnostics.finished++;clean();return oldFinish?.call(this,data);};
           diagnostics.installed++;
         }
         if(Array.isArray(node.timeline)){
@@ -135,5 +184,5 @@
     if(diagnostics.installed!==1){diagnostics.lastProblem='El instalador esperaba un único ensayo Bienvenida';
       console.warn('[Validación Bienvenida]',diagnostics.lastProblem,diagnostics.installed);}
   }
-  win.ValidacionBienvenida={install,clean};
+  win.ValidacionBienvenida={install,clean,inspect:()=>inspectCandidates().map(x=>({text:x.text,tag:x.tag,cls:x.className,exact:x.exact,visible:x.isVisible}))};
 })(window,document);
