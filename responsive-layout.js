@@ -1,109 +1,186 @@
-/* Correccion de escala de ExpBuilder: no modifica ensayos, condiciones ni respuestas. */
-(function (global) {
+/*
+  Escalado uniforme tipo "lienzo fijo" para experimentos de ExpBuilder/jsPsych.
+  - Toma 1920x1080 como tamano de referencia.
+  - Convierte medidas inline en vw/vh a px de referencia.
+  - Escala todo el contenido como una sola imagen manteniendo proporciones.
+  - No modifica la logica experimental ni el guardado de datos.
+*/
+(function (global, document) {
   'use strict';
 
-  const baseline = new WeakMap();
-  const getWidth = () => Math.max(320, global.innerWidth || 1024);
-  const pxToVw = (px, width) => (px * 100) / width;
-  const clamp = (value, lo, hi) => Math.min(hi, Math.max(lo, value));
+  const BASE_W = 1920;
+  const BASE_H = 1080;
+  const SHELL_ID = 'expbuilder-fixed-shell';
+  const STAGE_ID = 'expbuilder-fixed-stage';
+  const MANAGED_ATTR = 'data-expbuilder-stage-managed';
+  const ORIGINAL_STYLE_ATTR = 'data-expbuilder-original-style';
 
-  // El plugin ExpBuilder usa porcentajes del ancho del viewport en sus campos *_vw.
-  // Mantiene el tamanio legible en moviles y evita que aumente sin limite en escritorio.
-  function scaleComponent(component) {
-    if (!component || typeof component !== 'object') return;
-    if (!baseline.has(component)) {
-      baseline.set(component, {
-        font: component._font_size_runtime_vw,
-        buttonFont: component._button_font_size_runtime_vw,
-        width: component.width,
-        height: component.height,
-        x: component.coordinates && component.coordinates.x
+  function ensureBaseStyles() {
+    if (document.getElementById('expbuilder-fixed-scale-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'expbuilder-fixed-scale-styles';
+    style.textContent = `
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #ffffff;
+      }
+      body.jspsych-display-element {
+        min-height: 100vh;
+        min-height: 100dvh;
+      }
+      #${SHELL_ID} {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        background: transparent;
+        z-index: 0;
+      }
+      #${STAGE_ID} {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: ${BASE_W}px;
+        height: ${BASE_H}px;
+        transform-origin: top left;
+        overflow: hidden;
+        background: transparent;
+      }
+      #${STAGE_ID} .jspsych-content,
+      #${STAGE_ID} .jspsych-display-element,
+      #${STAGE_ID} .jspsych-content-wrapper {
+        max-width: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function ensureShell() {
+    ensureBaseStyles();
+    let shell = document.getElementById(SHELL_ID);
+    let stage = document.getElementById(STAGE_ID);
+    if (!shell) {
+      shell = document.createElement('div');
+      shell.id = SHELL_ID;
+      stage = document.createElement('div');
+      stage.id = STAGE_ID;
+      shell.appendChild(stage);
+      document.body.appendChild(shell);
+    }
+    if (!stage) {
+      stage = document.createElement('div');
+      stage.id = STAGE_ID;
+      shell.appendChild(stage);
+    }
+    return { shell, stage };
+  }
+
+  function convertUnits(styleText) {
+    if (!styleText || typeof styleText !== 'string') return styleText;
+    return styleText
+      .replace(/(-?\d*\.?\d+)vw/g, (_, n) => `${((parseFloat(n) / 100) * BASE_W).toFixed(3)}px`)
+      .replace(/(-?\d*\.?\d+)vh/g, (_, n) => `${((parseFloat(n) / 100) * BASE_H).toFixed(3)}px`)
+      .replace(/(-?\d*\.?\d+)vmin/g, (_, n) => {
+        const base = Math.min(BASE_W, BASE_H);
+        return `${((parseFloat(n) / 100) * base).toFixed(3)}px`;
+      })
+      .replace(/(-?\d*\.?\d+)vmax/g, (_, n) => {
+        const base = Math.max(BASE_W, BASE_H);
+        return `${((parseFloat(n) / 100) * base).toFixed(3)}px`;
       });
-    }
-    const base = baseline.get(component);
-    const width = getWidth();
-    const mobile = width < 600;
+  }
 
-    if (typeof base.font === 'number' && Number.isFinite(base.font)) {
-      // Titulos y texto corriente conservan jerarquia tipografica.
-      const heading = base.font >= 3;
-      const minimum = heading ? 17 : (base.font >= 2.5 ? 15 : 13);
-      const maximum = heading ? (base.font >= 4 ? 40 : 33) : (base.font >= 2.5 ? 28 : 23);
-      component._font_size_runtime_vw = pxToVw(clamp(base.font * width / 100, minimum, maximum), width);
+  function convertNodeStyle(node) {
+    if (!(node instanceof global.Element)) return;
+    if (node.id === SHELL_ID || node.id === STAGE_ID) return;
+
+    const original = node.getAttribute(ORIGINAL_STYLE_ATTR) ?? node.getAttribute('style');
+    if (original != null && !node.hasAttribute(ORIGINAL_STYLE_ATTR)) {
+      node.setAttribute(ORIGINAL_STYLE_ATTR, original);
     }
-    if (typeof base.buttonFont === 'number' && Number.isFinite(base.buttonFont)) {
-      const minimum = mobile ? 14 : 14;
-      component._button_font_size_runtime_vw = pxToVw(
-        clamp(base.buttonFont * width / 100, minimum, 24), width
-      );
+    if (original != null) {
+      const converted = convertUnits(original);
+      if (converted !== node.getAttribute('style')) node.setAttribute('style', converted);
     }
-    if (component.type === 'ButtonResponseComponent') {
-      // El ancho y la altura de los botones tambien proceden de la anchura visual.
-      // No acortar ni recortar el texto de 'Continuar' en un movil.
-      const minWidth = (component.choices || []).some(
-        choice => String(choice).length > 15
-      ) ? 165 : 112;
-      const originalWidth = typeof base.width === 'number' ? base.width * width / 100 : minWidth;
-      const originalHeight = typeof base.height === 'number' ? base.height * width / 100 : 42;
-      component.width = pxToVw(clamp(originalWidth, minWidth, 210), width);
-      component.height = pxToVw(clamp(originalHeight, 38, 56), width);
-      if (component.coordinates && typeof base.x === 'number') {
-        const widthPct = component.width;
-        const minCenter = widthPct / 2 + 6;
-        const maxCenter = 100 - minCenter;
-        component.coordinates.x = 2 * clamp((base.x + 100) / 2, minCenter, maxCenter) - 100;
-      }
-    }
-    if (component.type === 'ImageComponent') {
-      // Limitar los logos y otras imagenes en pantallas enormes sin recortar imagenes.
-      if (typeof base.width === 'number' && Number.isFinite(base.width)) {
-        component.width = pxToVw(Math.min(base.width * width / 100, 185), width);
-      }
-      if (typeof base.height === 'number' && Number.isFinite(base.height)) {
-        component.height = pxToVw(Math.min(base.height * width / 100, 210), width);
-      }
+
+    if (node.tagName === 'STYLE' && !node.hasAttribute(ORIGINAL_STYLE_ATTR)) {
+      const css = node.textContent || '';
+      node.setAttribute(ORIGINAL_STYLE_ATTR, css);
+      node.textContent = convertUnits(css);
+    } else if (node.tagName === 'STYLE' && node.hasAttribute(ORIGINAL_STYLE_ATTR)) {
+      node.textContent = convertUnits(node.getAttribute(ORIGINAL_STYLE_ATTR) || '');
     }
   }
 
-  // El plugin usa timeline_variables (objetos) para los estimulos, asi que podemos
-  // ajustar componentes existentes sin tocar el flujo experimental.
-  function eachNode(nodes, fn) {
-    if (!Array.isArray(nodes)) return;
-    for (const node of nodes) {
-      if (!node || typeof node !== 'object') continue;
-      if (Array.isArray(node.timeline_variables)) {
-        for (const variable of node.timeline_variables) {
-          if (!variable || typeof variable !== 'object') continue;
-          for (const component of variable.components || []) fn(component);
-          for (const component of variable.response_components || []) fn(component);
-        }
-      }
-      if (Array.isArray(node.timeline)) eachNode(node.timeline, fn);
+  function convertTree(root) {
+    if (!(root instanceof global.Node)) return;
+    if (root.nodeType === global.Node.ELEMENT_NODE) convertNodeStyle(root);
+    if (root.querySelectorAll) {
+      root.querySelectorAll('*').forEach(convertNodeStyle);
+      root.querySelectorAll('style').forEach(convertNodeStyle);
     }
   }
 
-  function install(timeline) {
-    eachNode(timeline, scaleComponent);
-    // Se recalcula antes de cada ensayo, tambien si el participante giro el movil.
-    function wrap(nodes) {
-      if (!Array.isArray(nodes)) return;
-      for (const node of nodes) {
-        if (!node || typeof node !== 'object') continue;
-        if (node.type === global.DynamicPlugin) {
-          const originalStart = node.on_start;
-          node.on_start = function (trial) {
-            if (typeof originalStart === 'function') originalStart.call(this, trial);
-            for (const component of trial.components || []) scaleComponent(component);
-            for (const component of trial.response_components || []) scaleComponent(component);
-          };
-        }
-        if (Array.isArray(node.timeline)) wrap(node.timeline);
-      }
+  function moveManagedNodesIntoStage() {
+    const { stage } = ensureShell();
+    const bodyChildren = Array.from(document.body.children);
+    for (const child of bodyChildren) {
+      if (child.id === SHELL_ID) continue;
+      if (child.tagName === 'SCRIPT') continue;
+      if (child.tagName === 'STYLE') continue;
+      if (child.id === 'expbuilder-runtime-error') continue; // keep fatal overlay outside the stage
+      if (!child.hasAttribute(MANAGED_ATTR)) child.setAttribute(MANAGED_ATTR, '1');
+      stage.appendChild(child);
+      convertTree(child);
     }
-    wrap(timeline);
-    // Actualiza las definiciones para futuros ensayos cuando cambie el ancho.
-    global.addEventListener('resize', () => eachNode(timeline, scaleComponent), { passive:true });
+    // Ajusta tambien estilos dentro del propio stage (por si jsPsych reutiliza nodos).
+    convertTree(stage);
   }
 
-  global.ExpBuilderResponsive = { install, scaleComponent };
-})(window);
+  function layoutStage() {
+    const { stage } = ensureShell();
+    const vw = Math.max(1, global.innerWidth || document.documentElement.clientWidth || BASE_W);
+    const vh = Math.max(1, global.innerHeight || document.documentElement.clientHeight || BASE_H);
+    const scale = Math.min(vw / BASE_W, vh / BASE_H);
+    const offsetX = Math.max(0, (vw - BASE_W * scale) / 2);
+    const offsetY = Math.max(0, (vh - BASE_H * scale) / 2);
+    stage.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+  }
+
+  let observerStarted = false;
+  function installFixedCanvas() {
+    ensureShell();
+    moveManagedNodesIntoStage();
+    layoutStage();
+
+    if (!observerStarted) {
+      const observer = new MutationObserver(() => {
+        moveManagedNodesIntoStage();
+        layoutStage();
+      });
+      observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+      observerStarted = true;
+      global.addEventListener('resize', layoutStage, { passive: true });
+      global.addEventListener('orientationchange', layoutStage, { passive: true });
+      document.addEventListener('fullscreenchange', layoutStage);
+    }
+  }
+
+  // Mantener la API esperada por experiment.js, pero sin reescalar componente por componente.
+  global.ExpBuilderResponsive = {
+    install: function () {
+      installFixedCanvas();
+    },
+    relayout: layoutStage,
+    convertTree,
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', installFixedCanvas, { once: true });
+  } else {
+    installFixedCanvas();
+  }
+})(window, document);
