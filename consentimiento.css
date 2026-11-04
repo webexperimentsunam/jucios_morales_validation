@@ -1,0 +1,93 @@
+/* Validacion v8: solo las cuatro paginas del consentimiento informado. */
+#validacion-consentimiento {
+  position:fixed; inset:0; z-index:2147482000;
+  display:flex; align-items:center; justify-content:center;
+  padding:clamp(12px,2.6vw,28px);
+  background:#edf3f6; color:#1b3442;
+  font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  font-size:16px; line-height:1.6; overflow:hidden;
+}
+#validacion-consentimiento, #validacion-consentimiento *,
+#validacion-consentimiento *::before, #validacion-consentimiento *::after { box-sizing:border-box; }
+#validacion-consentimiento .vc-card {
+  background:#fff; border:1px solid #dce7ec; border-radius:16px;
+  width:min(100%,900px); height:min(94dvh,960px);
+  min-height:0; display:flex; flex-direction:column;
+  box-shadow:0 18px 45px rgba(25,63,78,.08); overflow:hidden;
+}
+#validacion-consentimiento .vc-header {
+  flex:0 0 auto; background:#fff; border-bottom:1px solid #e4ebef;
+  padding:16px clamp(18px,4vw,42px);
+  display:flex; align-items:center; justify-content:space-between; gap:18px;
+  color:#4b6a78; font-size:12px; font-weight:700; line-height:1.45;
+  letter-spacing:.035em;
+}
+#validacion-consentimiento .vc-progress {white-space:nowrap;color:#587180; font-variant-numeric:tabular-nums;}
+#validacion-consentimiento .vc-progress-track {height:4px;background:#e6ecee;flex:0 0 auto;}
+#validacion-consentimiento .vc-progress-fill {height:100%;background:#a3b18a;}
+#validacion-consentimiento .vc-scroll {
+  min-height:0; min-width:0; overflow-y:auto; overflow-x:hidden;
+  overscroll-behavior:contain; flex:1 1 auto;
+  padding:clamp(25px,3.6vw,50px) clamp(20px,5.2vw,68px);
+  scrollbar-gutter:stable;
+}
+#validacion-consentimiento .vc-document {max-width:73ch;margin:0 auto;}
+#validacion-consentimiento .vc-eyebrow {margin:0 0 15px;color:#57707d; font-size:13px; font-weight:650;}
+#validacion-consentimiento .vc-title {
+  margin:0 0 18px; font-size:clamp(23px,3vw,29px);font-weight:750;
+  line-height:1.25;letter-spacing:-.02em;color:#203a47;
+}
+#validacion-consentimiento .vc-subtitle {
+  margin:0 0 26px; font-size:clamp(16px,1.8vw,18px);font-weight:550;
+  line-height:1.45;color:#385765;
+}
+#validacion-consentimiento .vc-section-title {
+  font-size:clamp(18px,2.3vw,22px); font-weight:700;
+  line-height:1.35; margin:26px 0 13px;color:#223d49;
+}
+#validacion-consentimiento .vc-section-title:first-child { margin-top:0; }
+#validacion-consentimiento .vc-paragraph {
+  font-size:clamp(15px,1.7vw,17px); line-height:1.66;
+  margin:0 0 17px; color:#253e4c; overflow-wrap:anywhere;
+}
+#validacion-consentimiento .vc-link {
+  display:inline-block; overflow-wrap:anywhere; color:#136b9c;
+  text-decoration:underline; text-underline-offset:2px;
+}
+#validacion-consentimiento .vc-footer {
+  flex:0 0 auto; background:#fff; border-top:1px solid #e4ebef;
+  padding:15px clamp(18px,4vw,42px);
+  display:flex; align-items:center; justify-content:flex-end;
+  gap:12px; flex-wrap:wrap;
+}
+#validacion-consentimiento .vc-button {
+  appearance:none; min-height:46px; padding:10px 25px; min-width:118px;
+  border:1px solid #81998b; background:#a3b18a; color:#182a22;
+  border-radius:8px; font:650 16px/1.2 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  cursor:pointer;
+}
+#validacion-consentimiento .vc-button:hover:not(:disabled) {background:#91a37d;}
+#validacion-consentimiento .vc-button[data-choice="Regresar"] {
+  color:#385564; border-color:#cbd7de; background:#fff; margin-right:auto;
+}
+#validacion-consentimiento .vc-button[data-choice="Regresar"]:hover:not(:disabled) {background:#f1f5f6;}
+#validacion-consentimiento .vc-button[data-choice="No acepto"] {
+  color:#8b3431; border-color:#dfb4b1; background:#fff;
+}
+#validacion-consentimiento .vc-button[data-choice="No acepto"]:hover:not(:disabled) {background:#fff2f1;}
+#validacion-consentimiento .vc-button:focus-visible,
+#validacion-consentimiento .vc-link:focus-visible {outline:3px solid #23699c;outline-offset:3px;}
+#validacion-consentimiento .vc-button:disabled {opacity:.55;cursor:wait;}
+@media(max-width:600px) {
+  #validacion-consentimiento {padding:0;align-items:stretch;}
+  #validacion-consentimiento .vc-card {width:100%;height:100dvh;border:0;border-radius:0;box-shadow:none;}
+  #validacion-consentimiento .vc-header {padding:13px 16px;font-size:11px;}
+  #validacion-consentimiento .vc-scroll {padding:24px 20px 30px;scrollbar-gutter:auto;}
+  #validacion-consentimiento .vc-paragraph {font-size:16px;line-height:1.6;}
+  #validacion-consentimiento .vc-title {font-size:24px;}
+  #validacion-consentimiento .vc-section-title {font-size:19px;}
+  #validacion-consentimiento .vc-footer {padding:12px 14px max(12px,env(safe-area-inset-bottom));gap:8px;}
+  #validacion-consentimiento .vc-button {min-width:0; flex:1 1 110px; padding:12px 14px;font-size:15px;}
+  #validacion-consentimiento .vc-button[data-choice="Regresar"] {flex:0 1 100%;margin-right:0;}
+}
+@media(prefers-reduced-motion:reduce) {#validacion-consentimiento * {scroll-behavior:auto !important;}}

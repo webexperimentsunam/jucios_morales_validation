@@ -4870,6 +4870,7 @@ data: {
 window.ExpBuilderNavigation?.registerTrial(1793649983720, Final$20$Experimento_procedure);
 
     window.ValidacionBienvenida.install(timeline);
+    window.ValidacionConsentimiento.install(timeline);
     window.ExpBuilderNavigation?.attach(jsPsych, timeline);
     jsPsych.run(timeline);
 
