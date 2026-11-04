@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="es"><head>
+<!DOCTYPE html><html lang="es-MX"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
@@ -86,14 +86,14 @@
       ].join(";");
       overlay.innerHTML =
         '<div style="max-width:620px;text-align:center">' +
-        '<h1 style="font-size:24px;margin:0 0 12px">The experiment could not continue</h1>' +
-        '<p style="margin:0 0 8px">Please contact the experiment administrator.</p>' +
+        '<h1 style="font-size:24px;margin:0 0 12px">No fue posible continuar el experimento</h1>' +
+        '<p style="margin:0 0 8px">Comunícate con la persona responsable del estudio.</p>' +
         '<p data-runtime-error-code style="font-family:monospace;margin:0"></p>' +
         "</div>";
       targetDocument.body.appendChild(overlay);
     }
     const code = overlay.querySelector("[data-runtime-error-code]");
-    if (code) code.textContent = `Error reference: ${errorRecord.code}`;
+    if (code) code.textContent = `Referencia del error: ${errorRecord.code}`;
     const loading = targetDocument.getElementById("jspsych-loading-overlay");
     if (loading) loading.style.display = "none";
   }
@@ -160,4 +160,4 @@
   emit("runtime-ready", { version: api.version });
   return api;
 })(window, document);
-</script><link rel="stylesheet" href="./bienvenida.css?v=7"><script src="./bienvenida.js?v=7"></script><link rel="stylesheet" href="./consentimiento.css?v=8"><script src="./consentimiento.js?v=8"></script><link rel="stylesheet" href="./pantallas.css?v=9"><script src="./pantallas.js?v=9"></script><script src="./experiment.js?v=9"></script></body></html>
+</script><link rel="stylesheet" href="./bienvenida.css?v=7"><script src="./bienvenida.js?v=7"></script><link rel="stylesheet" href="./consentimiento.css?v=8"><script src="./consentimiento.js?v=8"></script><link rel="stylesheet" href="./pantallas.css?v=9"><script src="./pantallas.js?v=9"></script><link rel="stylesheet" href="./survey.css?v=11"><script src="./survey.js?v=11"></script><script src="./experiment.js?v=11"></script></body></html>

@@ -1,0 +1,72 @@
+/* Cuestionario adaptativo nativo - no afecta otros ensayos */
+#juicios-survey {
+  position:fixed;inset:0;z-index:2147482000;background:#edf3f6;color:#1e3644;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  padding:clamp(10px,2.4vw,26px);
+  font:400 16px/1.55 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+}
+#juicios-survey,#juicios-survey *,#juicios-survey *::before,#juicios-survey *::after{box-sizing:border-box}
+#juicios-survey .jm-card{display:flex;flex-direction:column;min-height:0;overflow:hidden;width:min(100%,890px);
+  height:min(95dvh,980px);background:white;border:1px solid #dce7ec;border-radius:16px;
+  box-shadow:0 18px 45px rgba(25,63,78,.08)}
+#juicios-survey .jm-header{display:flex;justify-content:space-between;align-items:center;gap:14px;
+  flex-shrink:0;padding:16px clamp(20px,4vw,42px);border-bottom:1px solid #e4ebef;
+  font-size:12px;color:#50717f;font-weight:700;letter-spacing:.035em}
+#juicios-survey .jm-form{min-height:0;display:flex;flex-direction:column;flex:1}
+#juicios-survey .jm-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  padding:clamp(20px,3.6vw,46px) clamp(22px,5vw,64px) 38px;scrollbar-gutter:stable}
+#juicios-survey .jm-intro{max-width:74ch;margin:0 auto 22px}
+#juicios-survey .jm-eyebrow{margin:0 0 5px;color:#65818c;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.055em}
+#juicios-survey .jm-title{font-size:clamp(25px,3vw,32px);margin:0 0 12px;font-weight:750;letter-spacing:-.022em;line-height:1.2}
+#juicios-survey .jm-lead{font-size:16px;color:#395665;margin:0 0 8px;line-height:1.6}
+#juicios-survey .jm-sublead{font-size:13px;color:#667f89;margin:0}
+#juicios-survey .jm-section{border-top:1px solid #e5edef;padding:23px 0 25px;max-width:74ch;margin:0 auto}
+#juicios-survey .jm-section-title{font-size:18px;font-weight:740;line-height:1.35;margin:0 0 16px;color:#223c49}
+#juicios-survey .jm-section-lead{font-size:14px;color:#486574}
+#juicios-survey .jm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 24px}
+#juicios-survey .jm-grid-personal .jm-field:first-child{grid-column:1/-1;max-width:360px}
+#juicios-survey .jm-field{min-width:0}
+#juicios-survey .jm-field[hidden]{display:none!important}
+#juicios-survey .jm-label{display:block;font-weight:660;font-size:15px;line-height:1.45;margin:0 0 10px}
+#juicios-survey .jm-required{color:#b5374a}
+#juicios-survey .jm-hint{font-size:12px;margin:7px 0 0;color:#667c86}
+#juicios-survey .jm-input,#juicios-survey .jm-select{
+  display:block;width:100%;min-height:48px;padding:11px 14px;border:1px solid #c6d6dc;
+  background:#fff;color:#1d3542;border-radius:8px;font:500 15px/1.3 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+}
+#juicios-survey .jm-input:focus,#juicios-survey .jm-select:focus{outline:3px solid #87bbd0;outline-offset:1px;border-color:#3e7b95}
+#juicios-survey .jm-options{display:grid;grid-template-columns:1fr;gap:8px}
+#juicios-survey .jm-binary{display:flex;gap:10px;flex-wrap:wrap}
+#juicios-survey .jm-option{display:flex;align-items:center;gap:12px;min-height:45px;
+  padding:10px 12px;border:1px solid #d7e2e6;border-radius:9px;cursor:pointer;
+  color:#2a4653;background:#fff;font-size:15px;line-height:1.35}
+#juicios-survey .jm-option:hover{border-color:#a3b18a;background:#f7faf4}
+#juicios-survey .jm-option:has(input:checked){border-color:#7a9466;background:#f2f6ef}
+#juicios-survey .jm-option:focus-within{outline:2px solid #87bbd0;outline-offset:2px}
+#juicios-survey .jm-radio{accent-color:#607b55;width:17px;height:17px;flex:0 0 17px;margin:0}
+#juicios-survey .jm-binary .jm-option{min-width:115px;justify-content:flex-start}
+#juicios-survey .jm-error{margin:6px auto 0;padding:12px 14px;background:#fff4f1;
+  color:#923c30;border:1px solid #e8b9b0;border-radius:9px;max-width:74ch;font-size:14px}
+#juicios-survey .jm-error[hidden]{display:none}
+#juicios-survey .jm-footer{display:flex;justify-content:space-between;align-items:center;gap:16px;
+  flex-shrink:0;padding:14px clamp(20px,4vw,42px);border-top:1px solid #e4ebef;background:#fff}
+#juicios-survey .jm-footer-info{color:#6c8188;font-size:12px}
+#juicios-survey .jm-submit{min-width:160px;min-height:47px;padding:12px 25px;
+  border-radius:8px;border:1px solid #81998b;background:#a3b18a;color:#182a22;
+  font:700 15px/1.2 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;cursor:pointer}
+#juicios-survey .jm-submit:hover:not(:disabled){background:#91a37d}
+#juicios-survey .jm-submit:focus-visible{outline:3px solid #23699c;outline-offset:3px}
+#juicios-survey .jm-submit:disabled{opacity:.6;cursor:wait}
+@media(max-width:640px){
+ #juicios-survey{padding:0;align-items:stretch}
+ #juicios-survey .jm-card{height:100dvh;border:0;border-radius:0;box-shadow:none;max-width:none}
+ #juicios-survey .jm-header{padding:13px 16px;font-size:11px}
+ #juicios-survey .jm-scroll{padding:24px 18px 30px;scrollbar-gutter:auto}
+ #juicios-survey .jm-title{font-size:26px}
+ #juicios-survey .jm-grid{grid-template-columns:minmax(0,1fr);gap:22px}
+ #juicios-survey .jm-grid-personal .jm-field:first-child{grid-column:auto;max-width:none}
+ #juicios-survey .jm-footer{padding:12px 16px max(12px,env(safe-area-inset-bottom))}
+ #juicios-survey .jm-submit{min-width:130px}
+ #juicios-survey .jm-footer-info{font-size:11px}
+}
+@media(max-width:360px){#juicios-survey .jm-footer-info{display:none}#juicios-survey .jm-submit{width:100%}}

@@ -1012,7 +1012,7 @@ const m9e = decideBranch;
   ].join(';');
   _loadingOverlay.innerHTML = `
     <div style="width:48px;height:48px;border:5px solid #e0e0e0;border-top-color:#555;border-radius:50%;animation:_spin 0.8s linear infinite"></div>
-    <p id="jspsych-loading-msg" style="margin:0;color:#555;font-size:15px">Initializing experiment…</p>
+    <p id="jspsych-loading-msg" style="margin:0;color:#555;font-size:15px">Preparando el experimento…</p>
     <style>@keyframes _spin{to{transform:rotate(360deg)}}</style>
   `;
   document.body.appendChild(_loadingOverlay);
@@ -1073,7 +1073,7 @@ const m9e = decideBranch;
     ].join(';');
     overlay.innerHTML = `
       <div style="width:48px;height:48px;border:5px solid #e0e0e0;border-top-color:#555;border-radius:50%;animation:_spin 0.8s linear infinite"></div>
-      <p id="jspsych-loading-msg" style="margin:0;color:#555;font-size:15px">${msg || 'Please wait…'}</p>
+      <p id="jspsych-loading-msg" style="margin:0;color:#555;font-size:15px">${msg || 'Espera un momento…'}</p>
       <style>@keyframes _spin{to{transform:rotate(360deg)}}</style>
     `;
     document.body.appendChild(overlay);
@@ -1170,7 +1170,7 @@ const m9e = decideBranch;
       await _showCaptchaGate("", "hcaptcha");
       sessionStorage.setItem(_publicStorageKeys.captchaPassed, '1');
       if (_loadingEl) _loadingEl.style.display = 'flex';
-      _setLoadingMsg('Creating session…');
+      _setLoadingMsg('Creando sesión…');
     }
 
 
@@ -1221,7 +1221,7 @@ const m9e = decideBranch;
 
     // SIEMPRE llamar a createSession (para crear documento en Firestore)
     // El backend maneja sesiones duplicadas (409) y las retorna correctamente
-    _setLoadingMsg('Creating session…');
+    _setLoadingMsg('Creando sesión…');
     participantNumber = await createSession();
 
     // If session name has counter token, generate final name now that participantNumber is known
@@ -1238,12 +1238,12 @@ const m9e = decideBranch;
     localStorage.setItem(_publicStorageKeys.participant, participantNumber.toString());
 
     if (typeof participantNumber !== "number" || isNaN(participantNumber)) {
-      alert("The participant number is not assigned. Please, wait.");
+      alert("No se pudo asignar el número de participante. Intenta nuevamente.");
       throw new Error("participantNumber not assigned");
     }
     
     // Esperar e inicializar Firebase
-    _setLoadingMsg('Loading resources…');
+    _setLoadingMsg('Cargando recursos…');
     await waitForFirebase();
     if (!window.firebase.apps.length) {
       window.firebase.initializeApp(firebaseConfig);
@@ -1252,7 +1252,8 @@ const m9e = decideBranch;
 
     // --- Configurar onDisconnect para finalizar sesión automáticamente ---
     const sessionRef = db.ref('sessions/7f4f984c-de8c-47f4-8144-b6284a011f97/' + trialSessionId);
-    await sessionRef.set({
+    // update, no set: al reanudar NO borrar respuestas guardadas en la sesion.
+    await sessionRef.update({
       connected: true,
       experimentID: '7f4f984c-de8c-47f4-8144-b6284a011f97',
       sessionId: trialSessionId,
@@ -1305,6 +1306,68 @@ const m9e = decideBranch;
     let lastBatchError = null;
     const PERSIST_ID = window.JSPSYCH_EXPERIMENT_ID;
     const BATCH_ENDPOINT = 'https://us-central1-test-e4cf9.cloudfunctions.net/apiData';
+
+    // Guardado remoto adicional: cada respuesta queda en Realtime Database
+    // independientemente de la consolidacion final del CSV en Google Drive.
+    // Los permisos reales dependen de las reglas del servidor Firebase; comprobarlos.
+    const checkpointRef = sessionRef.child('trial_checkpoints');
+    let checkpointQueue = Promise.resolve();
+    let lastCheckpointError = null;
+    let checkpointConfirmed = 0;
+    let lastCheckpointAck = null;
+    const failedCheckpoints = new Map();
+    function checkpointKey(row) {
+      if (!Number.isSafeInteger(row.id) || row.id <= 0) throw new Error('La respuesta no tiene id local valido');
+      return 'r' + String(row.id).padStart(7, '0');
+    }
+    async function saveCheckpoint(row) {
+      const key = checkpointKey(row);
+      const payload = { ...JSON.parse(JSON.stringify(row)), sessionId: trialSessionId,
+        experimentID: PERSIST_ID, checkpointVersion: 1,
+        savedAt: window.firebase.database.ServerValue.TIMESTAMP };
+      // Establecer un ID estable por registro: un reintento sobreescribe ese
+      // registro y no crea respuestas duplicadas.
+      await checkpointRef.child(key).set(payload);
+      failedCheckpoints.delete(key);
+      checkpointConfirmed++;
+      lastCheckpointAck = { key, trialIndex: row.trial_index,
+        at: new Date().toISOString() };
+      lastCheckpointError = null;
+    }
+    function queueCheckpoint(row) {
+      const key = checkpointKey(row);
+      const promise = checkpointQueue.then(() => saveCheckpoint(row));
+      checkpointQueue = promise.catch(err => {
+        failedCheckpoints.set(key, row);
+        lastCheckpointError = err.message || String(err);
+        console.warn('[Juicios morales] Respaldo Firebase pendiente:', key, lastCheckpointError);
+      });
+      return promise;
+    }
+    // Reenviar las respuestas existentes al reanudar es seguro porque cada
+    // registro conserva su clave estable (set en lugar de push).
+    if (resumedSession) {
+      (await TrialDB.getAll()).filter(row => row.sessionId === trialSessionId)
+        .forEach(row => { void queueCheckpoint(row).catch(() => {}); });
+    }
+    async function drainCheckpoints() {
+      await checkpointQueue;
+      // Un reintento al finalizar sin perder la copia local.
+      for (const row of Array.from(failedCheckpoints.values())) {
+        try { await queueCheckpoint(row); }
+        catch (_) { /* Drive completo es la segunda via de recuperacion. */ }
+      }
+      await checkpointQueue;
+    }
+    window.JuiciosCheckpointDiagnostics = {
+      version:'11.0', path: 'sessions/' + PERSIST_ID + '/' + trialSessionId + '/trial_checkpoints',
+      get firebaseConfirmed() { return checkpointConfirmed; },
+      get firebasePending() { return failedCheckpoints.size; },
+      get lastFirebaseAck() { return lastCheckpointAck; },
+      get lastFirebaseError() { return lastCheckpointError; },
+      reintentar: drainCheckpoints,
+    };
+
 
     // Envio incremental, una solicitud apiData por ensayo terminado.
     // El backend recibe el mismo formato de trial utilizado por el modo
@@ -1493,6 +1556,7 @@ const m9e = decideBranch;
         // jsPsych no espera los callbacks async de on_data_update por sí mismo.
         // La navegación de ExpBuilder registra las operaciones pendientes.
         await window.ExpBuilderPersistence.whenIdle();
+        await drainCheckpoints();
         await flushBatches(true);
         _setLoadingMsg('Confirmando el archivo final…');
         const allRows = (await TrialDB.getAll()).filter(row => row.sessionId === trialSessionId);
@@ -1553,7 +1617,7 @@ const m9e = decideBranch;
         data.clientTimestamp = Date.now();
         data.sessionId = trialSessionId;
         data.experimentID = "7f4f984c-de8c-47f4-8144-b6284a011f97";
-        data.version_experimento = "jucios_morales_validation-v10";
+        data.version_experimento = "jucios_morales_validation-v11";
         if (VALIDACION_PRUEBA_ACTIVA) {
           data.modo_prueba = true;
           data.version_parche_prueba = VALIDACION_PRUEBA_VERSION;
@@ -1576,7 +1640,11 @@ const m9e = decideBranch;
 
         if (BATCH_CONFIG.useIndexedDB) {
           // Primero persistir localmente y reconocer la navegación.
-          await TrialDB.add(data);
+          const checkpointId = await TrialDB.add(data);
+          // Guardar fuera de la cola del avance del ensayo; la red no bloquea
+          // la interfaz. El dato ya se encuentra primero en IndexedDB.
+          const checkpointRow = { ...data, id: checkpointId };
+          void queueCheckpoint(checkpointRow).catch(() => {});
           window.ExpBuilderNavigation.onTrialPersisted(data);
           // Enviar este ensayo inmediatamente (no esperar al final de la sesion).
           // La copia local se guarda ANTES del POST y los envios son seriales.
@@ -4933,6 +5001,7 @@ window.ExpBuilderNavigation?.registerTrial(1793649983720, Final$20$Experimento_p
     window.ValidacionBienvenida.install(timeline);
     window.ValidacionConsentimiento.install(timeline);
     window.ValidacionPantallas.install(timeline);
+    window.JuiciosSurvey.install(timeline);
     window.ExpBuilderNavigation?.attach(jsPsych, timeline);
     jsPsych.run(timeline);
 
@@ -4943,5 +5012,5 @@ window.ExpBuilderNavigation?.registerTrial(1793649983720, Final$20$Experimento_p
       sessionId: window.JSPSYCH_SESSION_ID || null,
       error: error.message
     });
-    _setLoadingMsg('Could not start safely. Check the local server connection.');
+    _setLoadingMsg('No se pudo iniciar el experimento. Revisa tu conexión.');
   });
