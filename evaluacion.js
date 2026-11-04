@@ -1,4 +1,4 @@
-/* Juicios morales v12 — dos bloques de evaluación con plugin nativo jsPsych.
+/* Juicios morales v13 — respuesta discreta (radio) y polaridad de Competencia unificada.
    Lee las variables del bucle ACTUAL: no sustituye estímulos ni altera el muestreo.
    Esquema de datos original y ramas de navegación conservados. */
 (function (win, doc) {
@@ -28,7 +28,7 @@
       vars:['components_Behavioral$20$Statements','response_components_Behavioral$20$Statements']
     }
   };
-  const stats={version:'12.0',installed:0,practiceRendered:0,mainRendered:0,submitted:0,incomplete:0,lastTrial:null,lastValues:null,lastError:null};
+  const stats={version:'13.0',installed:0,practiceRendered:0,mainRendered:0,submitted:0,incomplete:0,lastTrial:null,lastValues:null,lastError:null};
   win.JuiciosEvaluacionDiagnostics=stats;
   const el=(tag,cls,text)=>{const o=doc.createElement(tag);if(cls)o.className=cls;if(text!==undefined)o.textContent=String(text);return o;};
   const item=(components,name)=>components.find(c=>c.name===name);
@@ -54,7 +54,21 @@
          ||s.max-s.min!==8||!s.require_movement||!Array.isArray(s.labels)||s.labels.length!==9)
         throw Error('Configuración inesperada de escala '+s.name);
     });
-    return {statement:statements[0],titles,pairs,sliders,button:buttons[0],components,responses};
+    // Corregir también la presentación si el navegador tiene una copia anterior de JSON en caché.
+    // Conservamos la correspondencia NUMÉRICA (-4 incapaz, +4 capaz) en ambos bloques.
+    const competence=pairs[1];
+    const left=competence[0].text.trim(),right=competence[1].text.trim();
+    const visibleTexts={};
+    if(left==='Capaz'&&right==='Incapaz'){
+      // Cambiamos SOLO la capa visible y el registro de las etiquetas mostradas.
+      // Nunca modificar los componentes de las listas ni su orden.
+      visibleTexts[competence[0].name]='Incapaz';
+      visibleTexts[competence[1].name]='Capaz';
+      pairs[1]=[Object.assign({},competence[0],{text:'Incapaz'}),Object.assign({},competence[1],{text:'Capaz'})];
+    }else if(left!=='Incapaz'||right!=='Capaz'){
+      throw Error('Etiquetas de Competencia inesperadas: '+left+' / '+right);
+    }
+    return {statement:statements[0],titles,pairs,sliders,button:buttons[0],components,responses,visibleTexts,originalCompetenceOrder:left+'_a_'+right};
   }
   function install(timeline){
     let count=0;
@@ -75,7 +89,7 @@
       const originalFinish=trial.on_finish;
       const cfg=keys[kind];
       class NativeEvaluation {
-        static info={name:kind==='Ensayo'?'juicios-practica-v12':'juicios-evaluacion-v12',version:'12.0',parameters:{}};
+        static info={name:kind==='Ensayo'?'juicios-practica-v12':'juicios-evaluacion-v12',version:'13.0',parameters:{}};
         constructor(jsPsych){this.jsPsych=jsPsych;}
         trial(display){
           const began=performance.now();
@@ -92,7 +106,7 @@
           const intro=el('section','je-intro');
           intro.append(el('p','je-kicker',practice?'Ensayo de práctica':'Evaluación de enunciados'));
           intro.append(el('h1','je-prompt',source.statement.text));
-          intro.append(el('p','je-hint','Valora la afirmación en las cuatro dimensiones. Mueve cada escala para registrar tu respuesta.'));
+          intro.append(el('p','je-hint','Evalúa la afirmación en las cuatro dimensiones. Elige una opción por dimensión.'));
           scroll.append(intro);
           const grid=el('div','je-grid');
           const state=[];
@@ -108,29 +122,34 @@
             ends.append(left,right);panel.append(ends);
             locationNodes.set(source.pairs[i][0].name,left);
             locationNodes.set(source.pairs[i][1].name,right);
-            const inp=el('input','je-range');inp.type='range';inp.min=slider.min;
-            inp.max=slider.max;inp.step='1';inp.value=slider.slider_start;
-            inp.id='je-range-'+i;
-            inp.setAttribute('aria-label',source.titles[i].text+': de '+source.pairs[i][0].text+' a '+source.pairs[i][1].text);
-            inp.setAttribute('aria-valuetext','Sin responder');
-            const tick=el('div','je-ticks');
-            for(let n=slider.min;n<=slider.max;n++)tick.append(el('span','',String(n)));
-            const choice=el('div','je-choice','Sin responder');
-            inp.addEventListener('input',()=>{
-              state[i].touched=true;state[i].value=Number(inp.value);
-              panel.classList.add('je-answered');
-              choice.textContent='Valor seleccionado: '+inp.value;
-              inp.setAttribute('aria-valuetext',inp.value);
-              note.textContent='';
-            });
-            panel.append(inp,tick,choice);grid.append(panel);
-            state.push({name:slider.name,slider,value:null,touched:false,input:inp,panel});
+            const options=el('div','je-options');
+            options.setAttribute('role','radiogroup');
+            options.setAttribute('aria-label',dims[i]+': '+source.pairs[i][0].text+' a '+source.pairs[i][1].text);
+            const radios=[];
+            for(let n=slider.min;n<=slider.max;n++){
+              const label=el('label','je-option');
+              const radio=el('input','je-radio');
+              radio.type='radio';radio.name='juicios_'+(practice?'p':'e')+'_'+i;
+              radio.value=String(n);
+              // Radios nativos: accesibles con teclado; no hay opción preseleccionada.
+              radio.setAttribute('aria-label',dims[i]+': '+String(n));
+              const numeral=el('span','je-option-number',String(n));
+              label.append(radio,numeral);options.append(label);radios.push(radio);
+              radio.addEventListener('change',()=>{
+                if(!radio.checked)return;
+                state[i].touched=true;state[i].value=n;
+                panel.classList.add('je-answered');panel.classList.remove('je-missing');
+                note.textContent='';
+              });
+            }
+            panel.append(options);grid.append(panel);
+            state.push({name:slider.name,slider,value:null,touched:false,radios,panel});
             locationNodes.set(slider.name,panel);
           });
           scroll.append(grid);
           const note=el('p','je-error');note.setAttribute('role','alert');scroll.append(note);
           const bottom=el('footer','je-footer');
-          const advice=el('span','je-footer-text','Responde las cuatro escalas para continuar.');
+          const advice=el('span','je-footer-text','Selecciona un valor en las cuatro dimensiones para continuar.');
           const next=el('button','je-next','Siguiente');next.type='button';
           bottom.append(advice,next);card.append(top,scroll,bottom);main.append(card);display.append(main);
           locationNodes.set(source.button.name,next);
@@ -145,16 +164,16 @@
               note.textContent='Completa las cuatro evaluaciones. Faltan: '+missing.map(s=>s.name==='Informatividad_copy'?'Credibilidad':s.name).join(', ')+'.';
               missing.forEach(s=>s.panel.classList.add('je-missing'));
               missing[0].panel.scrollIntoView({behavior:'smooth',block:'center'});
-              missing[0].input.focus({preventScroll:true});return;
+              missing[0].radios[0].focus({preventScroll:true});return;
             }
             done=true;next.disabled=true;
-            const result={rt:Math.round(performance.now()-began),je_layout:'v12',je_phase:practice?'practica':'principal'};
+            const result={rt:Math.round(performance.now()-began),je_layout:'v13',je_response_widget:'radio9',je_competencia_direction:'incapaz_a_capaz',je_competencia_fuente:source.originalCompetenceOrder,je_phase:practice?'practica':'principal'};
             for(const c of components){
               const base=c.name;
               if(!base)continue;
               result[base+'_type']=c.type;
               if(c.type==='TextComponent'){
-                result[base+'_text']=c.text;
+                result[base+'_text']=source.visibleTexts[base] ?? c.text;
                 result[base+'_response']=null;
               }else if(c.type==='ImageComponent'){result[base+'_stimulus']=c.stimulus;}
               const target=locationNodes.get(base);
