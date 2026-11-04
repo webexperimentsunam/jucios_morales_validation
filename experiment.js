@@ -241,6 +241,23 @@
  
   const Uid = "C71v82VCu8YE7lyNhr02UmB8g5k1";
 
+  // TEST SHORTCUT: add ?prueba=3 to exercise all screens with three main trials.
+  // Regular URL executes the original full experiment.
+  const VALIDACION_PRUEBA_ACTIVA = new URLSearchParams(window.location.search).get('prueba') === '3';
+  const VALIDACION_PRUEBA_VERSION = 'v9-prueba3-1';
+  window.ValidacionPrueba = {
+    version: VALIDACION_PRUEBA_VERSION,
+    activa: VALIDACION_PRUEBA_ACTIVA,
+    practica: 3,
+    principal: null,
+    limitePrincipal: VALIDACION_PRUEBA_ACTIVA ? 3 : null,
+    get sessionId() { return window.JSPSYCH_SESSION_ID || null; }
+  };
+  if (VALIDACION_PRUEBA_ACTIVA) {
+    document.title = '[PRUEBA 3] Validación — Experimento';
+    console.info('[Validación] MODO PRUEBA: 3 ensayos de práctica y 3 del bloque principal. Datos marcados como prueba.');
+  }
+
   const _publicStorageKeys = {"sessionId":"expbuilder:public:e9493936-a5e7-4970-8759-520d2b4689d0:session-id","participant":"expbuilder:public:e9493936-a5e7-4970-8759-520d2b4689d0:participant-number","captchaPassed":"expbuilder:public:e9493936-a5e7-4970-8759-520d2b4689d0:captcha-passed","resumeTrial":"expbuilder:public:e9493936-a5e7-4970-8759-520d2b4689d0:resume-trial","trialDatabase":"expbuilder:public:e9493936-a5e7-4970-8759-520d2b4689d0:trials-v1"};
 
   
@@ -894,6 +911,18 @@ const m9e = decideBranch;
   }
 
   // Recuperar sessionId de localStorage o crear uno nuevo
+  // Evitar que una sesión piloto reanude accidentalmente una sesión de producción,
+  // o viceversa. Se recomienda iniciar en una ventana de incógnito nueva.
+  const _pilotStorageKey = _publicStorageKeys.sessionId + ':pilot-mode';
+  const _existingSession = localStorage.getItem(_publicStorageKeys.sessionId);
+  const _existingPilotMode = localStorage.getItem(_pilotStorageKey) === '3';
+  if (_existingSession && _existingPilotMode !== VALIDACION_PRUEBA_ACTIVA) {
+    throw new Error('Hay una sesión iniciada en el modo opuesto. Usa una ventana de incógnito nueva para probar y conserva los datos pendientes de la sesión anterior.');
+  }
+  if (!_existingSession) {
+    if (VALIDACION_PRUEBA_ACTIVA) localStorage.setItem(_pilotStorageKey, '3');
+    else localStorage.removeItem(_pilotStorageKey);
+  }
   let trialSessionId = localStorage.getItem(_publicStorageKeys.sessionId);
   let storedParticipantNumber = localStorage.getItem(_publicStorageKeys.participant);
   let isResuming = false;
@@ -930,7 +959,9 @@ const m9e = decideBranch;
           sessionId: trialSessionId,
           uid: Uid,
           batchSize: 10,
-          ...(_preSessionName ? { sessionName: _preSessionName } : {})
+          ...(_preSessionName
+            ? { sessionName: (VALIDACION_PRUEBA_ACTIVA ? 'PRUEBA3-' : '') + _preSessionName }
+            : (VALIDACION_PRUEBA_ACTIVA ? { sessionName: 'PRUEBA3-' + trialSessionId } : {}))
         }),
       });
       
@@ -1198,7 +1229,7 @@ const m9e = decideBranch;
       const _finalName = _generateSessionName(participantNumber);
       if (_finalName) {
         // Session IDs are durable identities. The generated name is display metadata.
-        _updateSessionName(trialSessionId, _finalName);
+        _updateSessionName(trialSessionId, (VALIDACION_PRUEBA_ACTIVA ? 'PRUEBA3-' : '') + _finalName);
       }
     }
 
@@ -1469,6 +1500,7 @@ const m9e = decideBranch;
         localStorage.removeItem(BATCH_ACK_KEY);
         window.ExpBuilderNavigation.clearTransientState();
         localStorage.removeItem(_publicStorageKeys.sessionId);
+        if (VALIDACION_PRUEBA_ACTIVA) localStorage.removeItem(_pilotStorageKey);
         localStorage.removeItem(_publicStorageKeys.participant);
         sessionStorage.removeItem(_publicStorageKeys.captchaPassed);
         document.getElementById('validacion-save-recovery')?.remove();
@@ -1509,6 +1541,11 @@ const m9e = decideBranch;
         data.clientTimestamp = Date.now();
         data.sessionId = trialSessionId;
         data.experimentID = "e9493936-a5e7-4970-8759-520d2b4689d0";
+        if (VALIDACION_PRUEBA_ACTIVA) {
+          data.modo_prueba = true;
+          data.version_parche_prueba = VALIDACION_PRUEBA_VERSION;
+          data.limite_ensayos_principales = 3;
+        }
         if (data.builder_id !== undefined && data.builder_id !== null) {
           localStorage.setItem(
             _publicStorageKeys.resumeTrial,
@@ -4716,9 +4753,19 @@ data: {
   },};
 window.ExpBuilderNavigation?.registerTrial(1793642521181, Behavioral$20$Statements_timeline);
 
+    // Limitar SOLO los estímulos que ejecuta el bloque principal. El catálogo,
+    // la selección por participante y los datos originales no se modifican.
+    const test_stimuli_principal_ejecutar = VALIDACION_PRUEBA_ACTIVA
+      ? test_stimuli_loop_1793650037960.slice(0, 3)
+      : test_stimuli_loop_1793650037960;
+    window.ValidacionPrueba.principal = test_stimuli_principal_ejecutar.length;
+    if (VALIDACION_PRUEBA_ACTIVA) {
+      console.info('[Validación] Bloque principal limitado a', test_stimuli_principal_ejecutar.length, 'ensayos.');
+    }
+
     const loop_1793650037960_procedure = {
       timeline: [Behavioral$20$Statements_timeline],
-      timeline_variables: test_stimuli_loop_1793650037960.length ? test_stimuli_loop_1793650037960 : [{}],
+      timeline_variables: test_stimuli_principal_ejecutar.length ? test_stimuli_principal_ejecutar : [{}],
       get repetitions() {
     return window.ExpBuilderNavigation?.remainingLoopRepetitions("loop_1793650037960", 1) ?? 1;
   },
