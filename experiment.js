@@ -1369,6 +1369,48 @@ const m9e = decideBranch;
     };
 
 
+    // Verificación desde la sesión piloto sin acceso a Firebase Console.
+    // Lectura de un checkpoint PROPIO: si no hay permiso de lectura, eso no
+    // implica que la escritura haya fallado. No abre ni cambia reglas.
+    window.JuiciosVerificacionRemota = {
+      version: '12.0',
+      async estado() {
+        return {
+          experimentID: PERSIST_ID,
+          apiConfirmadas: batchAck.batchNumber,
+          firebaseConfirmadas: checkpointConfirmed,
+          firebasePendientes: failedCheckpoints.size,
+          firebaseError: lastCheckpointError,
+          ultimaConfirmada: lastCheckpointAck ? { key: lastCheckpointAck.key, trialIndex: lastCheckpointAck.trialIndex } : null,
+          registrosLocales: (await TrialDB.getAll()).filter(x => x.sessionId === trialSessionId).length,
+          lecturaNoVerificada: true
+        };
+      },
+      async verificar() {
+        await checkpointQueue;
+        if (!lastCheckpointAck) return { estado: 'sin_escritura_confirmada',
+          explicacion: 'Aún no hay checkpoints confirmados por Firebase.' };
+        try {
+          const snap = await checkpointRef.child(lastCheckpointAck.key).once('value');
+          const value = snap.val();
+          const ok = value && value.sessionId === trialSessionId &&
+            value.experimentID === PERSIST_ID &&
+            ('r'+String(value.id).padStart(7,'0')) === lastCheckpointAck.key;
+          return {
+            estado: ok ? 'lectura_remota_verificada' : 'lectura_no_coincide',
+            clave: lastCheckpointAck.key,
+            explicacion: ok ? 'El servidor devolvió la última respuesta almacenada.' :
+              'El servidor no devolvió el checkpoint esperado.'
+          };
+        } catch (error) {
+          return { estado: 'lectura_no_disponible',
+            explicacion: 'La API de lectura falló o no está autorizada; esto no invalida una confirmación de escritura.',
+            detalle: error?.message || String(error) };
+        }
+      },
+      exportarRespaldo: () => window.ValidacionBatchDiagnostics.exportLocalCopy()
+    };
+
     // Envio incremental, una solicitud apiData por ensayo terminado.
     // El backend recibe el mismo formato de trial utilizado por el modo
     // original sin IndexedDB. La copia local NO se borra al recibir el ACK.
@@ -1617,7 +1659,7 @@ const m9e = decideBranch;
         data.clientTimestamp = Date.now();
         data.sessionId = trialSessionId;
         data.experimentID = "7f4f984c-de8c-47f4-8144-b6284a011f97";
-        data.version_experimento = "jucios_morales_validation-v11";
+        data.version_experimento = "jucios_morales_validation-v12";
         if (VALIDACION_PRUEBA_ACTIVA) {
           data.modo_prueba = true;
           data.version_parche_prueba = VALIDACION_PRUEBA_VERSION;
@@ -5002,6 +5044,7 @@ window.ExpBuilderNavigation?.registerTrial(1793649983720, Final$20$Experimento_p
     window.ValidacionConsentimiento.install(timeline);
     window.ValidacionPantallas.install(timeline);
     window.JuiciosSurvey.install(timeline);
+    window.JuiciosEvaluacion.install(timeline);
     window.ExpBuilderNavigation?.attach(jsPsych, timeline);
     jsPsych.run(timeline);
 
