@@ -2,11 +2,11 @@
 
   // --- FileUploadResponseComponent endpoint (Firebase Cloud Function) ---
   window.JSPSYCH_FILE_UPLOAD_ENDPOINT = 'https://us-central1-test-e4cf9.cloudfunctions.net/apiData'.replace('/apiData', '/uploadParticipantFile');
-  window.JSPSYCH_EXPERIMENT_ID = 'e9493936-a5e7-4970-8759-520d2b4689d0';
+  window.JSPSYCH_EXPERIMENT_ID = '7f4f984c-de8c-47f4-8144-b6284a011f97';
 
   // --- IndexedDB Wrapper para Batching con TTL (3 días) ---
   const TrialDB = {
-    dbName: "expbuilder:public:e9493936-a5e7-4970-8759-520d2b4689d0:trials-v1",
+    dbName: "expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:trials-v1",
     storeName: 'trials',
     db: null,
     TTL_DAYS: 3,
@@ -258,7 +258,7 @@
     console.info('[Validación] MODO PRUEBA: 3 ensayos de práctica y 3 del bloque principal. Datos marcados como prueba.');
   }
 
-  const _publicStorageKeys = {"sessionId":"expbuilder:public:e9493936-a5e7-4970-8759-520d2b4689d0:session-id","participant":"expbuilder:public:e9493936-a5e7-4970-8759-520d2b4689d0:participant-number","captchaPassed":"expbuilder:public:e9493936-a5e7-4970-8759-520d2b4689d0:captcha-passed","resumeTrial":"expbuilder:public:e9493936-a5e7-4970-8759-520d2b4689d0:resume-trial","trialDatabase":"expbuilder:public:e9493936-a5e7-4970-8759-520d2b4689d0:trials-v1"};
+  const _publicStorageKeys = {"sessionId":"expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:session-id","participant":"expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:participant-number","captchaPassed":"expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:captcha-passed","resumeTrial":"expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:resume-trial","trialDatabase":"expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:trials-v1"};
 
   
   
@@ -328,7 +328,7 @@ const m9e = decideBranch;
 
   
   (() => {
-    const RESUME_TRIAL_KEY = "expbuilder:public:e9493936-a5e7-4970-8759-520d2b4689d0:resume-trial";
+    const RESUME_TRIAL_KEY = "expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:resume-trial";
     let pendingBranch = null;
     let deferredResume = null;
 
@@ -955,10 +955,10 @@ const m9e = decideBranch;
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "*/*" },
         body: JSON.stringify({
-          experimentID: "e9493936-a5e7-4970-8759-520d2b4689d0",
+          experimentID: "7f4f984c-de8c-47f4-8144-b6284a011f97",
           sessionId: trialSessionId,
           uid: Uid,
-          batchSize: 10,
+          batchSize: 1,
           ...(_preSessionName
             ? { sessionName: (VALIDACION_PRUEBA_ACTIVA ? 'PRUEBA3-' : '') + _preSessionName }
             : (VALIDACION_PRUEBA_ACTIVA ? { sessionName: 'PRUEBA3-' + trialSessionId } : {}))
@@ -991,7 +991,7 @@ const m9e = decideBranch;
       await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "updateSessionName", experimentID: "e9493936-a5e7-4970-8759-520d2b4689d0", sessionId, sessionName }),
+        body: JSON.stringify({ action: "updateSessionName", experimentID: "7f4f984c-de8c-47f4-8144-b6284a011f97", sessionId, sessionName }),
       });
     } catch (e) {}
   }
@@ -1174,14 +1174,14 @@ const m9e = decideBranch;
     }
 
 
-    const resumeRaw = localStorage.getItem("expbuilder:public:e9493936-a5e7-4970-8759-520d2b4689d0:resume-trial");
+    const resumeRaw = localStorage.getItem("expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:resume-trial");
     const resumeRouteDecision = isResuming && resumeRaw ? _resolveResumeBranch(resumeRaw) : null;
     if (isResuming && resumeRaw && !resumeRouteDecision) throw new Error('The saved navigation checkpoint is invalid');
   
     
     // --- Configuración de Batching (cargada desde Firestore) ---
     const BATCH_CONFIG = {
-      size: 10,
+      size: 1,
       currentBatchNumber: 0,
       resumeTimeoutMinutes: 30,
       useIndexedDB: true
@@ -1192,7 +1192,7 @@ const m9e = decideBranch;
       await TrialDB.init();
     }
     
-    // Recuperación de la sesión y del progreso confirmado de los lotes.
+    // Recuperación de la sesión y del progreso confirmado de los envíos.
     // No se borran registros previos de manera automática.
     let resumedSession = false;
     const BATCH_ACK_KEY = `expbuilder:public:${window.JSPSYCH_EXPERIMENT_ID}:batch-ack-v2`;
@@ -1251,10 +1251,10 @@ const m9e = decideBranch;
     const db = window.firebase.database();
 
     // --- Configurar onDisconnect para finalizar sesión automáticamente ---
-    const sessionRef = db.ref('sessions/e9493936-a5e7-4970-8759-520d2b4689d0/' + trialSessionId);
+    const sessionRef = db.ref('sessions/7f4f984c-de8c-47f4-8144-b6284a011f97/' + trialSessionId);
     await sessionRef.set({
       connected: true,
-      experimentID: 'e9493936-a5e7-4970-8759-520d2b4689d0',
+      experimentID: '7f4f984c-de8c-47f4-8144-b6284a011f97',
       sessionId: trialSessionId,
       participantNumber: participantNumber,
       startedAt: window.firebase.database.ServerValue.TIMESTAMP,
@@ -1297,24 +1297,29 @@ const m9e = decideBranch;
 
     
 
-    // Guardado por lotes en el endpoint original de ExpBuilder.
-    // Se mantiene una copia completa local hasta confirmar apiDataComplete.
-    // Los lotes se envían en orden para evitar carreras y pérdidas por borrado prematuro.
+    // Guardado incremental: 1 ensayo por envio y copia en IndexedDB.
+    // El ACK de apiData confirma recepcion por la API, no necesariamente que
+    // Google Drive ya haya creado/actualizado el CSV.
+    // apiDataComplete al terminar consolida la sesion y valida el archivo final.
     let batchQueue = Promise.resolve();
     let lastBatchError = null;
     const PERSIST_ID = window.JSPSYCH_EXPERIMENT_ID;
     const BATCH_ENDPOINT = 'https://us-central1-test-e4cf9.cloudfunctions.net/apiData';
 
+    // Envio incremental, una solicitud apiData por ensayo terminado.
+    // El backend recibe el mismo formato de trial utilizado por el modo
+    // original sin IndexedDB. La copia local NO se borra al recibir el ACK.
+    let lastRemoteAck = null;
     async function sendBatchConcatenated(trials, batchNumber) {
-      if (!trials.length) return;
+      if (trials.length !== 1) throw new Error('El modo por ensayo requiere exactamente un registro.');
+      const row = trials[0];
       const payload = {
-        batchNumber,
-        trialsCount: trials.length,
-        trialsData: JSON.stringify(trials),
-        firstTrialIndex: trials[0]?.trial_index ?? 0,
-        lastTrialIndex: trials[trials.length - 1]?.trial_index ?? 0,
-        clientTimestamp: trials[0]?.clientTimestamp || Date.now(),
-        trial_index: `batch_${batchNumber}`
+        ...row,
+        sessionId: trialSessionId,
+        experimentID: PERSIST_ID,
+        clientTrialKey: `${trialSessionId}:${row.id}`,
+        envio_incremental: true,
+        numero_envio: batchNumber
       };
       const response = await fetch(BATCH_ENDPOINT, {
         method: 'POST',
@@ -1327,12 +1332,16 @@ const m9e = decideBranch;
         })
       });
       if (!response.ok) {
-        throw new Error(`El lote ${batchNumber} recibió HTTP ${response.status}: ${await response.text()}`);
+        throw new Error(`El ensayo ${row.trial_index ?? row.id} recibió HTTP ${response.status}: ${await response.text()}`);
       }
       const result = await response.json();
       if (result?.success !== true) {
-        throw new Error(`La API no confirmó el lote ${batchNumber}: ${result?.message || 'sin confirmación'}`);
+        throw new Error(`La API no confirmó el ensayo ${row.trial_index ?? row.id}: ${result?.message || 'sin confirmación'}`);
       }
+      lastRemoteAck = {
+        localId: row.id, trialIndex: row.trial_index ?? null,
+        time: new Date().toISOString(), sessionId: trialSessionId
+      };
       return result;
     }
 
@@ -1354,7 +1363,7 @@ const m9e = decideBranch;
         localStorage.setItem(BATCH_ACK_KEY, JSON.stringify(batchAck));
         lastBatchError = null;
         window.ValidacionBatchDiagnostics && (window.ValidacionBatchDiagnostics.lastError = null);
-        console.info(`[Validación] Lote ${number} confirmado (${batch.length} registros).`);
+        console.info(`[Juicios morales] Ensayo ${batch[0].trial_index ?? batch[0].id} confirmado por apiData (${number}).`);
       }
     }
 
@@ -1369,6 +1378,9 @@ const m9e = decideBranch;
     window.ValidacionBatchDiagnostics = {
       batchSize: BATCH_CONFIG.size,
       experimentID: PERSIST_ID,
+      backendExperiment: 'jucios_morales_validation',
+      get lastRemoteAck() { return lastRemoteAck; },
+      get apiConfirmed() { return batchAck.batchNumber; },
       get sessionId() { return trialSessionId; },
       get confirmedBatches() { return batchAck.batchNumber; },
       get lastConfirmedLocalId() { return batchAck.lastAckId; },
@@ -1382,7 +1394,7 @@ const m9e = decideBranch;
           exportedAt: new Date().toISOString(), rows }, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = url; link.download = `validacion-respaldo-${trialSessionId}.json`;
+        link.href = url; link.download = `jucios-morales-respaldo-${trialSessionId}.json`;
         document.body.append(link); link.click(); link.remove();
         setTimeout(() => URL.revokeObjectURL(url), 60000);
         return rows.length;
@@ -1413,7 +1425,7 @@ const m9e = decideBranch;
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "*/*" },
         body: JSON.stringify({
-          experimentID: "e9493936-a5e7-4970-8759-520d2b4689d0",
+          experimentID: "7f4f984c-de8c-47f4-8144-b6284a011f97",
           sessionId: trialSessionId,
           trialsData: trialsWithMetadata,
           storage: "googledrive",
@@ -1540,7 +1552,8 @@ const m9e = decideBranch;
         // Agregar timestamp del cliente para ordenamiento correcto
         data.clientTimestamp = Date.now();
         data.sessionId = trialSessionId;
-        data.experimentID = "e9493936-a5e7-4970-8759-520d2b4689d0";
+        data.experimentID = "7f4f984c-de8c-47f4-8144-b6284a011f97";
+        data.version_experimento = "jucios_morales_validation-v10";
         if (VALIDACION_PRUEBA_ACTIVA) {
           data.modo_prueba = true;
           data.version_parche_prueba = VALIDACION_PRUEBA_VERSION;
@@ -1565,13 +1578,14 @@ const m9e = decideBranch;
           // Primero persistir localmente y reconocer la navegación.
           await TrialDB.add(data);
           window.ExpBuilderNavigation.onTrialPersisted(data);
-          // Respaldos periódicos remotos, sin bloquear los estímulos mientras
-          // el servidor responde. Los envíos se serializan en flushBatches.
+          // Enviar este ensayo inmediatamente (no esperar al final de la sesion).
+          // La copia local se guarda ANTES del POST y los envios son seriales.
+          // No bloquear el inicio del siguiente ensayo por latencia de red.
           const pendingCount = (await TrialDB.getAll()).filter(row =>
             row.sessionId === trialSessionId && row.id > batchAck.lastAckId).length;
           if (pendingCount >= BATCH_CONFIG.size) {
             void flushBatches(false).catch(error => {
-              console.warn('[Validación] El lote se reintentará al finalizar:', error.message);
+              console.warn('[Juicios morales] Envío pendiente: se reintentará con el siguiente ensayo o al finalizar:', error.message);
               lastBatchError = error.message;
               window.ValidacionBatchDiagnostics.lastError = error.message;
             });
@@ -1583,7 +1597,7 @@ const m9e = decideBranch;
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                experimentID: "e9493936-a5e7-4970-8759-520d2b4689d0",
+                experimentID: "7f4f984c-de8c-47f4-8144-b6284a011f97",
                 sessionId: trialSessionId,
                 data: data
               })

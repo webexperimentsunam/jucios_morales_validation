@@ -62,13 +62,37 @@
       return;
     }
     if(name==='Instrucciones'){
-      // El original deja el encabezado "Evita" despues de su lista. Solo se
-      // corrige la agrupacion visual, sin cambiar el texto de ningun componente.
-      const order=[0,1,2,4,3,6,5];
-      for(const index of order){
-        const t=texts[index];if(!t)continue;
-        appendTextComponent(container,t,index===0?'title':(index===2||index===4||index===6)?'section':'body');
+      // Presentacion semantica de las mismas preguntas y listas del trial.
+      // No modifica las cadenas originales ni la identificacion de respuestas.
+      container.classList.add('vi-instructions');
+      if(texts[0]) container.append(el('h1','vi-guide-title',clean(texts[0].text)));
+      const description=String(texts[1]?.text||'');
+      const segments=description.split(/\n\s*\n/);
+      if(segments[0]) container.append(el('p','vi-guide-lead',clean(segments[0])));
+      const questions=segments.slice(1).join('\n').split(/\r?\n/).map(clean).filter(Boolean);
+      const grid=el('div','vi-dimensions');
+      for(const line of questions){
+        const m=line.match(/^(Moralidad|Competencia|Informatividad|Credibilidad):\s*(.*)$/);
+        const box=el('section','vi-dimension');
+        if(m){box.append(el('h2','vi-dimension-name',m[1]));box.append(el('p','vi-dimension-question',m[2]));}
+        else box.append(el('p','vi-dimension-question',line));
+        grid.append(box);
       }
+      container.append(grid);
+      if(texts[2])container.append(el('h2','vi-guide-how',clean(texts[2].text)));
+      const tips=el('div','vi-tip-grid');
+      for(const cfg of [
+        {heading:texts[4]?.text, list:texts[3]?.text, kind:'vi-respond'},
+        {heading:texts[6]?.text, list:texts[5]?.text, kind:'vi-avoid'}
+      ]){
+        const panel=el('section','vi-tip '+cfg.kind);
+        panel.append(el('h3','vi-tip-title',clean(cfg.heading)));
+        const items=String(cfg.list||'').split(/\r?\n/).map(clean).filter(Boolean);
+        const ul=el('ul','vi-tip-list');
+        for(const item of items)ul.append(el('li','',item.replace(/^[•\-*]\s*/,'')));
+        panel.append(ul);tips.append(panel);
+      }
+      container.append(tips);
       return;
     }
     texts.forEach((t,i)=>appendTextComponent(container,t,i===0?'title':'body'));
