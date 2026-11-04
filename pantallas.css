@@ -1,0 +1,71 @@
+/* v9: seis pantallas informativas, sin afectar Survey ni las escalas. */
+#validacion-pantalla {
+  position:fixed; inset:0; z-index:2147482000; background:#edf3f6;
+  display:flex; justify-content:center; align-items:center;
+  padding:clamp(12px,2.6vw,28px); overflow:hidden;
+  color:#203947; font:400 16px/1.6 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+}
+#validacion-pantalla, #validacion-pantalla *, #validacion-pantalla *::before, #validacion-pantalla *::after {box-sizing:border-box;}
+#validacion-pantalla .vi-card {
+  background:white; border:1px solid #dae5eb; border-radius:16px;
+  width:min(100%,860px); height:min(92dvh,900px); min-height:0;
+  display:flex; flex-direction:column; overflow:hidden;
+  box-shadow:0 16px 46px rgba(24,65,80,.08);
+}
+#validacion-pantalla .vi-card.vi-short {height:auto; min-height:min(600px,90dvh); max-height:92dvh;}
+#validacion-pantalla .vi-head {
+  padding:15px clamp(18px,4vw,40px); border-bottom:1px solid #e3ebef;
+  font-weight:700; letter-spacing:.04em; font-size:12px;
+  display:flex; justify-content:space-between; gap:16px; color:#527180; flex:none;
+}
+#validacion-pantalla .vi-content {
+  min-height:0; flex:1 1 auto; overflow-y:auto; overflow-x:hidden;
+  padding:clamp(26px,4vw,50px) clamp(20px,5vw,60px);
+  scrollbar-gutter:stable; overscroll-behavior:contain;
+}
+#validacion-pantalla .vi-document {max-width:68ch;margin:0 auto;}
+#validacion-pantalla .vi-short .vi-content {display:flex; align-items:center;}
+#validacion-pantalla .vi-short .vi-document {width:100%; text-align:center;}
+#validacion-pantalla .vi-title {
+  font-size:clamp(25px,3.3vw,34px); line-height:1.23;
+  font-weight:750; letter-spacing:-.025em; margin:0 0 26px; overflow-wrap:break-word;
+}
+#validacion-pantalla .vi-section {font-size:clamp(19px,2.1vw,22px);font-weight:700;line-height:1.35;margin:28px 0 14px;color:#263f4d;}
+#validacion-pantalla .vi-paragraph, #validacion-pantalla .vi-list {font-size:clamp(16px,1.5vw,18px);line-height:1.65;color:#3a5561;}
+#validacion-pantalla .vi-paragraph {margin:0 0 16px;overflow-wrap:anywhere;}
+#validacion-pantalla .vi-list {margin:5px 0 24px;padding-left:24px;}
+#validacion-pantalla .vi-list li {margin:0 0 9px;}
+#validacion-pantalla .vi-logos {display:flex;justify-content:center;align-items:center;gap:clamp(12px,3vw,34px);margin:0 auto 32px;max-width:100%;}
+#validacion-pantalla .vi-logo {display:block;object-fit:contain;width:min(25%,120px);height:clamp(66px,11vh,108px);}
+#validacion-pantalla .vi-illustrations {display:flex;justify-content:center;gap:20px;align-items:center;margin:26px auto 0;}
+#validacion-pantalla .vi-illustration {width:min(24%,110px);height:110px;object-fit:contain;}
+#validacion-pantalla .vi-actions {
+  flex:none;display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;
+  gap:12px;padding:15px clamp(18px,4vw,40px);
+  border-top:1px solid #e3ebef;background:white;
+}
+#validacion-pantalla .vi-button {
+  cursor:pointer; border:1px solid #81998b; background:#a3b18a; color:#172a21;
+  border-radius:8px; padding:11px 25px; font:650 16px/1.2 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  min-height:46px;min-width:145px;
+}
+#validacion-pantalla .vi-button:hover:not(:disabled) {background:#93a47a;}
+#validacion-pantalla .vi-button[data-choice="Regresar"] {background:white;border-color:#cbd7de;color:#385564;margin-right:auto;}
+#validacion-pantalla .vi-button[data-choice="Regresar"]:hover:not(:disabled) {background:#f1f5f6;}
+#validacion-pantalla .vi-button:focus-visible {outline:3px solid #23699c;outline-offset:3px;}
+#validacion-pantalla .vi-button:disabled {opacity:.55;cursor:wait;}
+@media (max-width:600px) {
+  #validacion-pantalla {padding:0;align-items:stretch;}
+  #validacion-pantalla .vi-card, #validacion-pantalla .vi-card.vi-short {
+    width:100%;height:100dvh;min-height:0;max-height:none;border:0;border-radius:0;box-shadow:none;
+  }
+  #validacion-pantalla .vi-head {padding:14px 18px;font-size:11px;}
+  #validacion-pantalla .vi-content {padding:26px 20px;scrollbar-gutter:auto;}
+  #validacion-pantalla .vi-title {font-size:clamp(24px,7vw,29px);}
+  #validacion-pantalla .vi-paragraph, #validacion-pantalla .vi-list {font-size:16px;}
+  #validacion-pantalla .vi-logos {gap:12px;}
+  #validacion-pantalla .vi-logo {height:75px;}
+  #validacion-pantalla .vi-illustration {height:72px;}
+  #validacion-pantalla .vi-actions {padding:12px 16px max(15px,env(safe-area-inset-bottom));gap:8px;}
+  #validacion-pantalla .vi-button {min-width:0;flex:1 1 120px;padding:12px 14px;font-size:15px;}
+}
