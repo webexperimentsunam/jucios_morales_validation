@@ -4,157 +4,29 @@
   window.JSPSYCH_FILE_UPLOAD_ENDPOINT = 'https://us-central1-test-e4cf9.cloudfunctions.net/apiData'.replace('/apiData', '/uploadParticipantFile');
   window.JSPSYCH_EXPERIMENT_ID = '7f4f984c-de8c-47f4-8144-b6284a011f97';
 
-  // --- IndexedDB Wrapper para Batching con TTL (3 días) ---
-  const TrialDB = {
-    dbName: "expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:trials-v1",
-    storeName: 'trials',
-    db: null,
-    TTL_DAYS: 3,
-
-    async init() {
-      return new Promise((resolve, reject) => {
-        const request = indexedDB.open(this.dbName, 1);
-        
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => {
-          this.db = request.result;
-          // Limpiar datos vencidos al iniciar
-          this.cleanExpiredData().catch(err => console.error('Error cleaning expired data:', err));
-          resolve(this.db);
-        };
-        
-        request.onupgradeneeded = (event) => {
-          const db = event.target.result;
-          if (!db.objectStoreNames.contains(this.storeName)) {
-            const store = db.createObjectStore(this.storeName, { 
-              keyPath: 'id', 
-              autoIncrement: true 
-            });
-            store.createIndex('sessionId', 'sessionId', { unique: false });
-            store.createIndex('timestamp', 'timestamp', { unique: false });
-            store.createIndex('createdAt', 'createdAt', { unique: false });
-          }
-        };
-      });
-    },
-
-    async cleanExpiredData() {
-      if (!this.db) await this.init();
-      const now = Date.now();
-      const expirationTime = this.TTL_DAYS * 24 * 60 * 60 * 1000; // 3 días en ms
-      
-      return new Promise((resolve, reject) => {
-        const transaction = this.db.transaction([this.storeName], 'readwrite');
-        const store = transaction.objectStore(this.storeName);
-        const index = store.index('createdAt');
-        const request = index.openCursor();
-        
-        let deletedCount = 0;
-        
-        request.onsuccess = (event) => {
-          const cursor = event.target.result;
-          if (cursor) {
-            const trial = cursor.value;
-            const age = now - (trial.createdAt || now);
-            
-            if (age > expirationTime) {
-              cursor.delete();
-              deletedCount++;
-            }
-            cursor.continue();
-          } else {
-            if (deletedCount > 0) {
-              console.log(`Cleaned ${deletedCount} expired trials from IndexedDB`);
-            }
-            resolve(deletedCount);
-          }
-        };
-        
-        request.onerror = () => reject(request.error);
-      });
-    },
-
-    async add(trial) {
-      if (!this.db) await this.init();
-      return new Promise((resolve, reject) => {
-        const transaction = this.db.transaction([this.storeName], 'readwrite');
-        const store = transaction.objectStore(this.storeName);
-        const request = store.add({
-          ...trial,
-          timestamp: Date.now(),
-          createdAt: Date.now(),
-          sessionId: trialSessionId
-        });
-        
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-    },
-
-    async getAll() {
-      if (!this.db) await this.init();
-      return new Promise((resolve, reject) => {
-        const transaction = this.db.transaction([this.storeName], 'readonly');
-        const store = transaction.objectStore(this.storeName);
-        const request = store.getAll();
-        
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-    },
-
-    async count() {
-      if (!this.db) await this.init();
-      return new Promise((resolve, reject) => {
-        const transaction = this.db.transaction([this.storeName], 'readonly');
-        const store = transaction.objectStore(this.storeName);
-        const request = store.count();
-        
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-    },
-
-    async getN(n) {
-      if (!this.db) await this.init();
-      return new Promise((resolve, reject) => {
-        const transaction = this.db.transaction([this.storeName], 'readonly');
-        const store = transaction.objectStore(this.storeName);
-        const request = store.getAll(null, n);
-        
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-    },
-
-    async deleteN(n) {
-      if (!this.db) await this.init();
-      const trials = await this.getN(n);
-      return new Promise((resolve, reject) => {
-        const transaction = this.db.transaction([this.storeName], 'readwrite');
-        const store = transaction.objectStore(this.storeName);
-        
-        trials.forEach(trial => {
-          store.delete(trial.id);
-        });
-        
-        transaction.oncomplete = () => resolve(trials.length);
-        transaction.onerror = () => reject(transaction.error);
-      });
-    },
-
-    async clear() {
-      if (!this.db) await this.init();
-      return new Promise((resolve, reject) => {
-        const transaction = this.db.transaction([this.storeName], 'readwrite');
-        const store = transaction.objectStore(this.storeName);
-        const request = store.clear();
-        
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
-      });
-    }
-  };
+  // --- Almacenamiento en memoria para la sesión actual (sin IndexedDB) ---
+  // Los registros se transmiten a la API después de cada ensayo. La memoria
+  // permite conservar el envío final a Drive sin acceder a IndexedDB.
+  // La memoria se pierde si se cierra o recarga la página; por ello deben
+  // confirmarse las escrituras remotas y posteriormente activar Cloudflare.
+  const TrialDB = (() => {
+    const rows = [];
+    let nextId = 1;
+    return {
+      async init() { return null; },
+      async add(trial) {
+        const id = nextId++;
+        rows.push({ ...trial, id, sessionId: trialSessionId,
+          timestamp: Date.now(), createdAt: Date.now() });
+        return id;
+      },
+      async getAll() { return rows.slice(); },
+      async count() { return rows.length; },
+      async getN(n) { return rows.slice(0, n); },
+      async deleteN(n) { return rows.splice(0, n).length; },
+      async clear() { rows.length = 0; }
+    };
+  })();
 
   // --- Recolectar metadata del sistema ---
   const getMetadata = () => {
@@ -1054,8 +926,8 @@ const m9e = decideBranch;
         <circle cx="32" cy="32" r="30" fill="#22c55e"/>
         <polyline points="18,33 28,43 46,22" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <p style="margin:0;color:#111;font-size:18px;font-weight:600">Experiment complete. Thank you!</p>
-      <p style="margin:0;color:#555;font-size:14px">You can now close this window.</p>
+      <p style="margin:0;color:#111;font-size:18px;font-weight:600">Experimento completado. ¡Gracias!</p>
+      <p style="margin:0;color:#555;font-size:14px">Ya puedes cerrar esta ventana.</p>
     `;
     document.body.appendChild(overlay);
   }
@@ -1183,8 +1055,8 @@ const m9e = decideBranch;
     const BATCH_CONFIG = {
       size: 1,
       currentBatchNumber: 0,
-      resumeTimeoutMinutes: 30,
-      useIndexedDB: true
+      resumeTimeoutMinutes: 1,
+      useIndexedDB: false
     };
 
     // Inicializar IndexedDB solo si está habilitado
@@ -1199,7 +1071,7 @@ const m9e = decideBranch;
     let batchAck = { sessionId: trialSessionId, lastAckId: 0, batchNumber: 0 };
     try {
       const previous = JSON.parse(localStorage.getItem(BATCH_ACK_KEY) || 'null');
-      if (previous && previous.sessionId === trialSessionId) {
+      if (BATCH_CONFIG.useIndexedDB && previous && previous.sessionId === trialSessionId) {
         batchAck = {
           sessionId: trialSessionId,
           lastAckId: Number(previous.lastAckId) || 0,
@@ -1217,6 +1089,12 @@ const m9e = decideBranch;
             'Recupéralas antes de iniciar una sesión diferente.');
         }
       }
+    }
+
+    if (isResuming && !BATCH_CONFIG.useIndexedDB) {
+      // Esta modalidad no puede reconstruir ensayos anteriores tras recargar la pagina.
+      // Evitar consolidar un CSV parcial como si fuera una sesion completa.
+      throw new Error('Existe una sesión anterior, pero el modo sin IndexedDB no permite reconstruir sus respuestas tras recargar. Conserva esa pestaña para revisión y abre una sesión NUEVA en una ventana de incógnito. No borres datos de una sesión real sin exportarlos primero.');
     }
 
     // SIEMPRE llamar a createSession (para crear documento en Firestore)
@@ -1298,7 +1176,7 @@ const m9e = decideBranch;
 
     
 
-    // Guardado incremental: 1 ensayo por envio y copia en IndexedDB.
+    // Guardado incremental: 1 ensayo por envio con cola en memoria (sin IndexedDB).
     // El ACK de apiData confirma recepcion por la API, no necesariamente que
     // Google Drive ya haya creado/actualizado el CSV.
     // apiDataComplete al terminar consolida la sesion y valida el archivo final.
@@ -1465,7 +1343,7 @@ const m9e = decideBranch;
         batchAck = { sessionId: trialSessionId, lastAckId: batch[batch.length-1].id,
           batchNumber: number };
         BATCH_CONFIG.currentBatchNumber = number;
-        localStorage.setItem(BATCH_ACK_KEY, JSON.stringify(batchAck));
+        if (BATCH_CONFIG.useIndexedDB) localStorage.setItem(BATCH_ACK_KEY, JSON.stringify(batchAck));
         lastBatchError = null;
         window.ValidacionBatchDiagnostics && (window.ValidacionBatchDiagnostics.lastError = null);
         console.info(`[Juicios morales] Ensayo ${batch[0].trial_index ?? batch[0].id} confirmado por apiData (${number}).`);
@@ -1482,6 +1360,9 @@ const m9e = decideBranch;
 
     window.ValidacionBatchDiagnostics = {
       batchSize: BATCH_CONFIG.size,
+      useIndexedDB: BATCH_CONFIG.useIndexedDB,
+      resumeTimeoutMinutes: BATCH_CONFIG.resumeTimeoutMinutes,
+      get sessionNameConfig() { return _SESSION_NAME_TOKENS.map(x => ({...x})); },
       experimentID: PERSIST_ID,
       backendExperiment: 'jucios_morales_validation',
       get lastRemoteAck() { return lastRemoteAck; },
@@ -1558,8 +1439,8 @@ const m9e = decideBranch;
       });
     }
 
-    // Reintento manual y respaldo descargable cuando falla el guardado remoto.
-    // No borrar la copia local en caso de error.
+    // Reintento manual y descarga cuando falla el guardado remoto.
+    // La memoria NO persiste al cerrar o recargar la pestaña.
     function showSaveRecovery(error, retry) {
       _hideLoading();
       document.getElementById('validacion-save-recovery')?.remove();
@@ -1570,8 +1451,9 @@ const m9e = decideBranch;
       panel.innerHTML = `<section style="width:min(100%,560px);background:#fff;border:1px solid #bdcdcc;` +
         `border-radius:14px;padding:24px;box-shadow:0 10px 30px #0001">` +
         `<h2 style="margin:0 0 12px;font-size:22px">Guardado pendiente</h2>` +
-        `<p>Las respuestas permanecen en este navegador, pero el servidor no ha confirmado ` +
-        `el guardado final. No cierres la pestaña sin descargar una copia.</p>` +
+        `<p>Las respuestas permanecen temporalmente en la memoria de esta pestaña, ` +
+        `pero el servidor no ha confirmado el guardado final. Si cierras o recargas ` +
+        `esta página, puedes perderlas. Descarga una copia antes de salir.</p>` +
         `<p id="validacion-save-detail" style="color:#85462c;font-size:13px;overflow-wrap:anywhere"></p>` +
         `<div style="display:flex;gap:12px;flex-wrap:wrap">` +
         `<button id="validacion-save-retry" style="padding:12px;cursor:pointer">Reintentar guardado</button>` +
@@ -1659,7 +1541,7 @@ const m9e = decideBranch;
         data.clientTimestamp = Date.now();
         data.sessionId = trialSessionId;
         data.experimentID = "7f4f984c-de8c-47f4-8144-b6284a011f97";
-        data.version_experimento = "jucios_morales_validation-v12";
+        data.version_experimento = "jucios_morales_validation-v13.2";
         if (VALIDACION_PRUEBA_ACTIVA) {
           data.modo_prueba = true;
           data.version_parche_prueba = VALIDACION_PRUEBA_VERSION;
@@ -1680,47 +1562,22 @@ const m9e = decideBranch;
           }).catch(err => console.error('Error updating state:', err));
         }
 
-        if (BATCH_CONFIG.useIndexedDB) {
-          // Primero persistir localmente y reconocer la navegación.
-          const checkpointId = await TrialDB.add(data);
-          // Guardar fuera de la cola del avance del ensayo; la red no bloquea
-          // la interfaz. El dato ya se encuentra primero en IndexedDB.
-          const checkpointRow = { ...data, id: checkpointId };
-          void queueCheckpoint(checkpointRow).catch(() => {});
-          window.ExpBuilderNavigation.onTrialPersisted(data);
-          // Enviar este ensayo inmediatamente (no esperar al final de la sesion).
-          // La copia local se guarda ANTES del POST y los envios son seriales.
-          // No bloquear el inicio del siguiente ensayo por latencia de red.
-          const pendingCount = (await TrialDB.getAll()).filter(row =>
-            row.sessionId === trialSessionId && row.id > batchAck.lastAckId).length;
-          if (pendingCount >= BATCH_CONFIG.size) {
-            void flushBatches(false).catch(error => {
-              console.warn('[Juicios morales] Envío pendiente: se reintentará con el siguiente ensayo o al finalizar:', error.message);
-              lastBatchError = error.message;
-              window.ValidacionBatchDiagnostics.lastError = error.message;
-            });
-          }
-        } else {
-          // --- SIN IndexedDB: Enviar trial por trial a Firestore ---
-          try {
-            const response = await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                experimentID: "7f4f984c-de8c-47f4-8144-b6284a011f97",
-                sessionId: trialSessionId,
-                data: data
-              })
-            });
-
-            if (!response.ok) {
-              console.error('Error sending trial to Firestore:', await response.text());
-            } else {
-              window.ExpBuilderNavigation.onTrialPersisted(data);
-            }
-          } catch (error) {
-            console.error('Error sending trial:', error);
-          }
+        // Guardar en memoria y continuar sin esperar a la red; no usa IndexedDB.
+        const checkpointId = await TrialDB.add(data);
+        const checkpointRow = { ...data, id: checkpointId };
+        // Respaldo Firebase por ensayo (sujeto a permisos de ese proyecto).
+        void queueCheckpoint(checkpointRow).catch(() => {});
+        window.ExpBuilderNavigation.onTrialPersisted(data);
+        // Envío individual a apiData; la cola serializa solicitudes y evita
+        // solapamientos cuando un participante responde rápidamente.
+        const pendingCount = (await TrialDB.getAll()).filter(row =>
+          row.sessionId === trialSessionId && row.id > batchAck.lastAckId).length;
+        if (pendingCount >= BATCH_CONFIG.size) {
+          void flushBatches(false).catch(error => {
+            console.warn('[Juicios morales] El ensayo no ha sido confirmado por apiData:', error.message);
+            lastBatchError = error.message;
+            window.ValidacionBatchDiagnostics.lastError = error.message;
+          });
         }
 
         

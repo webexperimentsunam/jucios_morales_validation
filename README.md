@@ -1,29 +1,33 @@
-# Juicios Morales v13 — instrucciones y escalas discretas (sin modificar las listas)
+# Actualización de guardado v13.2 — sin IndexedDB
 
-Basado exactamente en la versión v12. Se mantiene el experimento completo, incluidas las **9 listas JSON originales** (480 registros), sus tamaños, distribución de estímulos, selección y aleatorización. La versión de prueba `?prueba=3` permanece disponible.
+La carga de `index (2).html` del usuario se comparó byte por byte con `index.html` de v13.1: **son idénticos**. La configuración que funciona no venía incorporada a ese archivo; está en `experiment.js`.
 
-## Cambios
+## Cambios implementados
 
-- **Competencia:** en la evaluación principal, el programa muestra `−4 = Incapaz` y `+4 = Capaz`, igual que en la práctica. La corrección se aplica exclusivamente a la representación en pantalla y a los campos de etiqueta visible del ensayo registrado: **no cambia ni reescribe las listas**. El registro marca `je_competencia_fuente` para auditoría.
-- **Las cuatro dimensiones:** en lugar de deslizadores se utilizan **nueve opciones discretas** con valores enteros, inicialmente sin ninguna selección. Se permiten los valores centrales (0 y 4) sin necesidad de mover un deslizador. Los controles son accesibles con ratón, pantalla táctil y teclado.
-- **Instrucciones:** se elimina la referencia a "estar de acuerdo" y la exigencia de responder rápidamente. Se explican explícitamente el significado y la dirección de las cuatro escalas. Cada afirmación se valora de forma independiente.
-- **Compatibilidad de datos:** se mantienen las variables `Moralidad_response`, `Competencia_response`, `Informatividad_response` y `Credibilidad_response` (en práctica la última es `Informatividad_copy_response`, como en la v12), y el botón `Siguiente`. Por compatibilidad se conserva el nombre histórico `SliderResponseComponent` en los metadatos, aunque ahora se ven botones discretos; los campos `je_response_widget: radio9` y `je_layout: v13` lo documentan.
-- La persistencia a IndexedDB, `apiData`, Firebase y el guardado final en Google Drive se mantiene igual a v12. **No se ha confirmado aún que los datos incompletos sean recuperables en Google Drive**.
+- `batchSize: 1` (ya estaba en v13.1, se conserva).
+- `useIndexedDB: false` (no se accede a la API IndexedDB).
+- `resumeTimeoutMinutes: 1` (se envía como metadato de la sesión al servidor; no instala un temporizador local de finalización).
+- Cola en memoria con solicitudes seriales a `apiData`, un registro por ensayo, más el respaldo adicional Firebase existente si sus reglas permiten escribir.
+- Guardado final: `apiDataComplete` recibe todos los registros conservados en la memoria de la sesión actual; ya no falla por intentar usar IndexedDB.
+- Los envíos confirmados solo acreditan recepción de `apiData`, no persistencia inmediata en el CSV de Drive.
+- Se rechaza la reanudación de una sesión previa en una nueva carga de página, puesto que no hay forma fiable de recuperar sus registros completos sin IndexedDB. Realizar pruebas en una ventana de incógnito nueva.
+- `window.ValidacionBatchDiagnostics` expone `batchSize`, `useIndexedDB`, `resumeTimeoutMinutes`, `apiConfirmed`, `lastError` y `sessionNameConfig`.
+- Sin modificación de estímulos, condiciones, ensayo de práctica, pantalla completa, ni formularios.
 
-## Instalación sobre v12
+## Nombre de los participantes
 
-Sustituir únicamente estos cuatro archivos en la raíz del repositorio: `index.html`, `experiment.js`, `evaluacion.js` y `evaluacion.css`.
+El HTML adjunto **no contiene la nueva regla de nombres**: la carga se hace con `./experiment.js?v=13`, y el `experiment.js` disponible en v13.1 define `_SESSION_NAME_TOKENS = []`. Por seguridad no se ha inventado una convención nueva; el nombre de sesión sigue usando un UUID (prefijo `PRUEBA3-` en piloto). Para trasladar literalmente tu nueva convención, hace falta el `experiment.js` que realmente tiene esos cambios, o una descripción exacta de la convención.
 
-**No subir ni editar la carpeta `data/`, ni ninguna otra carpeta.**
+## Publicar
 
-## Verificaciones previas a la recolección
+Sube `experiment.js` e `index.html` a la raíz del repositorio. No reemplaces las listas ni el CSS. Entra en incógnito y abre la URL con `?prueba=3`.
 
-Ejecutar `?prueba=3`. Comprobar las instrucciones, la dirección de Competencia (práctica y principal), el registro del valor 0, bloqueo de ensayos incompletos, transición y persistencia final. Los datos de la tarea principal recogidos en versiones anteriores con extremos invertidos pueden requerir recodificación `competencia_corregida = -competencia_anterior`; documentar cualquier cambio antes de combinar conjuntos.
+En consola:
 
+```js
+window.ValidacionBatchDiagnostics
+```
 
-## v13.1 — mejora para celular de las escalas discretas
+Debe indicar `batchSize: 1`, `useIndexedDB: false`, `resumeTimeoutMinutes: 1`. Tras completar un ensayo, revisa `apiConfirmed` (confirmación de API, no aún Drive). Cierra y vuelve a abrir SOLO tras comprobar la exportación remota; de lo contrario se perderá el buffer en memoria.
 
-- Se corrigió el CSS de `.je-options` para que **las nueve categorías estén siempre en una sola fila**, ordenadas de izquierda a derecha. La versión v13 ponía tres columnas en pantallas de menos de 480 px, confundiendo la polaridad de la escala.
-- Se redujeron discretamente las separaciones y la tipografía de los botones en móviles de 320 px, manteniendo botones de 46 px de alto.
-- **Único archivo modificado:** `evaluacion.css`. No se modifica `evaluacion.js`, `experiment.js`, los archivos `data/`, el orden de estímulos ni la lógica de guardado.
-- Para instalar sobre v13, reemplaza exclusivamente `evaluacion.css` en la raíz del repositorio. Forzar recarga o abrir en incógnito para evitar caché.
+**Aviso importante:** desactivar IndexedDB significa perder la copia durable en el navegador. Si hay fallo de red, cierre o recarga, una respuesta aún no confirmada podría perderse. No lo uses en producción hasta confirmar las escrituras remotas, preferentemente con el respaldo de Cloudflare planificado. El timeout de un minuto es un dato para el servidor, no una garantía de finalización automática.
