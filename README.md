@@ -1,29 +1,31 @@
-# Juicios Morales v13.3 — nomenclatura desde el experimento de referencia
+# Juicios Morales v13.5 — reanudacion local experimental
 
-Esta versión se creó a partir de v13.2 (sin IndexedDB) y del archivo `index (1)(1).html` del experimento de un ensayo.
+Base: v13.3 con escalas horizontales v13.1. Mantiene 9 JSON de estimulos sin cambiar.
 
-## Cambios aplicados
-- `BATCH_CONFIG`: **size 1**, **useIndexedDB false** y **resumeTimeoutMinutes 1**, sin alterar los valores de v13.2.
-- Nombre de sesión: **contador (3 dígitos) + fecha (YYYY-MM-DD) + hora (HH-mm-ss) + Validation_Jucios_Morales**, unidos por guiones bajos. Por ejemplo: `007_2026-11-05_18-03-42_Validation_Jucios_Morales`.
-- En modo `?prueba=3`, el nombre lleva el prefijo `PRUEBA3-` para separar pruebas de sesiones reales.
-- Se espera la respuesta HTTP de `updateSessionName` antes de comenzar los ensayos, y un diagnóstico muestra si la actualización fue aceptada por la API.
-- Conservado el `sessionId` UUID invariable. **El nombre generado no sustituye el ID de sesión ni garantiza el nombre final del archivo de Google Drive** hasta comprobar el backend real.
-- Guardado incremental y envío final a `apiDataComplete` conservados desde v13.2. No se trasladó el `on_finish` del experimento de un ensayo.
-- `index.html` apunta a `experiment.js?v=13.3` para refrescar la caché del navegador.
+## Cambios
+- IndexedDB reactivado para guardar cada respuesta y su checkpoint de navegacion (3 dias de retencion local para sesiones antiguas).
+- Guardado `apiData` por ensayo (`batchSize=1`) y `apiDataComplete` al finalizar, sin modificar el formato de salida ni los identificadores de sesion.
+- Al regresar al mismo navegador se ofrece `Continuar donde me quede` cuando existe copia local y cursor valido, o `Empezar desde el principio` para crear un UUID nuevo.
+- Si la sesion anterior es de v13.3, no tiene respuestas IndexedDB; solo puede comenzar de cero. No se eliminan sus registros enviados al servidor.
+- No se mezclan sesiones piloto (`?prueba=3`) con sesiones reales.
+- Al finalizar exitosamente se elimina exclusivamente la copia IndexedDB de la sesion terminada; no las de otras sesiones.
+- El cursor de reanudacion se confirma despues de la transaccion de escritura local.
+- Se conserva el nombre de sesion original cuando una persona reanuda.
 
-## Publicación
-Con v13.2 ya publicada, reemplaza `experiment.js` e `index.html`. No cambies `data/`, `img/` ni los archivos de diseño. No subas el HTML de referencia: es un experimento distinto de un solo ensayo.
+## Instalacion
+Reemplaza `index.html` y `experiment.js` en el repositorio GitHub Pages. No actualices el despliegue en produccion sin hacer primero pruebas con `?prueba=3`.
 
-## Comprobación
-Abre una ventana de incógnito **nueva**, `?prueba=3`, y consulta:
+## Prueba sugerida
+1. En el MISMO navegador, abre `?prueba=3` sin incognito; inicia una sesion nueva.
+2. Completa al menos 1 ensayo, verifica `await window.JuiciosReanudacionDiagnostico.localRows()`.
+3. Cierra la pestana. Vuelve a la misma URL y elige `Continuar donde me quede`.
+4. Comprueba el siguiente ensayo, las respuestas finales y el numero de participante.
+5. Cierra otra prueba y elige `Empezar desde el principio`; comprueba que cambia `sessionId` y comienza desde Bienvenida.
+6. En otro navegador o dispositivo, no debe ofrecer reanudar esa sesion: comienza una sesion nueva.
 
-```js
-window.ValidacionBatchDiagnostics
-window.ValidacionBatchDiagnostics.sessionNameConfig
-window.ValidacionBatchDiagnostics.sessionNameState
-```
-
-Valores esperados: `batchSize: 1`, `useIndexedDB: false`, `resumeTimeoutMinutes: 1`. En `sessionNameState`, `expected` contiene el nombre generado y `confirmed` indica si la API respondió sin error; esto no verifica por sí solo que Drive haya renombrado el archivo. Completa una sesión de prueba para validar el resultado en Drive y las respuestas por ensayo.
-
-## Precauciones
-Sin IndexedDB, las respuestas no confirmadas se conservan **solo en memoria** durante la sesión. Si se cierra o recarga la página, esas respuestas pueden perderse. El timeout de un minuto es un parámetro transmitido al backend, no un cierre automático de la pestaña. No utilizar con participantes reales sin verificar la recuperación de abandonos.
+## Advertencias
+- Solo se puede reanudar en el mismo perfil y navegador mientras conserve IndexedDB/localStorage; no se almacenan cuentas ni contrasenas.
+- La confirmacion local no demuestra que `apiData` guardo un ensayo. Comprobar `window.ValidacionBatchDiagnostics` durante pruebas con el servidor real.
+- `resumeTimeoutMinutes=1` es una configuracion enviada a la API, no la caducidad local. El servidor puede imponer sus propias condiciones de reanudacion.
+- IndexedDB no reemplaza un respaldo del servidor. Si el navegador borra sus datos locales, no se puede reconstruir el avance.
+- Los tests locales no permiten verificar la autorizacion del backend Firebase o Google Drive.
