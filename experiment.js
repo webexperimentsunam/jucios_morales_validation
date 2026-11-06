@@ -732,7 +732,7 @@ const m9e = decideBranch;
 
 
   // --- Session Name Configuration ---
-  const _SESSION_NAME_TOKENS = [];
+  const _SESSION_NAME_TOKENS = [{"id":"mw1bc3gxhez","type":"counter","dateFormat":"YYYY-MM-DD","timeFormat":"HH-mm-ss","randomLength":6,"customValue":"","counterDigits":3},{"id":"mw1bc6wtgvd","type":"date","dateFormat":"YYYY-MM-DD","timeFormat":"HH-mm-ss","randomLength":6,"customValue":"","counterDigits":3},{"id":"mw1bc7cfy9m","type":"time","dateFormat":"YYYY-MM-DD","timeFormat":"HH-mm-ss","randomLength":6,"customValue":"","counterDigits":3},{"id":"mw1bc9vvvwu","type":"customText","dateFormat":"YYYY-MM-DD","timeFormat":"HH-mm-ss","randomLength":6,"customValue":"Validation_Jucios_Morales","counterDigits":3}];
   const _SESSION_NAME_SEPARATOR = "_";
   function _generateSessionName(participantNumber) {
     if (!_SESSION_NAME_TOKENS || _SESSION_NAME_TOKENS.length === 0) return null;
@@ -858,17 +858,38 @@ const m9e = decideBranch;
     }
   }
 
+  // El contador se conoce después de crear la sesión en el servidor.
+  // El nombre es METADATO: el identificador UUID se mantiene estable.
+  const _sessionNameState = { expected: null, confirmed: false, error: null };
   async function _updateSessionName(sessionId, sessionName) {
+    _sessionNameState.expected = sessionName;
+    _sessionNameState.confirmed = false;
+    _sessionNameState.error = null;
     try {
-      await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
+      const response = await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "updateSessionName", experimentID: "7f4f984c-de8c-47f4-8144-b6284a011f97", sessionId, sessionName }),
       });
-    } catch (e) {}
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const raw = await response.text();
+      if (raw.trim()) {
+        let payload = null;
+        try { payload = JSON.parse(raw); } catch (_) { /* Puede responder texto. */ }
+        if (payload && payload.success === false) {
+          throw new Error(payload.message || 'El servidor rechazó el nombre');
+        }
+      }
+      _sessionNameState.confirmed = true;
+      return true;
+    } catch (e) {
+      _sessionNameState.error = String(e?.message || e);
+      console.warn('[Juicios morales] Nombre de sesión no confirmado:', _sessionNameState.error);
+      // Un error al asignar el nombre no debe impedir responder ni guardar ensayos.
+      return false;
+    }
   }
 
-  
   // --- Loading overlay ---
   // Read body background at runtime to match canvas styles injected via <style>
   const _bgColor = (getComputedStyle(document.body).backgroundColor || '').trim();
@@ -1107,7 +1128,7 @@ const m9e = decideBranch;
       const _finalName = _generateSessionName(participantNumber);
       if (_finalName) {
         // Session IDs are durable identities. The generated name is display metadata.
-        _updateSessionName(trialSessionId, (VALIDACION_PRUEBA_ACTIVA ? 'PRUEBA3-' : '') + _finalName);
+        await _updateSessionName(trialSessionId, (VALIDACION_PRUEBA_ACTIVA ? 'PRUEBA3-' : '') + _finalName);
       }
     }
 
@@ -1363,6 +1384,7 @@ const m9e = decideBranch;
       useIndexedDB: BATCH_CONFIG.useIndexedDB,
       resumeTimeoutMinutes: BATCH_CONFIG.resumeTimeoutMinutes,
       get sessionNameConfig() { return _SESSION_NAME_TOKENS.map(x => ({...x})); },
+      get sessionNameState() { return {..._sessionNameState}; },
       experimentID: PERSIST_ID,
       backendExperiment: 'jucios_morales_validation',
       get lastRemoteAck() { return lastRemoteAck; },
