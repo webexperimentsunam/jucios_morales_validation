@@ -28,7 +28,7 @@
       vars:['components_Behavioral$20$Statements','response_components_Behavioral$20$Statements']
     }
   };
-  const stats={version:'13.0',installed:0,practiceRendered:0,mainRendered:0,submitted:0,incomplete:0,lastTrial:null,lastValues:null,lastError:null};
+  const stats={version:'13.8',installed:0,practiceRendered:0,mainRendered:0,submitted:0,incomplete:0,lastTrial:null,lastValues:null,lastError:null};
   win.JuiciosEvaluacionDiagnostics=stats;
   const el=(tag,cls,text)=>{const o=doc.createElement(tag);if(cls)o.className=cls;if(text!==undefined)o.textContent=String(text);return o;};
   const item=(components,name)=>components.find(c=>c.name===name);
@@ -89,7 +89,7 @@
       const originalFinish=trial.on_finish;
       const cfg=keys[kind];
       class NativeEvaluation {
-        static info={name:kind==='Ensayo'?'juicios-practica-v12':'juicios-evaluacion-v12',version:'13.0',parameters:{}};
+        static info={name:kind==='Ensayo'?'juicios-practica-v12':'juicios-evaluacion-v12',version:'13.8',parameters:{}};
         constructor(jsPsych){this.jsPsych=jsPsych;}
         trial(display){
           const began=performance.now();
@@ -106,15 +106,15 @@
           const intro=el('section','je-intro');
           intro.append(el('p','je-kicker',practice?'Ensayo de práctica':'Evaluación de enunciados'));
           intro.append(el('h1','je-prompt',source.statement.text));
-          intro.append(el('p','je-hint','Evalúa la afirmación en las cuatro dimensiones. Elige una opción por dimensión.'));
+          intro.append(el('p','je-hint','Responde las cuatro dimensiones en orden: Moralidad, Competencia, Informatividad y Credibilidad.'));
           scroll.append(intro);
           const grid=el('div','je-grid');
           const state=[];
           const locationNodes=new Map();
           locationNodes.set(source.statement.name,intro.querySelector('h1'));
           source.sliders.forEach((slider,i)=>{
-            const panel=el('section','je-scale');panel.dataset.dimension=dims[i];
-            const title=el('h2','je-scale-title',source.titles[i].text);panel.append(title);
+            const panel=el('section',i===0?'je-scale':'je-scale je-locked');panel.dataset.dimension=dims[i];panel.dataset.paso=String(i+1);
+            const title=el('h2','je-scale-title',String(i+1)+'. '+source.titles[i].text);panel.append(title);
             locationNodes.set(source.titles[i].name,title);
             const ends=el('div','je-ends');
             const left=el('span','je-end',source.pairs[i][0].text);
@@ -124,13 +124,14 @@
             locationNodes.set(source.pairs[i][1].name,right);
             const options=el('div','je-options');
             options.setAttribute('role','radiogroup');
+            options.setAttribute('aria-disabled',i===0?'false':'true');
             options.setAttribute('aria-label',dims[i]+': '+source.pairs[i][0].text+' a '+source.pairs[i][1].text);
             const radios=[];
             for(let n=slider.min;n<=slider.max;n++){
               const label=el('label','je-option');
               const radio=el('input','je-radio');
               radio.type='radio';radio.name='juicios_'+(practice?'p':'e')+'_'+i;
-              radio.value=String(n);
+              radio.value=String(n);radio.disabled=i!==0;
               // Radios nativos: accesibles con teclado; no hay opción preseleccionada.
               radio.setAttribute('aria-label',dims[i]+': '+String(n));
               const numeral=el('span','je-option-number',String(n));
@@ -139,6 +140,14 @@
                 if(!radio.checked)return;
                 state[i].touched=true;state[i].value=n;
                 panel.classList.add('je-answered');panel.classList.remove('je-missing');
+                // Habilitar el siguiente bloque solo despues de contestar este.
+                // Las respuestas anteriores pueden modificarse sin reiniciar el orden.
+                const nextScale=state[i+1];
+                if(nextScale&&nextScale.panel.classList.contains('je-locked')){
+                  nextScale.panel.classList.remove('je-locked');
+                  nextScale.radios.forEach(r=>{r.disabled=false;});
+                  nextScale.panel.querySelector('.je-options')?.setAttribute('aria-disabled','false');
+                }
                 note.textContent='';
               });
             }
@@ -167,7 +176,7 @@
               missing[0].radios[0].focus({preventScroll:true});return;
             }
             done=true;next.disabled=true;
-            const result={rt:Math.round(performance.now()-began),je_layout:'v13',je_response_widget:'radio9',je_competencia_direction:'incapaz_a_capaz',je_competencia_fuente:source.originalCompetenceOrder,je_phase:practice?'practica':'principal'};
+            const result={rt:Math.round(performance.now()-began),je_layout:'v13.8_columna',je_response_widget:'radio9',je_competencia_direction:'incapaz_a_capaz',je_competencia_fuente:source.originalCompetenceOrder,je_phase:practice?'practica':'principal'};
             for(const c of components){
               const base=c.name;
               if(!base)continue;

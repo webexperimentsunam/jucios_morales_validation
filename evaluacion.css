@@ -8,16 +8,19 @@
 #juicios-evaluacion .je-kicker{font-weight:700;font-size:12px;color:#6c858e;letter-spacing:.075em;text-transform:uppercase;margin:0 0 14px}
 #juicios-evaluacion .je-prompt{font-size:clamp(21px,2.65vw,30px);font-weight:650;letter-spacing:-.02em;line-height:1.4;color:#203a48;margin:0 0 13px;overflow-wrap:anywhere}
 #juicios-evaluacion .je-hint{font-size:14px;line-height:1.5;color:#647b85;margin:0}
-#juicios-evaluacion .je-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;max-width:900px;margin:0 auto}
-#juicios-evaluacion .je-scale{min-width:0;display:flex;flex-direction:column;border:1px solid #dbe6eb;background:#f8fbfc;border-radius:12px;padding:20px 22px 16px;min-height:185px;transition:border-color .15s ease}
+#juicios-evaluacion .je-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;max-width:710px;margin:0 auto}
+#juicios-evaluacion .je-scale{min-width:0;display:flex;flex-direction:column;border:1px solid #dbe6eb;background:#f8fbfc;border-radius:12px;padding:18px 22px 16px;min-height:160px;transition:border-color .15s ease}
 #juicios-evaluacion .je-scale.je-answered{border-color:#96b29a}
 #juicios-evaluacion .je-scale.je-missing:not(.je-answered){border-color:#d6a8a0}
+#juicios-evaluacion .je-scale.je-locked{background:#f3f6f7;opacity:.58}
+#juicios-evaluacion .je-scale.je-locked .je-option,#juicios-evaluacion .je-scale.je-locked .je-radio{cursor:not-allowed}
+#juicios-evaluacion .je-scale.je-locked .je-option:hover{background:#fff;border-color:#d2e0e5}
 #juicios-evaluacion .je-scale-title{font-size:18px;line-height:1.3;font-weight:700;color:#234356;margin:0 0 12px;text-align:center}
 #juicios-evaluacion .je-ends{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;min-height:44px;margin:0 0 8px}
 #juicios-evaluacion .je-end{font-size:14px;font-weight:650;line-height:1.3;max-width:47%;color:#3b6274;overflow-wrap:break-word}
 #juicios-evaluacion .je-end-right{text-align:right}
-#juicios-evaluacion .je-ends{min-height:52px}
-#juicios-evaluacion .je-options{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:5px;margin-top:auto;padding-top:14px}
+#juicios-evaluacion .je-ends{min-height:38px}
+#juicios-evaluacion .je-options{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:5px;margin-top:0;padding-top:10px}
 #juicios-evaluacion .je-option{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;min-height:44px;border:1px solid #d2e0e5;border-radius:8px;background:#fff;color:#365465;cursor:pointer;user-select:none;transition:background-color .1s,border-color .1s}
 #juicios-evaluacion .je-option:hover{background:#eaf3f0;border-color:#9bb4a6}
 #juicios-evaluacion .je-option:has(.je-radio:checked){background:#dbe9d3;color:#213c2d;border-color:#5d8666;box-shadow:inset 0 0 0 1px #5d8666}
@@ -68,3 +71,5 @@
   #juicios-evaluacion .je-option-number{font-size:11px}
 }
 
+
+/* v13.8: cuatro dimensiones en una sola columna, también en escritorio. */

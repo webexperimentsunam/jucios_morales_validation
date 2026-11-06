@@ -1,56 +1,38 @@
-# Juicios Morales v13.7 — reanudacion local + guardado remoto parcial
+# Juicios Morales v13.8 — Evaluaciones verticales en orden fijo
 
-## Base y evidencia
-Esta version es una modificacion MINIMA de la v13.5, no de la v13.6.
-En las pruebas reales de la v13.5, 11 registros fueron confirmados por `apiData`,
-pero no se genero un CSV parcial en Google Drive. Al modificar el campo
-`useIndexedDB` de la sesion en Firebase a `false`, Drive genero el archivo
-parcial. La persona despues pudo reanudar con IndexedDB y el guardado final
-actualizo ese MISMO archivo.
+## Base
+Se tomó el proyecto completo **v13.7**, cuya combinación de almacenamiento local (IndexedDB activado) y metadatos de Firebase (`useIndexedDB=false`) permitió, en las pruebas del investigador, guardar archivos parciales en Drive y reanudar sesiones.
 
-## Cambios exclusivos
-1. `BATCH_CONFIG.useIndexedDB = true`: conservar la base local y la reanudacion.
-2. `FIREBASE_SESSION_USE_INDEXEDDB = false`: enviar ESTE valor en
-   `sessionRef.update(...)` de Firebase, tambien al retomar una sesion.
-3. Se incorpora `firebaseSessionUseIndexedDB` al diagnostico para distinguirlo
-   de `useIndexedDB` (local). El codigo de ensayo lleva version v13.7.
-4. `index.html` solicita `experiment.js?v=13.7` para evitar una copia cacheada.
+## Cambios únicos de esta versión
+- `evaluacion.css`: las cuatro escalas aparecen siempre en **una columna**, también en escritorio. Cada escala conserva sus **nueve botones en una fila** horizontal.
+- `evaluacion.js`: habilitación secuencial obligatoria: Moralidad → Competencia → Informatividad → Credibilidad. Las escalas 2-4 se activan después de contestar la inmediatamente anterior; un participante puede corregir una respuesta previamente elegida.
+- `index.html`: nuevas referencias `evaluacion.css?v=13.8` y `evaluacion.js?v=13.8` para evitar caché. `experiment.js?v=13.7` permanece igual.
+- El dato adicional `je_layout` ahora registra `v13.8_columna`. Las claves originales de respuesta (Moralidad_response, Competencia_response, Informatividad_response, Credibilidad_response y, en práctica, Informatividad_copy_response) no cambian.
 
-NO se modificaron la API `apiData`, `apiDataComplete`, el tamano de lote (1),
-el timeout (1 minuto), los nombres, las pantallas, los estimulos, las listas,
-la aleatorizacion, ni la logica de continuar/empezar desde cero.
+**No se modificaron** `experiment.js`, su identificador de estudio, la nomenclatura, `batchSize = 1`, IndexedDB, el valor de `useIndexedDB` comunicado a Firebase, el tiempo de espera, las nueve listas de estímulos, la cantidad de ensayos, la aleatorización, los textos de consentimiento o los demás archivos.
 
-## Instalacion
-Instala sobre la v13.5 reemplazando SOLO `index.html` y `experiment.js` en
-GitHub Pages. **No instales v13.6 previamente**; se ignoro intencionalmente
-esa rama de cambios. Conserva una copia del estado anterior.
+## Instalación
+En GitHub `webexperimentsunam/jucios_morales_validation`, reemplaza **solo** estos tres archivos de la raíz con los del parche:
+1. `index.html`
+2. `evaluacion.js`
+3. `evaluacion.css`
 
-## Verificacion en consola
-Despues de cargar una sesion piloto (`?prueba=3`), ejecuta:
+No vuelvas a subir `experiment.js`, ni carpetas `data/`, `img/`. La versión de lógica de guardado seguirá reportándose como **v13.7**, porque no se ha cambiado.
 
-```js
-const d = window.ValidacionBatchDiagnostics;
-({ lote: d.batchSize, indexedDBLocal: d.useIndexedDB,
-   indexedDBEnFirebase: d.firebaseSessionUseIndexedDB,
-   timeout: d.resumeTimeoutMinutes,
-   confirmados: d.apiConfirmed, error: d.lastError });
-```
+## Verificaciones locales
+- Sintaxis JavaScript correcta mediante `node --check`.
+- Pruebas con DOM simulado para práctica y evaluación principal: 4 escalas, orden de activación, valores registrados y esquema original.
+- Verificación de CSS para una columna, y de referencias de scripts en HTML.
+- Comparación SHA-256 de `experiment.js` y de los 9 JSON de estímulos con v13.7: idénticos.
+- No se pudo realizar captura funcional con Chromium en este entorno por una restricción del navegador. La apariencia y la conexión real deben probarse en el sitio publicado.
 
-Esperado: `lote=1`, `indexedDBLocal=true`, `indexedDBEnFirebase=false`,
-`timeout=1`. La confirmacion de `apiData` debe aumentar tras responder.
+## Pruebas recomendadas
+1. Abrir `?prueba=3` en computadora: comprobar cuatro escalas apiladas y orden de activación.
+2. Elegir los extremos y puntos medios en las cuatro escalas, comprobar que `Siguiente` funciona.
+3. Repetir en celular (320-390 px) y comprobar que los 9 valores de cada escala siguen en una fila.
+4. Abandonar, revisar el archivo parcial de Drive y reanudar hasta finalizar.
+5. Probar comenzar una sesión nueva y verificar conservación de la anterior.
+6. Verificar las columnas del CSV contra la versión v13.7.
 
-## Protocolo de prueba REAL
-A. Sesion piloto: responder algunos ensayos, verificar envios y cerrar pestaña.
-   Comprobar que aparece el CSV incompleto en Drive (podria tardar por la
-   consolidacion del servidor), y que los datos esperados estan presentes.
-B. Reabrir MISMO navegador, elegir `Continuar`, terminar y comprobar que
-   el mismo archivo se actualiza sin duplicar respuestas.
-C. Iniciar otra sesion piloto, abandonar, reabrir, elegir `Empezar desde el
-   principio`. Comprobar que el archivo parcial anterior permanece y que
-   la sesion nueva recibe otro identificador.
-D. Abrir desde otro dispositivo: se inicia desde cero, sin cuentas.
-
-La prueba anterior respalda el comportamiento, pero NO demuestra que todos los
-abandonos futuros sean 100% recuperables; depende de disponibilidad de red,
-reglas y operaciones del servidor externo. No cambiar permisos ni metadatos
-con datos reales sin autorizacion institucional.
+## Reanudación: duración
+El código de v13.7 usa `resumeTimeoutMinutes=1` para metadatos del servidor, **no** como caducidad de la copia local. `TrialDB.TTL_DAYS=3` limpia registros antiguos de sesiones distintas, pero excluye expresamente el identificador de sesión actualmente recuperable. Esto no garantiza recuperación indefinida: depende del navegador, almacenamiento local, posibles restricciones del servidor y borrado de datos del sitio. Probar reanudación después de un día antes de anunciar plazos a participantes.
