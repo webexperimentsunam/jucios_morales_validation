@@ -1203,8 +1203,14 @@ const m9e = decideBranch;
       size: 1,
       currentBatchNumber: 0,
       resumeTimeoutMinutes: 1, // ajuste del servidor, NO plazo de expiracion local
-      useIndexedDB: true
+      useIndexedDB: true // Solo IndexedDB local: conserva respuestas y reanudacion
     };
+    // v13.7: el servidor de ExpBuilder consolida los CSV parciales en Drive
+    // al recibir useIndexedDB=false en los METADATOS de Firebase. Este valor
+    // es independiente del almacenamiento IndexedDB local activado arriba.
+    // Confirmado en prueba real: archivo parcial, reanudacion y actualizacion
+    // del mismo archivo al finalizar. No cambiar BATCH_CONFIG.useIndexedDB.
+    const FIREBASE_SESSION_USE_INDEXEDDB = false;
     await TrialDB.init();
     // No borrar las sesiones incompletas mientras las estamos recuperando.
     await TrialDB.cleanExpiredData(trialSessionId);
@@ -1239,7 +1245,7 @@ const m9e = decideBranch;
       }
     }
     window.JuiciosReanudacionDiagnostico = {
-      version: '13.5', get sessionId() { return trialSessionId; },
+      version: '13.7', get sessionId() { return trialSessionId; },
       get recovered() { return resumedSession; },
       get recoveredRows() { return resumedSession ? previousRows.length : 0; },
       get testMode() { return VALIDACION_PRUEBA_ACTIVA; },
@@ -1305,7 +1311,7 @@ const m9e = decideBranch;
       lastUpdate: window.firebase.database.ServerValue.TIMESTAMP,
       metadata: metadata,
       resumeTimeoutMinutes: BATCH_CONFIG.resumeTimeoutMinutes,
-      useIndexedDB: BATCH_CONFIG.useIndexedDB
+      useIndexedDB: FIREBASE_SESSION_USE_INDEXEDDB
     });
     
     sessionRef.onDisconnect().update({
@@ -1522,6 +1528,7 @@ const m9e = decideBranch;
     window.ValidacionBatchDiagnostics = {
       batchSize: BATCH_CONFIG.size,
       useIndexedDB: BATCH_CONFIG.useIndexedDB,
+      firebaseSessionUseIndexedDB: FIREBASE_SESSION_USE_INDEXEDDB,
       resumeTimeoutMinutes: BATCH_CONFIG.resumeTimeoutMinutes,
       get sessionNameConfig() { return _SESSION_NAME_TOKENS.map(x => ({...x})); },
       get sessionNameState() { return {..._sessionNameState}; },
@@ -1703,7 +1710,7 @@ const m9e = decideBranch;
         data.clientTimestamp = Date.now();
         data.sessionId = trialSessionId;
         data.experimentID = "7f4f984c-de8c-47f4-8144-b6284a011f97";
-        data.version_experimento = "jucios_morales_validation-v13.5";
+        data.version_experimento = "jucios_morales_validation-v13.7";
         if (VALIDACION_PRUEBA_ACTIVA) {
           data.modo_prueba = true;
           data.version_parche_prueba = VALIDACION_PRUEBA_VERSION;

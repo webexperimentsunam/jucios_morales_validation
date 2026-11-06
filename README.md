@@ -1,31 +1,56 @@
-# Juicios Morales v13.5 — reanudacion local experimental
+# Juicios Morales v13.7 — reanudacion local + guardado remoto parcial
 
-Base: v13.3 con escalas horizontales v13.1. Mantiene 9 JSON de estimulos sin cambiar.
+## Base y evidencia
+Esta version es una modificacion MINIMA de la v13.5, no de la v13.6.
+En las pruebas reales de la v13.5, 11 registros fueron confirmados por `apiData`,
+pero no se genero un CSV parcial en Google Drive. Al modificar el campo
+`useIndexedDB` de la sesion en Firebase a `false`, Drive genero el archivo
+parcial. La persona despues pudo reanudar con IndexedDB y el guardado final
+actualizo ese MISMO archivo.
 
-## Cambios
-- IndexedDB reactivado para guardar cada respuesta y su checkpoint de navegacion (3 dias de retencion local para sesiones antiguas).
-- Guardado `apiData` por ensayo (`batchSize=1`) y `apiDataComplete` al finalizar, sin modificar el formato de salida ni los identificadores de sesion.
-- Al regresar al mismo navegador se ofrece `Continuar donde me quede` cuando existe copia local y cursor valido, o `Empezar desde el principio` para crear un UUID nuevo.
-- Si la sesion anterior es de v13.3, no tiene respuestas IndexedDB; solo puede comenzar de cero. No se eliminan sus registros enviados al servidor.
-- No se mezclan sesiones piloto (`?prueba=3`) con sesiones reales.
-- Al finalizar exitosamente se elimina exclusivamente la copia IndexedDB de la sesion terminada; no las de otras sesiones.
-- El cursor de reanudacion se confirma despues de la transaccion de escritura local.
-- Se conserva el nombre de sesion original cuando una persona reanuda.
+## Cambios exclusivos
+1. `BATCH_CONFIG.useIndexedDB = true`: conservar la base local y la reanudacion.
+2. `FIREBASE_SESSION_USE_INDEXEDDB = false`: enviar ESTE valor en
+   `sessionRef.update(...)` de Firebase, tambien al retomar una sesion.
+3. Se incorpora `firebaseSessionUseIndexedDB` al diagnostico para distinguirlo
+   de `useIndexedDB` (local). El codigo de ensayo lleva version v13.7.
+4. `index.html` solicita `experiment.js?v=13.7` para evitar una copia cacheada.
+
+NO se modificaron la API `apiData`, `apiDataComplete`, el tamano de lote (1),
+el timeout (1 minuto), los nombres, las pantallas, los estimulos, las listas,
+la aleatorizacion, ni la logica de continuar/empezar desde cero.
 
 ## Instalacion
-Reemplaza `index.html` y `experiment.js` en el repositorio GitHub Pages. No actualices el despliegue en produccion sin hacer primero pruebas con `?prueba=3`.
+Instala sobre la v13.5 reemplazando SOLO `index.html` y `experiment.js` en
+GitHub Pages. **No instales v13.6 previamente**; se ignoro intencionalmente
+esa rama de cambios. Conserva una copia del estado anterior.
 
-## Prueba sugerida
-1. En el MISMO navegador, abre `?prueba=3` sin incognito; inicia una sesion nueva.
-2. Completa al menos 1 ensayo, verifica `await window.JuiciosReanudacionDiagnostico.localRows()`.
-3. Cierra la pestana. Vuelve a la misma URL y elige `Continuar donde me quede`.
-4. Comprueba el siguiente ensayo, las respuestas finales y el numero de participante.
-5. Cierra otra prueba y elige `Empezar desde el principio`; comprueba que cambia `sessionId` y comienza desde Bienvenida.
-6. En otro navegador o dispositivo, no debe ofrecer reanudar esa sesion: comienza una sesion nueva.
+## Verificacion en consola
+Despues de cargar una sesion piloto (`?prueba=3`), ejecuta:
 
-## Advertencias
-- Solo se puede reanudar en el mismo perfil y navegador mientras conserve IndexedDB/localStorage; no se almacenan cuentas ni contrasenas.
-- La confirmacion local no demuestra que `apiData` guardo un ensayo. Comprobar `window.ValidacionBatchDiagnostics` durante pruebas con el servidor real.
-- `resumeTimeoutMinutes=1` es una configuracion enviada a la API, no la caducidad local. El servidor puede imponer sus propias condiciones de reanudacion.
-- IndexedDB no reemplaza un respaldo del servidor. Si el navegador borra sus datos locales, no se puede reconstruir el avance.
-- Los tests locales no permiten verificar la autorizacion del backend Firebase o Google Drive.
+```js
+const d = window.ValidacionBatchDiagnostics;
+({ lote: d.batchSize, indexedDBLocal: d.useIndexedDB,
+   indexedDBEnFirebase: d.firebaseSessionUseIndexedDB,
+   timeout: d.resumeTimeoutMinutes,
+   confirmados: d.apiConfirmed, error: d.lastError });
+```
+
+Esperado: `lote=1`, `indexedDBLocal=true`, `indexedDBEnFirebase=false`,
+`timeout=1`. La confirmacion de `apiData` debe aumentar tras responder.
+
+## Protocolo de prueba REAL
+A. Sesion piloto: responder algunos ensayos, verificar envios y cerrar pestaña.
+   Comprobar que aparece el CSV incompleto en Drive (podria tardar por la
+   consolidacion del servidor), y que los datos esperados estan presentes.
+B. Reabrir MISMO navegador, elegir `Continuar`, terminar y comprobar que
+   el mismo archivo se actualiza sin duplicar respuestas.
+C. Iniciar otra sesion piloto, abandonar, reabrir, elegir `Empezar desde el
+   principio`. Comprobar que el archivo parcial anterior permanece y que
+   la sesion nueva recibe otro identificador.
+D. Abrir desde otro dispositivo: se inicia desde cero, sin cuentas.
+
+La prueba anterior respalda el comportamiento, pero NO demuestra que todos los
+abandonos futuros sean 100% recuperables; depende de disponibilidad de red,
+reglas y operaciones del servidor externo. No cambiar permisos ni metadatos
+con datos reales sin autorizacion institucional.
