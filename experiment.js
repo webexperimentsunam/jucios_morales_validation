@@ -302,14 +302,14 @@
 
   // Únicamente acorta la tarea para pruebas internas; se comunica con la API real.
   const VALIDACION_PRUEBA_ACTIVA = new URLSearchParams(location.search).get('prueba') === '3';
-  const VALIDACION_PRUEBA_VERSION = 'v14-protocolo3-piloto';
+  const VALIDACION_PRUEBA_VERSION = 'v14-protocolo3-control-nombre';
   window.ValidacionPrueba = {
     activa: VALIDACION_PRUEBA_ACTIVA, version: VALIDACION_PRUEBA_VERSION,
     practica: 3, principal: VALIDACION_PRUEBA_ACTIVA ? 3 : 480
   };
   if (VALIDACION_PRUEBA_ACTIVA) {
     document.title = '[PRUEBA 3] Validación — Experimento';
-    console.info('[Validación] Modo piloto de 3 estímulos principales; se guardan en el servidor como PRUEBA3.');
+    console.info('[Validación] Prueba controlada de 3 ensayos: nombres originales de sesion y datos etiquetados como piloto.');
   }
 
 
@@ -1036,7 +1036,7 @@ const J8e = decideBranch;
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, experimentID: "7f4f984c-de8c-47f4-8144-b6284a011f97", sessionId: trialSessionId,
         sessionProtocolVersion: 3,
-        ..._publicWriter, renewConnection, metadata, ...(sessionName && { sessionName: (VALIDACION_PRUEBA_ACTIVA ? 'PRUEBA3-' : '') + sessionName }) })
+        ..._publicWriter, renewConnection, metadata, ...(sessionName && { sessionName }) })
     });
     const result = await response.json();
     if (result?.decision && result.sessionProtocolVersion === 3) {
@@ -1424,7 +1424,7 @@ const J8e = decideBranch;
       const _finalName = _generateSessionName(participantNumber);
       if (_finalName) {
         // Session IDs are durable identities. The generated name is display metadata.
-        _updateSessionName(trialSessionId, (VALIDACION_PRUEBA_ACTIVA ? 'PRUEBA3-' : '') + _finalName);
+        _updateSessionName(trialSessionId, _finalName);
       }
     }
 
