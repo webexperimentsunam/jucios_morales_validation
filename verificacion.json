@@ -1,0 +1,20 @@
+{
+  "source": "index (1).html",
+  "working_storage_core_identical": true,
+  "source_storage_core_sha256": "030078232528618d63f54a4d3c9f7856915436803a289b570b0016976af2c42e",
+  "integrated_storage_core_sha256": "030078232528618d63f54a4d3c9f7856915436803a289b570b0016976af2c42e",
+  "original_timeline_tail_sha256": "382cd367cfe630142c9437c4897ed92d67fe1ad55f60cf41c8e44c0195f0363a",
+  "pilot_mode": "?prueba=3 -> 3 main stimuli, server storage enabled",
+  "production_mode": "no ?prueba=3 -> 480 main stimuli",
+  "stimulus_json_files": 9,
+  "old_trial_definitions": 15,
+  "new_trial_definitions": 15,
+  "external_js": [
+    "evaluacion.js",
+    "survey.js",
+    "consentimiento.js",
+    "pantallas.js",
+    "bienvenida.js"
+  ],
+  "no_data_uploads": true
+}

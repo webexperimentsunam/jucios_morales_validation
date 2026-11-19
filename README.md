@@ -1,9 +1,30 @@
-# Validación — diagnóstico v14.1
+# Validación — integración sobre el HTML funcional de ExpBuilder
 
-Paquete de **dos archivos** para sustituir en la raíz de GitHub Pages: `index.html` y `experiment.js`.
+Este paquete utiliza **exactamente el motor de sesiones y exportación** del archivo `index (1).html` que proporcionaste. El código de las funciones de registro, sesiones, IndexedDB, envío de eventos, finalización, comprobación y reintentos de exportación se conservó sin cambios. Solo se sustituyó el ensayo de ejemplo por la tarea de Validación y se incluyeron los recursos visuales de la versión previa.
 
-Corrige la URL del JavaScript para evitar reutilización del caché de `v14.0-control-nombre`; conserva el flujo corregido de reentrada en sesiones expiradas o completadas. Permite consultar `window.ValidacionVersion` y `window.ValidacionEstadoExportacion` en la consola. El segundo objeto solo incluye estado, conteos, confirmaciones y `lastError`, sin IDs ni tokens. Un error de exportación sigue mostrando aviso de guardar/reintentar pero ya no bloquea la página con el error fatal global.
+## Instalación
 
-**No corrige fallos del backend** ni significa que Google Drive haya recibido los resultados. Antes de usarlo con participantes, comprobar `export.confirmed === true` y un archivo en Drive para distintas sesiones. No borrar IndexedDB ni los registros pendientes de sesiones anteriores.
+1. Crea una **rama o repositorio de prueba**. No sustituyas todavía el experimento usado para participantes.
+2. Sube **todo el contenido de esta carpeta**, incluidos `index.html`, los `.js`, los `.css`, `img/` y `data/`, a la raíz de GitHub Pages. No es necesario subir el ZIP ni los CSV de resultados.
+3. Abre `?prueba=3` para comprobar bienvenida, consentimiento, cuestionario, práctica y **tres estímulos principales**. **Este modo sí envía los datos a Firebase/Drive** y los marca como prueba.
+4. Sin `?prueba=3`, se habilitan los **480 estímulos principales**.
 
-Para verificar la versión, tras publicar ambos archivos y recargar, la consola debe mostrar `window.ValidacionVersion` = `v14.1-reentrada-diagnostico`. Si falla la exportación, revisar `window.ValidacionEstadoExportacion` y el error del servidor en el apartado `Respuesta` de `apiData` en Red/Network. No repetir las mismas pruebas con participantes reales.
+## Qué se conserva
+
+- ID de estudio y endpoints de Firebase del HTML del desarrollador.
+- El motor de `createSession`, `resumeSession`, `appendEvents`, `completeSession`, `sessionStatus` y `retryExport`, incluida la gestión de IndexedDB.
+- Los nombres de sesión originales del HTML funcional, sin prefijos `PRUEBA3-`.
+- Los componentes, sus datos y la selección/aleatorización de práctica y tarea principal de la versión de Validación.
+- Los archivos existentes de imagen, estilos y pantallas especializadas.
+
+## Límites y validación pendiente
+
+- `node --check` y verificaciones de estructura/activos superadas.
+- **No se ha realizado una prueba de escritura real a Firebase/Drive desde este entorno.**
+- No debe considerarse lista para reclutamiento sin comprobar: completado de 3 estímulos y CSV; reanudación con 1 o 2 minutos (mismo navegador); reingreso tras vencimiento; ejecución de los 480 ensayos y exportación completa.
+- La ruta de sesión expirada del HTML funcional se ha conservado tal cual, incluso aunque el flujo de reingreso requiera una adaptación posterior. La prioridad fue no modificar su código de almacenamiento.
+- Verifica que las etiquetas y la orientación de «Competencia» reflejen el protocolo aprobado antes de tomar datos reales.
+
+## Comprobaciones
+
+El archivo `verificacion.json` contiene el hash SHA-256 del motor de almacenamiento original y de la integración, que deben coincidir.
