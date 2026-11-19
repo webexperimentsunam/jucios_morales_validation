@@ -1,36 +1,81 @@
 {
-  "experimentID": "e9493936-a5e7-4970-8759-520d2b4689d0",
+  "experimentID": "7f4f984c-de8c-47f4-8144-b6284a011f97",
+  "build": "compatibilidad-protocolo-v3-expbuilder",
+  "version": "14.0",
   "practice": 3,
   "main": 480,
-  "build": "standalone-jspsych-v4",
   "files": {
-    "README.md": {
-      "sha256": "5f1bd6b4002747f8c19e918ae36e5394a584cd46d1bbfbc834bd8770c05e3335",
-      "size": 7413
-    },
-    "data/definition.json": {
-      "sha256": "ddcda6ccc5d4989db83e3768d59be3b745f011ef36463a3a9c799ebd5a42432a",
-      "size": 20850
-    },
-    "data/main.json": {
-      "sha256": "a6b5423b5a3d17a2eeafdeec0e7c30a09ef485d30376741e1c7f3599a45d1933",
-      "size": 78923
-    },
-    "data/practice.json": {
-      "sha256": "8155bd9dff9c22d311ebcb00d3af21146cf820356ca147953356edf3598713a1",
-      "size": 303
-    },
     "experiment.js": {
-      "sha256": "767e5ccb1153b39618f3cc93f5fe3661deefa1ec4d764ae86eca88382d7343ca",
-      "size": 11911
+      "sha256": "46fb7892647fc368d6929155afc83c455ad103fbfe52e825fe53911d0cc245bb",
+      "size": 263754
     },
-    "img/Mona.png": {
-      "sha256": "0b2d59fe1311a0219ce30047f00134d39635ecd5049a23c56e74d04288a8cedb",
-      "size": 30324
+    "evaluacion.css": {
+      "sha256": "ba8270ecb9f4fc8223ea2a81c429d636d01ae90e2093350b2bf2594174ff6db1",
+      "size": 6993
     },
-    "img/Mono.png": {
-      "sha256": "376abc85ccc2683ea16fcec54326fc0881fb3a6fa5e390b8df64882a1defdce6",
-      "size": 18472
+    "pantallas.css": {
+      "sha256": "991178c5c4e4323f79b4d476d35863cdf03f5d08b556fd2722f9cc2724e91844",
+      "size": 6519
+    },
+    "bienvenida.css": {
+      "sha256": "926b52c1e1a58aa60b41eb9e699c7f7c19badd429ba54e1df6398fab2c420d75",
+      "size": 3919
+    },
+    "evaluacion.js": {
+      "sha256": "b254795ba69f8bac12f88bbc76f35283e1d733c276ad59e36f8efa58d361d392",
+      "size": 12624
+    },
+    "responsive-layout.js": {
+      "sha256": "111305457f4558cc3752ab7ee00fb54e6ca470eb1e27a2a16b70edd38a6be001",
+      "size": 19166
+    },
+    "consentimiento.js": {
+      "sha256": "655b84e135b514eacb3f71d4bd58a122adcd0ad149952ee94e65c493f2f59946",
+      "size": 10291
+    },
+    "survey.js": {
+      "sha256": "0244b4fe920b2e40a6c93e3118aec02cc0511dc11dd9730e062b4c374dd0cdc1",
+      "size": 12212
+    },
+    "screen-plugin.js": {
+      "sha256": "f5e95559c2163fb22bc44c8d6ee197a68f85f23b5c5d0324591ef8694315b663",
+      "size": 16606
+    },
+    "survey.css": {
+      "sha256": "a336efdb7a7ce23d043d23bac3e5f30c07a788d21ea422e79417b863736ece03",
+      "size": 5399
+    },
+    "styles.css": {
+      "sha256": "b59c66b86d94575c37ac127e2935c255c18fd04bda3e7a63836d437b3e225853",
+      "size": 7779
+    },
+    "README.md": {
+      "sha256": "9f84bd5d806b068d175c50c7cfd711e4ece0b30ab5e2d0dad912db9aa3b1edca",
+      "size": 5056
+    },
+    "consentimiento.css": {
+      "sha256": "52342b65f810223b9374aae1b0f07220b3f8abe6895bad5f00e2a42810d38485",
+      "size": 4976
+    },
+    "storage.js": {
+      "sha256": "e33f96a204a83ba689b07ca85421033925c65d1ab6b07ac9a5c62e44966b38f9",
+      "size": 8157
+    },
+    "pantallas.js": {
+      "sha256": "e721132e89324c45a6f3e8154fad5cbc5ba5251292d4de5df98fae2cf172d559",
+      "size": 9631
+    },
+    "bienvenida.js": {
+      "sha256": "d00f976dbea2ba6a1b886d636e8d6659b37758f1d1206eeff7222d66261d232f",
+      "size": 6797
+    },
+    "experiment-theme.css": {
+      "sha256": "229c5b0aee0984828355755b5cb748b1b1e21211b66bd95ea02316912afeb99a",
+      "size": 7362
+    },
+    "index.html": {
+      "sha256": "87ac66a52935a123853988487af09c6e3f4f04f24833d10dc54f0b6b1aebd19b",
+      "size": 5948
     },
     "img/WhatsApp Image 2026-10-26 at 10.53.21.jpeg": {
       "sha256": "7beebc7a113814c2ca1d4910a67c5978a8695afb5b3d07fd9c130c2c65991efb",
@@ -44,21 +89,61 @@
       "sha256": "0e3fa7af79d64ded2d4dbbf1cf9e3ebec3a48d227994d3344539ae1e211be7a3",
       "size": 8839
     },
-    "index.html": {
-      "sha256": "e59de72e4b9455d33311023f9a8547dec80777fffffddffe8a6bd6233ef47cfe",
-      "size": 847
+    "img/Mono.png": {
+      "sha256": "376abc85ccc2683ea16fcec54326fc0881fb3a6fa5e390b8df64882a1defdce6",
+      "size": 18472
     },
-    "screen-plugin.js": {
-      "sha256": "f5e95559c2163fb22bc44c8d6ee197a68f85f23b5c5d0324591ef8694315b663",
-      "size": 16606
+    "img/Mona.png": {
+      "sha256": "0b2d59fe1311a0219ce30047f00134d39635ecd5049a23c56e74d04288a8cedb",
+      "size": 30324
     },
-    "storage.js": {
-      "sha256": "e33f96a204a83ba689b07ca85421033925c65d1ab6b07ac9a5c62e44966b38f9",
-      "size": 8157
+    "data/estimulos_002.json": {
+      "sha256": "ace50e31fa276b9788928f2c3fcba8865e55f810909a546078f7b619b00f20e3",
+      "size": 448808
     },
-    "styles.css": {
-      "sha256": "b59c66b86d94575c37ac127e2935c255c18fd04bda3e7a63836d437b3e225853",
-      "size": 7779
+    "data/estimulos_005.json": {
+      "sha256": "c3790e54e8cbe5a9c7b69a8d73921805682477fd921fd239893bb81c0f9478a3",
+      "size": 448720
+    },
+    "data/estimulos_006.json": {
+      "sha256": "830f5f464b34bca53732a51a5629218ac6117bc837111e3f2a46b6ffb7177cee",
+      "size": 448696
+    },
+    "data/main.json": {
+      "sha256": "a6b5423b5a3d17a2eeafdeec0e7c30a09ef485d30376741e1c7f3599a45d1933",
+      "size": 78923
+    },
+    "data/estimulos_001.json": {
+      "sha256": "60dabe754e748eaeab87756aa293d0f5ee450636b4799020894b7c86b66917e8",
+      "size": 448548
+    },
+    "data/estimulos_003.json": {
+      "sha256": "ab176b032ca7fda633feec4e94bead97a375f6df9073fb6b761c18ab27ac0d9e",
+      "size": 448730
+    },
+    "data/estimulos_004.json": {
+      "sha256": "9a9d70aa354e84d62930848977220cec208378badcd77ef63c5647fc536b474f",
+      "size": 448746
+    },
+    "data/estimulos_009.json": {
+      "sha256": "437969eb8a86d0a3fe7fb6acd473d5fb00047c816b196408b7f310d94e361489",
+      "size": 256524
+    },
+    "data/estimulos_007.json": {
+      "sha256": "cd906baa66aad1fd2dc38691749d434ffb7e5d37eab689c1a9c339db670f7c9d",
+      "size": 448490
+    },
+    "data/definition.json": {
+      "sha256": "ddcda6ccc5d4989db83e3768d59be3b745f011ef36463a3a9c799ebd5a42432a",
+      "size": 20850
+    },
+    "data/practice.json": {
+      "sha256": "8155bd9dff9c22d311ebcb00d3af21146cf820356ca147953356edf3598713a1",
+      "size": 303
+    },
+    "data/estimulos_008.json": {
+      "sha256": "2f320e45e22e1ca97144da7971764d14892d42aebcabe7acb301fdd1018967ec",
+      "size": 448661
     }
   }
 }

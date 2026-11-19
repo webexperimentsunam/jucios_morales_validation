@@ -4,99 +4,215 @@
   window.JSPSYCH_FILE_UPLOAD_ENDPOINT = 'https://us-central1-test-e4cf9.cloudfunctions.net/apiData'.replace('/apiData', '/uploadParticipantFile');
   window.JSPSYCH_EXPERIMENT_ID = '7f4f984c-de8c-47f4-8144-b6284a011f97';
 
-  // v13.5: cache local duradera para continuar en el MISMO navegador.
-  // Cada ensayo tiene una copia con su cursor de navegacion. El envio remoto
-  // sigue operando con batchSize=1; IndexedDB no sustituye apiData.
+
+  function _publicEventId() {
+    if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    return Array.from(crypto.getRandomValues(new Uint8Array(16)), value => value.toString(16).padStart(2, '0')).join('');
+  }
+  function _canonicalPublicEvent(value) {
+    if (Array.isArray(value)) return '[' + value.map(_canonicalPublicEvent).join(',') + ']';
+    if (value !== null && typeof value === 'object') {
+      return '{' + Object.keys(value).sort().map(key => JSON.stringify(key) + ':' + _canonicalPublicEvent(value[key])).join(',') + '}';
+    }
+    return JSON.stringify(value);
+  }
+  async function _publicHash(value) {
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(_canonicalPublicEvent(value)));
+    return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+  async function _publicEventEnvelope(record) {
+    return { eventId: record.eventId, sequence: record.sequence,
+      payloadHash: record.payloadHash || await _publicHash(record.payload), payload: record.payload,
+      ...(record.checkpoint ? { checkpoint: record.checkpoint } : {}) };
+  }
+  function _bindPublicCheckpoint(checkpoint, eventId, sequence) {
+    if (!checkpoint?.completed || typeof checkpoint.completed !== 'object') return checkpoint;
+    return { ...checkpoint, completed: { ...checkpoint.completed, eventId, sequence } };
+  }
+  function _upgradePublicEvents(transaction, storeName, counterName) {
+    const counters = transaction.objectStore(counterName);
+    const sequences = new Map();
+    transaction.objectStore(storeName).openCursor().onsuccess = event => {
+      const cursor = event.target.result;
+      if (!cursor) return;
+      const { id, timestamp, createdAt, sessionId, ...payload } = cursor.value;
+      const sequence = sequences.get(sessionId) || 0;
+      cursor.update({ ...cursor.value, eventId: _publicEventId(), sequence, payload });
+      sequences.set(sessionId, sequence + 1);
+      counters.put({ sessionId, nextSequence: sequence + 1 });
+      cursor.continue();
+    };
+  }
+
+
+  // --- IndexedDB: unacknowledged events have no age-based expiry ---
   const TrialDB = {
-    dbName: 'expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:trials-v1',
-    storeName: 'trials', db: null, TTL_DAYS: 3,
+    dbName: "expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:trials-v1",
+    storeName: 'trials',
+    counterName: 'session-sequences',
+    manifestName: 'event-manifest',
+    db: null,
+
     async init() {
-      if (this.db) return this.db;
       return new Promise((resolve, reject) => {
-        const request = indexedDB.open(this.dbName, 1);
-        request.onerror = () => reject(request.error || new Error('No se pudo abrir IndexedDB'));
-        request.onupgradeneeded = event => {
+        const request = indexedDB.open(this.dbName, 3);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          this.db = request.result;
+          resolve(this.db);
+        };
+        
+        request.onupgradeneeded = (event) => {
           const db = event.target.result;
           if (!db.objectStoreNames.contains(this.storeName)) {
-            const store = db.createObjectStore(this.storeName, { keyPath: 'id', autoIncrement: true });
+            const store = db.createObjectStore(this.storeName, { 
+              keyPath: 'id', 
+              autoIncrement: true 
+            });
             store.createIndex('sessionId', 'sessionId', { unique: false });
             store.createIndex('timestamp', 'timestamp', { unique: false });
             store.createIndex('createdAt', 'createdAt', { unique: false });
           }
+          if (!db.objectStoreNames.contains(this.manifestName)) {
+            const manifest = db.createObjectStore(this.manifestName, { keyPath: ['sessionId', 'sequence'] });
+            manifest.createIndex('sessionId', 'sessionId');
+          }
+          if (!db.objectStoreNames.contains(this.counterName)) {
+            db.createObjectStore(this.counterName, { keyPath: 'sessionId' });
+            _upgradePublicEvents(request.transaction, this.storeName, this.counterName);
+          }
         };
+      });
+    },
+
+
+    async add(trial, checkpoint = null) {
+      if (!this.db) await this.init();
+      const payload = JSON.parse(JSON.stringify(trial));
+      const payloadHash = await _publicHash(payload);
+      return new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([this.storeName, this.counterName, this.manifestName], 'readwrite');
+        const counters = transaction.objectStore(this.counterName);
+        let record;
+        const request = counters.get(trialSessionId);
         request.onsuccess = () => {
-          this.db = request.result;
-          this.db.onversionchange = () => { this.db.close(); this.db = null; };
-          resolve(this.db);
+          const sequence = request.result?.nextSequence || 0;
+          const eventId = _publicEventId();
+          const savedCheckpoint = _bindPublicCheckpoint(checkpoint, eventId, sequence);
+          record = { ...payload, payload, payloadHash, checkpoint: savedCheckpoint, eventId, sequence,
+            timestamp: Date.now(), createdAt: Date.now(), sessionId: trialSessionId };
+          const saved = transaction.objectStore(this.storeName).add(record);
+          saved.onsuccess = () => { record.id = saved.result; };
+          transaction.objectStore(this.manifestName).put({ sessionId: trialSessionId,
+            eventId: record.eventId, sequence, payloadHash });
+          counters.put({ sessionId: trialSessionId, nextSequence: sequence + 1,
+            checkpointSequence: checkpoint ? sequence : (request.result?.checkpointSequence ?? -1),
+            checkpoint: savedCheckpoint || request.result?.checkpoint || null });
         };
+        transaction.oncomplete = () => resolve(record);
+        transaction.onerror = transaction.onabort = () => reject(transaction.error || new Error('Trial transaction aborted'));
       });
     },
-    async add(trial, resumeCheckpoint = null) {
-      await this.init();
+    async getState() {
+      if (!this.db) await this.init();
       return new Promise((resolve, reject) => {
-        const tx = this.db.transaction([this.storeName], 'readwrite');
-        const request = tx.objectStore(this.storeName).add({
-          ...trial, sessionId: trialSessionId, timestamp: Date.now(), createdAt: Date.now(),
-          __resumeCheckpoint: resumeCheckpoint
-        });
-        let id = null;
-        request.onsuccess = () => { id = request.result; };
-        tx.oncomplete = () => resolve(id); // ACK solamente después del commit real
-        tx.onerror = () => reject(tx.error || new Error('Fallo al guardar el ensayo localmente'));
-        tx.onabort = () => reject(tx.error || new Error('Escritura IndexedDB cancelada'));
+        const transaction = this.db.transaction([this.counterName, this.manifestName], 'readonly');
+        const counter = transaction.objectStore(this.counterName).get(trialSessionId);
+        const manifest = transaction.objectStore(this.manifestName).index('sessionId').getAll(trialSessionId);
+        transaction.oncomplete = () => resolve({ ...counter.result,
+          events: manifest.result.sort((a, b) => a.sequence - b.sequence) });
+        transaction.onerror = transaction.onabort = () => reject(transaction.error || new Error('Cannot read saved event set'));
       });
     },
-    async getAll() {
-      await this.init();
+    async syncManifest(receivedEvents = []) {
+      if (!this.db) await this.init();
+      const pending = await this.getAll();
+      const events = [...receivedEvents, ...await Promise.all(pending.map(_publicEventEnvelope))];
+      if (!events.length) return;
       return new Promise((resolve, reject) => {
-        const request = this.db.transaction([this.storeName], 'readonly').objectStore(this.storeName).getAll();
+        const transaction = this.db.transaction([this.counterName, this.manifestName], 'readwrite');
+        const counters = transaction.objectStore(this.counterName);
+        const request = counters.get(trialSessionId);
+        request.onsuccess = () => {
+          for (const { eventId, sequence, payloadHash } of events) {
+            transaction.objectStore(this.manifestName).put({ sessionId: trialSessionId, eventId, sequence, payloadHash });
+          }
+          counters.put({ ...request.result, sessionId: trialSessionId,
+            nextSequence: Math.max(request.result?.nextSequence || 0, ...events.map(event => event.sequence + 1)) });
+        };
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = transaction.onabort = () => reject(transaction.error || new Error('Cannot restore saved event set'));
+      });
+    },
+    async deleteIds(ids) {
+      if (!this.db) await this.init();
+      return new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([this.storeName], 'readwrite');
+        const store = transaction.objectStore(this.storeName);
+        ids.forEach(id => store.delete(id));
+        transaction.oncomplete = () => resolve(ids.length);
+        transaction.onerror = transaction.onabort = () => reject(transaction.error || new Error('Trial deletion aborted'));
+      });
+    },
+
+
+    async getAll(sessionId = trialSessionId) {
+      if (!this.db) await this.init();
+      return new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([this.storeName], 'readonly');
+        const store = transaction.objectStore(this.storeName);
+        const request = store.index('sessionId').getAll(sessionId);
+        
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
       });
     },
-    async getSession(id) { return (await this.getAll()).filter(row => row.sessionId === id).sort((a,b) => a.id-b.id); },
-    async count() { return (await this.getAll()).length; },
-    async deleteSession(id) {
-      await this.init();
+
+    async count() {
+      if (!this.db) await this.init();
       return new Promise((resolve, reject) => {
-        const tx = this.db.transaction([this.storeName], 'readwrite');
-        const store = tx.objectStore(this.storeName);
-        let count = 0;
-        const req = store.index('sessionId').openCursor(IDBKeyRange.only(id));
-        req.onsuccess = event => {
-          const cursor = event.target.result;
-          if (cursor) { cursor.delete(); count++; cursor.continue(); }
-        };
-        tx.oncomplete = () => resolve(count);
-        tx.onerror = () => reject(tx.error || new Error('No se pudo cerrar la copia local'));
-        tx.onabort = () => reject(tx.error || new Error('El borrado local fue cancelado'));
+        const transaction = this.db.transaction([this.storeName], 'readonly');
+        const store = transaction.objectStore(this.storeName);
+        const request = store.index('sessionId').count(trialSessionId);
+        
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
       });
     },
-    async cleanExpiredData(preservedSessionId) {
-      await this.init();
-      const cutoff = Date.now() - this.TTL_DAYS*24*60*60*1000;
+
+    async getN(n) {
+      if (!this.db) await this.init();
       return new Promise((resolve, reject) => {
-        const tx = this.db.transaction([this.storeName], 'readwrite');
-        const req = tx.objectStore(this.storeName).openCursor();
-        let count = 0;
-        req.onsuccess = event => {
-          const cursor = event.target.result;
-          if (!cursor) return;
-          const record = cursor.value;
-          if (record.sessionId !== preservedSessionId && record.createdAt < cutoff) {
-            cursor.delete(); count++;
-          }
-          cursor.continue();
-        };
-        tx.oncomplete = () => resolve(count);
-        tx.onerror = () => reject(tx.error);
+        const transaction = this.db.transaction([this.storeName], 'readonly');
+        const store = transaction.objectStore(this.storeName);
+        const request = store.index('sessionId').getAll(trialSessionId, n);
+        
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
       });
+    },
+
+    async deleteN(n) {
+      if (!this.db) await this.init();
+      const trials = await this.getN(n);
+      return new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([this.storeName], 'readwrite');
+        const store = transaction.objectStore(this.storeName);
+        
+        trials.forEach(trial => {
+          store.delete(trial.id);
+        });
+        
+        transaction.oncomplete = () => resolve(trials.length);
+        transaction.onerror = () => reject(transaction.error);
+      });
+    },
+
+    async clear() {
+      const rows = await this.getAll();
+      return this.deleteIds(rows.map(row => row.id));
     }
-  };
-  // Campos internos de reanudacion nunca se envian a Firebase/Drive.
-  const stripLocalResumeFields = row => {
-    const { __resumeCheckpoint, ...transmittable } = row;
-    return transmittable;
   };
 
   // --- Recolectar metadata del sistema ---
@@ -184,40 +300,37 @@
  
   const Uid = "C71v82VCu8YE7lyNhr02UmB8g5k1";
 
-  // TEST SHORTCUT: add ?prueba=3 to exercise all screens with three main trials.
-  // Regular URL executes the original full experiment.
-  const VALIDACION_PRUEBA_ACTIVA = new URLSearchParams(window.location.search).get('prueba') === '3';
-  const VALIDACION_PRUEBA_VERSION = 'v9-prueba3-1';
+  // Únicamente acorta la tarea para pruebas internas; se comunica con la API real.
+  const VALIDACION_PRUEBA_ACTIVA = new URLSearchParams(location.search).get('prueba') === '3';
+  const VALIDACION_PRUEBA_VERSION = 'v14-protocolo3-piloto';
   window.ValidacionPrueba = {
-    version: VALIDACION_PRUEBA_VERSION,
-    activa: VALIDACION_PRUEBA_ACTIVA,
-    practica: 3,
-    principal: null,
-    limitePrincipal: VALIDACION_PRUEBA_ACTIVA ? 3 : null,
-    get sessionId() { return window.JSPSYCH_SESSION_ID || null; }
+    activa: VALIDACION_PRUEBA_ACTIVA, version: VALIDACION_PRUEBA_VERSION,
+    practica: 3, principal: VALIDACION_PRUEBA_ACTIVA ? 3 : 480
   };
   if (VALIDACION_PRUEBA_ACTIVA) {
     document.title = '[PRUEBA 3] Validación — Experimento';
-    console.info('[Validación] MODO PRUEBA: 3 ensayos de práctica y 3 del bloque principal. Datos marcados como prueba.');
+    console.info('[Validación] Modo piloto de 3 estímulos principales; se guardan en el servidor como PRUEBA3.');
   }
 
-  const _publicStorageKeys = {"sessionId":"expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:session-id","participant":"expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:participant-number","captchaPassed":"expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:captcha-passed","resumeTrial":"expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:resume-trial","trialDatabase":"expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:trials-v1"};
+
+
+  const _publicStorageKeys = {"sessionId":"expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:session-id","participant":"expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:participant-number","captchaPassed":"expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:captcha-passed","resumeTrial":"expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:resume-trial","recoverySessions":"expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:recovery-sessions","trialDatabase":"expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:trials-v1"};
 
   
   
   {
-    const readBranchRuleValue = function fF(n,e){let t=e.column||"";if(!t&&e.componentIdx&&e.prop?t=`${e.componentIdx}_${e.prop}`:!t&&e.prop&&(t=e.prop),!t)return;if(n[t]!==void 0)return n[t];const r=t.split("_");if(r.length<2)return;const i=r[r.length-1],s=`${r.slice(0,-1).join("_")}_response`,a=n[s];if(!(!a||typeof a!="object"||Array.isArray(a)))return a[i]};
-const compareBranchValue = function pF(n,e){if(Array.isArray(n)){const s=n.includes(e.value)||n.includes(String(e.value));return e.op==="=="?s:e.op==="!="?!s:!1}const t=Number.parseFloat(String(n)),r=Number.parseFloat(String(e.value)),i=!Number.isNaN(t)&&!Number.isNaN(r);switch(e.op){case"==":return i?t===r:String(n)===String(e.value);case"!=":return i?t!==r:String(n)!==String(e.value);case">":return i&&t>r;case"<":return i&&t<r;case">=":return i&&t>=r;case"<=":return i&&t<=r;default:return!1}};
-const evaluateBranchCondition = function ehe(n,e){return Array.isArray(e.rules)?e.rules.every(t=>{const r=fF(n,t);return r!==void 0&&pF(r,t)}):!1};
-const findLatestTrialData = function the(n,e){for(let t=n.length-1;t>=0;t-=1){const r=n[t];if([r.builder_id,r.trial_id,r.loop_id].some(s=>String(s)===String(e)))return r}return null};
-const evaluateReferencedCondition = function g9e(n,e){return Array.isArray(e.rules)?e.rules.every(t=>{if(t.trialId===null||t.trialId===void 0)return!1;const r=the(n,t.trialId);if(!r)return!1;const i=fF(r,t);return i!==void 0&&pF(i,t)}):!1};
-const decideBranch = function m9e(n,e,t,r){const i=s=>{if(s!=null&&s!=="FINISH_EXPERIMENT"&&!e.some(a=>String(a)===String(s)))throw new Error("Branch destination has no configured connection")};i(r);for(const s of t)if(i(s.nextTrialId),!!ehe(n,s))return{targetId:s.nextTrialId??null,conditionId:s.id??null,customParameters:s.customParameters??null,usedDefault:!1};return{targetId:r,conditionId:null,customParameters:null,usedDefault:!0}};
-const fF = readBranchRuleValue;
-const pF = compareBranchValue;
-const ehe = evaluateBranchCondition;
-const the = findLatestTrialData;
-const g9e = evaluateReferencedCondition;
-const m9e = decideBranch;
+    const readBranchRuleValue = function lF(n,e){let t=e.column||"";if(!t&&e.componentIdx&&e.prop?t=`${e.componentIdx}_${e.prop}`:!t&&e.prop&&(t=e.prop),!t)return;if(n[t]!==void 0)return n[t];const r=t.split("_");if(r.length<2)return;const i=r[r.length-1],s=`${r.slice(0,-1).join("_")}_response`,a=n[s];if(!(!a||typeof a!="object"||Array.isArray(a)))return a[i]};
+const compareBranchValue = function uF(n,e){if(Array.isArray(n)){const s=n.includes(e.value)||n.includes(String(e.value));return e.op==="=="?s:e.op==="!="?!s:!1}const t=Number.parseFloat(String(n)),r=Number.parseFloat(String(e.value)),i=!Number.isNaN(t)&&!Number.isNaN(r);switch(e.op){case"==":return i?t===r:String(n)===String(e.value);case"!=":return i?t!==r:String(n)!==String(e.value);case">":return i&&t>r;case"<":return i&&t<r;case">=":return i&&t>=r;case"<=":return i&&t<=r;default:return!1}};
+const evaluateBranchCondition = function Wde(n,e){return Array.isArray(e.rules)?e.rules.every(t=>{const r=lF(n,t);return r!==void 0&&uF(r,t)}):!1};
+const findLatestTrialData = function Gde(n,e){for(let t=n.length-1;t>=0;t-=1){const r=n[t];if([r.builder_id,r.trial_id,r.loop_id].some(s=>String(s)===String(e)))return r}return null};
+const evaluateReferencedCondition = function X8e(n,e){return Array.isArray(e.rules)?e.rules.every(t=>{if(t.trialId===null||t.trialId===void 0)return!1;const r=Gde(n,t.trialId);if(!r)return!1;const i=lF(r,t);return i!==void 0&&uF(i,t)}):!1};
+const decideBranch = function J8e(n,e,t,r){const i=s=>{if(s!=null&&s!=="FINISH_EXPERIMENT"&&!e.some(a=>String(a)===String(s)))throw new Error("Branch destination has no configured connection")};i(r);for(const s of t)if(i(s.nextTrialId),!!Wde(n,s))return{targetId:s.nextTrialId??null,conditionId:s.id??null,customParameters:s.customParameters??null,usedDefault:!1};return{targetId:r,conditionId:null,customParameters:null,usedDefault:!0}};
+const lF = readBranchRuleValue;
+const uF = compareBranchValue;
+const Wde = evaluateBranchCondition;
+const Gde = findLatestTrialData;
+const X8e = evaluateReferencedCondition;
+const J8e = decideBranch;
     window.ExpBuilderBranching = {
       readRuleValue: readBranchRuleValue,
       compareValue: compareBranchValue,
@@ -287,8 +400,10 @@ const m9e = decideBranch;
       const manifest = currentManifest();
       const finished = decision.targetId === "FINISH_EXPERIMENT";
       const address = finished ? { enterLoopIds: [] } : resolveAddress(decision.targetId);
-      if (!manifest || !address || decision.experimentRevision !== manifest.revision) {
-        throw new Error('The saved navigation does not match this experiment revision');
+      // Authoring revisions also change for names and presentation. Validate
+      // the saved execution references against the current manifest instead.
+      if (!manifest || !address) {
+        throw new Error('The saved navigation destination does not match this experiment');
       }
       if (address.enterLoopIds.length < decision.loops.length ||
           decision.loops.some((frame, index) => address.enterLoopIds[index] !== frame.loopId)) {
@@ -300,17 +415,43 @@ const m9e = decideBranch;
           throw new Error('The saved timeline cursor is invalid');
         }
         for (const entry of state.entries) {
-          if (resolveAddress(entry.id)?.targetOwnerId !== ownerId ||
-              (entry.targetId && !resolveAddress(entry.targetId))) {
+          const entryAddress = resolveAddress(entry.id);
+          const target = entry.targetId == null ? null : resolveAddress(entry.targetId);
+          if (entryAddress?.targetOwnerId !== ownerId ||
+              (entry.targetId != null && (entryAddress.targetKind !== 'loop' ||
+                !target?.enterLoopIds.includes(String(entry.id))))) {
             throw new Error('The saved timeline destination is invalid');
           }
+        }
+        if (state.deferred && state.deferred.targetId !== 'FINISH_EXPERIMENT' &&
+            resolveAddress(state.deferred.targetId)?.targetKind !== 'trial') {
+          throw new Error('The saved timeline destination is invalid');
         }
       };
       validateQueue(decision.globalRouting.nativeTimeline, null);
       if (finished && decision.globalRouting.nativeTimeline.index !== decision.globalRouting.nativeTimeline.entries.length) {
         throw new Error('A finished route cannot contain future entries');
       }
-      for (const frame of decision.loops) validateQueue(frame.routing.nativeTimeline, frame.loopId);
+      for (const frame of decision.loops) {
+        const loop = definitions.get(frame.loopId);
+        if (loop?.kind !== 'loop' || !Array.isArray(loop.node.timeline_variables) ||
+            frame.order.length !== loop.node.timeline_variables.length ||
+            frame.order.some(index => index >= loop.node.timeline_variables.length)) {
+          throw new Error('The saved loop order does not match its stimuli');
+        }
+        // The generated getter validates saved repetitions before any trial runs.
+        void loop.node.repetitions;
+        validateQueue(frame.routing.nativeTimeline, frame.loopId);
+      }
+      if (!finished) {
+        const queues = [decision.globalRouting.nativeTimeline, ...decision.loops.map(frame => frame.routing.nativeTimeline)];
+        for (const [depth, queue] of queues.entries()) {
+          const expected = address.enterLoopIds[depth] ?? String(decision.targetId);
+          if (queue.entries[queue.index]?.id !== expected) {
+            throw new Error('The saved timeline cursor does not reach its destination');
+          }
+        }
+      }
     };
     const acknowledgeBranch = data => {
       const request = pendingBranch;
@@ -397,8 +538,13 @@ const m9e = decideBranch;
       }
       return frame.order.slice(frame.cursor);
     };
-    const remainingLoopRepetitions = (loopId, repetitions) =>
-      Math.max(0, repetitions - (restoredLoops.get(String(loopId))?.repetition ?? 0));
+    const remainingLoopRepetitions = (loopId, repetitions) => {
+      const saved = restoredLoops.get(String(loopId));
+      if (saved && saved.repetition >= repetitions) {
+        throw new Error('The saved loop repetition no longer exists');
+      }
+      return repetitions - (saved?.repetition ?? 0);
+    };
     const startLoop = (loopId, readRouting, writeRouting) => {
       const key = String(loopId);
       const frame = preparedLoops.get(key);
@@ -667,7 +813,7 @@ const m9e = decideBranch;
     const registerTrial = (id, node) => definitions.set(String(id), { kind: 'trial', node });
     const registerLoop = (id, node, metadata) => definitions.set(String(id), { kind: 'loop', node, metadata });
     const attach = (jsPsych, timeline) => {
-      if (!definitions.size) return;
+      if (!definitions.size && !deferredResume) return;
       if (!currentManifest()?.scopes) throw new Error('Unsupported execution manifest');
       nativeRuntime = jsPsych;
       nativeResume = deferredResume;
@@ -854,17 +1000,6 @@ const m9e = decideBranch;
   }
 
   // Recuperar sessionId de localStorage o crear uno nuevo
-  // Evitar que una sesión piloto reanude accidentalmente una sesión de producción,
-  // o viceversa. Se recomienda iniciar en una ventana de incógnito nueva.
-  const _pilotStorageKey = _publicStorageKeys.sessionId + ':pilot-mode';
-  const _existingSession = localStorage.getItem(_publicStorageKeys.sessionId);
-  const _existingPilotMode = localStorage.getItem(_pilotStorageKey) === '3';
-  // El modo piloto y el modo real NO se pueden mezclar, pero el visitante
-  // puede comenzar una sesion nueva sin perder los registros locales anteriores.
-  if (!_existingSession) {
-    if (VALIDACION_PRUEBA_ACTIVA) localStorage.setItem(_pilotStorageKey, '3');
-    else localStorage.removeItem(_pilotStorageKey);
-  }
   let trialSessionId = localStorage.getItem(_publicStorageKeys.sessionId);
   let storedParticipantNumber = localStorage.getItem(_publicStorageKeys.participant);
   let isResuming = false;
@@ -885,142 +1020,45 @@ const m9e = decideBranch;
     isResuming = true;
   }
 
-  // Si se vuelve a entrar, ofrecer reanudar o empezar con otro UUID.
-  // La eleccion se hace antes de createSession y antes de enviar respuestas.
-  function askForSessionChoice({ canResume, localCount, mismatch, legacy }) {
-    _hideLoading();
-    return new Promise(resolve => {
-      const host = document.createElement('div');
-      host.id = 'juicios-resume-choice';
-      host.setAttribute('role', 'dialog');
-      host.setAttribute('aria-modal', 'true');
-      host.setAttribute('aria-label', 'Recuperar sesion');
-      host.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:#f5f6f7;display:flex;align-items:center;justify-content:center;padding:16px;font-family:system-ui,sans-serif;color:#172a35;overflow:auto';
-      const section = document.createElement('section');
-      section.style.cssText = 'background:white;border:1px solid #d7dfe3;border-radius:14px;padding:24px;width:min(100%,520px);box-shadow:0 10px 30px #0001';
-      const title = document.createElement('h2');
-      title.textContent = canResume ? 'Encontramos una sesión sin terminar' : 'Puedes comenzar una sesión nueva';
-      title.style.cssText = 'font-size:22px;line-height:1.3;margin:0 0 12px';
-      const description = document.createElement('p');
-      description.style.cssText = 'font-size:15px;line-height:1.55;margin:0 0 18px';
-      description.textContent = canResume
-        ? `Hay ${localCount} respuestas guardadas en este navegador. Si continúas, conservarás tu sesión y el orden original de los ensayos.`
-        : mismatch
-          ? 'La sesión guardada pertenece a otro modo (prueba o estudio). Para evitar mezclar datos, inicia una sesión nueva.'
-          : legacy
-            ? 'Existe una sesión anterior, pero fue creada sin una copia local recuperable. Sus envíos remotos no se borrarán. Puedes comenzar nuevamente desde el principio.'
-            : 'No se pudo verificar un punto de reanudación completo. Los datos locales anteriores no se borrarán al comenzar de nuevo.';
-      section.append(title, description);
-      function addButton(text, action, primary) {
-        const button = document.createElement('button');
-        button.textContent = text;
-        button.type = 'button';
-        button.style.cssText = 'display:block;width:100%;min-height:48px;padding:12px 14px;margin:10px 0 0;cursor:pointer;font:600 15px system-ui,sans-serif;border-radius:8px;border:1px solid #37546b;background:' + (primary ? '#264d64;color:white' : 'white;color:#264d64');
-        button.addEventListener('click', () => { host.remove(); resolve(action); });
-        section.appendChild(button);
-      }
-      if (canResume) addButton('Continuar donde me quedé', 'resume', true);
-      addButton('Empezar desde el principio (sesión nueva)', 'new', !canResume);
-      if (localCount) {
-        const note = document.createElement('p');
-        note.style.cssText = 'font-size:12px;color:#54616d;line-height:1.5;margin:16px 0 0';
-        note.textContent = 'Empezar de nuevo no elimina las respuestas de la sesión anterior. Los registros locales antiguos se conservan temporalmente.';
-        section.appendChild(note);
-      }
-      host.appendChild(section);
-      document.body.appendChild(host);
-    });
-  }
-
-  function startFreshSession() {
-    trialSessionId = (crypto.randomUUID ? crypto.randomUUID() :
-      'session-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2));
-    storedParticipantNumber = null;
-    isResuming = false;
-    window.JSPSYCH_SESSION_ID = trialSessionId;
-    localStorage.removeItem(_publicStorageKeys.sessionId);
-    localStorage.removeItem(_publicStorageKeys.participant);
-    localStorage.removeItem(_publicStorageKeys.resumeTrial);
-    localStorage.removeItem(`expbuilder:public:${window.JSPSYCH_EXPERIMENT_ID}:batch-ack-v2`);
-    if (VALIDACION_PRUEBA_ACTIVA) localStorage.setItem(_pilotStorageKey, '3');
-    else localStorage.removeItem(_pilotStorageKey);
-  }
-
   // Set JSPSYCH_SESSION_ID immediately so file uploads always have the current sessionId
   window.JSPSYCH_SESSION_ID = trialSessionId;
+  // Keep the identity even if registration commits but its HTTP response is lost.
+  localStorage.setItem(_publicStorageKeys.sessionId, trialSessionId);
 
   let participantNumber;
 
-  async function createSession() {
-    try {
-      const _preSessionName = !_sessionNameHasDynamic() ? _generateSessionName(null) : null;
-      const res = await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "*/*" },
-        body: JSON.stringify({
-          experimentID: "7f4f984c-de8c-47f4-8144-b6284a011f97",
-          sessionId: trialSessionId,
-          uid: Uid,
-          batchSize: 1,
-          ...(_preSessionName
-            ? { sessionName: (VALIDACION_PRUEBA_ACTIVA ? 'PRUEBA3-' : '') + _preSessionName }
-            : (VALIDACION_PRUEBA_ACTIVA ? { sessionName: 'PRUEBA3-' + trialSessionId } : {}))
-        }),
-      });
-      
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('Error creating session:', errorText);
-        throw new Error(`Failed to create session: ${res.status} - ${errorText}`);
-      }
-      
-      const result = await res.json();
-      console.log('Session created:', result);
-      
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to create session');
-      }
-      
-      return result.participantNumber;
-    } catch (error) {
-      console.error('Error in createSession:', error);
-      alert('Error creating session: ' + error.message);
-      throw error;
+  
+  const _publicSettingsError = function Kde(n){if(!n||typeof n!="object"||Array.isArray(n))return"Complete public settings are required.";function e(a,o){return a!==null&&typeof a=="object"&&!Array.isArray(a)&&Object.keys(a).length===o.length&&Object.keys(a).every(l=>o.includes(l))}const t=(a,o,l)=>typeof a=="number"&&Number.isSafeInteger(a)&&a>=o&&a<=l,{batchConfig:r,recruitmentConfig:i,captchaConfig:s}=n;return e(r,["useIndexedDB","batchSize","resumeTimeoutMinutes"])?typeof r.useIndexedDB!="boolean"?"Use IndexedDB must be a boolean.":t(r.batchSize,0,Number.MAX_SAFE_INTEGER)?t(r.resumeTimeoutMinutes,1,1440)?e(i,["platform","prolificCompletionCode"])?typeof i.platform!="string"||!["none","prolific","mturk"].includes(i.platform)?"Recruitment platform must be none, prolific or mturk.":typeof i.prolificCompletionCode!="string"?"Prolific Completion Code must be a string.":e(s,["enabled","provider","siteKey"])?typeof s.enabled!="boolean"?"CAPTCHA enabled must be a boolean.":typeof s.provider!="string"||!["hcaptcha","recaptcha"].includes(s.provider)?"CAPTCHA provider must be hcaptcha or recaptcha.":typeof s.siteKey!="string"?"CAPTCHA Site Key must be a string.":s.enabled&&!s.siteKey.trim()?"CAPTCHA Site Key is required when CAPTCHA is enabled.":null:"Complete CAPTCHA configuration is required.":"Complete recruitment configuration is required.":"Resume Timeout must be an integer from 1 to 1440 minutes.":"Batch Size must be a nonnegative safe integer.":"Complete batch configuration is required."};
+  const _publicWriter = { connectionId: crypto.randomUUID(), writeToken: crypto.randomUUID() + crypto.randomUUID(), connectionGeneration: 0 };
+  async function createSession(action = 'createSession', renewConnection = false) {
+    const sessionName = !_sessionNameHasDynamic() ? _generateSessionName(null) : null;
+    const response = await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, experimentID: "7f4f984c-de8c-47f4-8144-b6284a011f97", sessionId: trialSessionId,
+        sessionProtocolVersion: 3,
+        ..._publicWriter, renewConnection, metadata, ...(sessionName && { sessionName: (VALIDACION_PRUEBA_ACTIVA ? 'PRUEBA3-' : '') + sessionName }) })
+    });
+    const result = await response.json();
+    if (result?.decision && result.sessionProtocolVersion === 3) {
+      const settingsError = _publicSettingsError(result.configuration);
+      if (settingsError) throw new Error('Invalid session settings: ' + settingsError);
+      return result;
     }
+    throw new Error(result?.message || 'This publication requires the current session service');
   }
 
-  // El contador se conoce después de crear la sesión en el servidor.
-  // El nombre es METADATO: el identificador UUID se mantiene estable.
-  const _sessionNameState = { expected: null, confirmed: false, error: null };
+
   async function _updateSessionName(sessionId, sessionName) {
-    _sessionNameState.expected = sessionName;
-    _sessionNameState.confirmed = false;
-    _sessionNameState.error = null;
     try {
-      const response = await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
+      await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "updateSessionName", experimentID: "7f4f984c-de8c-47f4-8144-b6284a011f97", sessionId, sessionName }),
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const raw = await response.text();
-      if (raw.trim()) {
-        let payload = null;
-        try { payload = JSON.parse(raw); } catch (_) { /* Puede responder texto. */ }
-        if (payload && payload.success === false) {
-          throw new Error(payload.message || 'El servidor rechazó el nombre');
-        }
-      }
-      _sessionNameState.confirmed = true;
-      return true;
-    } catch (e) {
-      _sessionNameState.error = String(e?.message || e);
-      console.warn('[Juicios morales] Nombre de sesión no confirmado:', _sessionNameState.error);
-      // Un error al asignar el nombre no debe impedir responder ni guardar ensayos.
-      return false;
-    }
+    } catch (e) {}
   }
 
+  
   // --- Loading overlay ---
   // Read body background at runtime to match canvas styles injected via <style>
   const _bgColor = (getComputedStyle(document.body).backgroundColor || '').trim();
@@ -1036,7 +1074,7 @@ const m9e = decideBranch;
   ].join(';');
   _loadingOverlay.innerHTML = `
     <div style="width:48px;height:48px;border:5px solid #e0e0e0;border-top-color:#555;border-radius:50%;animation:_spin 0.8s linear infinite"></div>
-    <p id="jspsych-loading-msg" style="margin:0;color:#555;font-size:15px">Preparando el experimento…</p>
+    <p id="jspsych-loading-msg" style="margin:0;color:#555;font-size:15px">Initializing experiment…</p>
     <style>@keyframes _spin{to{transform:rotate(360deg)}}</style>
   `;
   document.body.appendChild(_loadingOverlay);
@@ -1078,8 +1116,8 @@ const m9e = decideBranch;
         <circle cx="32" cy="32" r="30" fill="#22c55e"/>
         <polyline points="18,33 28,43 46,22" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <p style="margin:0;color:#111;font-size:18px;font-weight:600">Experimento completado. ¡Gracias!</p>
-      <p style="margin:0;color:#555;font-size:14px">Ya puedes cerrar esta ventana.</p>
+      <p style="margin:0;color:#111;font-size:18px;font-weight:600">Experiment complete. Thank you!</p>
+      <p style="margin:0;color:#555;font-size:14px">You can now close this window.</p>
     `;
     document.body.appendChild(overlay);
   }
@@ -1097,7 +1135,7 @@ const m9e = decideBranch;
     ].join(';');
     overlay.innerHTML = `
       <div style="width:48px;height:48px;border:5px solid #e0e0e0;border-top-color:#555;border-radius:50%;animation:_spin 0.8s linear infinite"></div>
-      <p id="jspsych-loading-msg" style="margin:0;color:#555;font-size:15px">${msg || 'Espera un momento…'}</p>
+      <p id="jspsych-loading-msg" style="margin:0;color:#555;font-size:15px">${msg || 'Please wait…'}</p>
       <style>@keyframes _spin{to{transform:rotate(360deg)}}</style>
     `;
     document.body.appendChild(overlay);
@@ -1187,94 +1225,206 @@ const m9e = decideBranch;
 
 
   (async () => {
-    // --- CAPTCHA gate (hCaptcha / reCAPTCHA) ---
-    if (false && "" && !sessionStorage.getItem(_publicStorageKeys.captchaPassed)) {
-      const _loadingEl = document.getElementById('jspsych-loading-overlay');
-      if (_loadingEl) _loadingEl.style.display = 'none';
-      await _showCaptchaGate("", "hcaptcha");
-      sessionStorage.setItem(_publicStorageKeys.captchaPassed, '1');
-      if (_loadingEl) _loadingEl.style.display = 'flex';
-      _setLoadingMsg('Creando sesión…');
+    _setLoadingMsg('Creating session…');
+    let _publicSessionState = await createSession();
+    if (_publicSessionState.decision && !['resume_allowed', 'session_expired', 'session_completed'].includes(_publicSessionState.decision)) {
+      throw new Error('Session cannot resume: ' + _publicSessionState.decision + '. Your pending responses are preserved.');
+    }
+    const effectiveBatch = _publicSessionState.configuration.batchConfig;
+    const BATCH_CONFIG = { size: effectiveBatch.batchSize, useIndexedDB: effectiveBatch.useIndexedDB,
+      resumeTimeoutMinutes: effectiveBatch.resumeTimeoutMinutes, currentBatchNumber: 0 };
+    // Esperar e inicializar Firebase
+    _setLoadingMsg('Loading resources…');
+    await waitForFirebase();
+    if (!window.firebase.apps.length) {
+      window.firebase.initializeApp(firebaseConfig);
+    }
+    const db = window.firebase.database();
+
+
+    function _publicRecoveryIds() {
+      try { const ids = JSON.parse(localStorage.getItem(_publicStorageKeys.recoverySessions) || '[]');
+        return Array.isArray(ids) ? ids.filter(id => typeof id === 'string') : []; } catch (_) { return []; }
+    }
+    function _showPublicExpiredNotice() {
+      if (_publicSessionState.lifecycle !== 'expired') return;
+      let panel = document.getElementById('expbuilder-expired-session');
+      if (!panel) {
+        panel = document.createElement('div'); panel.id = 'expbuilder-expired-session';
+        panel.style.cssText = 'position:fixed;top:20px;left:20px;right:20px;z-index:2147483647;padding:16px;background:white;color:#222;font-family:sans-serif';
+        panel.textContent = 'This session has ended. Earlier responses are being recovered and saved to their original session.';
+        document.body.append(panel);
+      }
+      _offerNewPublicSession(panel);
+    }
+    function _offerNewPublicSession(panel) {
+      if (_publicSessionState.lifecycle !== 'expired') return;
+      const existing = panel.querySelector('[data-new-session]');
+      if (existing) { existing.disabled = publicResponses.some(item => !item.persisted); return; }
+      const button = document.createElement('button'); button.dataset.newSession = 'true';
+      button.textContent = 'Start a new participation';
+      button.disabled = publicResponses.some(item => !item.persisted);
+      button.onclick = () => {
+        if (publicResponses.some(item => !item.persisted)) return;
+        const ids = [...new Set([..._publicRecoveryIds(), trialSessionId])];
+        localStorage.setItem(_publicStorageKeys.recoverySessions, JSON.stringify(ids));
+        localStorage.setItem(_publicStorageKeys.sessionId, crypto.randomUUID());
+        localStorage.removeItem(_publicStorageKeys.participant);
+        localStorage.removeItem(_publicStorageKeys.resumeTrial);
+        sessionStorage.removeItem(_publicStorageKeys.captchaPassed);
+        window.location.reload();
+      };
+      panel.append(document.createElement('br'), button);
+    }
+    async function _recoverOlderPublicSessions() {
+      for (const sessionId of _publicRecoveryIds()) {
+        if (sessionId === trialSessionId) continue;
+        const post = async body => {
+          const response = await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ experimentID: "7f4f984c-de8c-47f4-8144-b6284a011f97", sessionId, ...body }) });
+          if (!response.ok) throw new Error('Earlier session recovery remains pending');
+          const result = await response.json();
+          if (!result.success || result.experimentID !== "7f4f984c-de8c-47f4-8144-b6284a011f97" || result.sessionId !== sessionId) throw new Error('Invalid earlier session receipt');
+          return result;
+        };
+        const status = await post({ action: 'sessionStatus' });
+        if (!['completed', 'expired'].includes(status.lifecycle)) continue;
+        const rows = await TrialDB.getAll(sessionId);
+        for (let offset = 0; offset < rows.length;) {
+          const selected = []; let bytes = 0;
+          while (offset < rows.length && selected.length < 100) {
+            const row = rows[offset], length = new TextEncoder().encode(JSON.stringify(row)).byteLength + 256;
+            if (selected.length && bytes + length > 900000) break;
+            selected.push(row); bytes += length; offset++;
+          }
+          const events = await Promise.all(selected.map(_publicEventEnvelope));
+          const result = await post({ action: 'recoverEvents', data: { protocolVersion: 1, events } });
+          const expected = new Map(events.map(event => [event.eventId, event]));
+          if (!Array.isArray(result.acknowledged) || result.acknowledged.length !== events.length) throw new Error('Invalid recovery acknowledgement');
+          for (const receipt of result.acknowledged) {
+            const event = expected.get(receipt.eventId);
+            if (!event || event.sequence !== receipt.sequence || event.payloadHash !== receipt.payloadHash) throw new Error('Recovery acknowledgement mismatch');
+            expected.delete(receipt.eventId);
+          }
+          await TrialDB.deleteIds(selected.map(row => row.id));
+        }
+        const result = await post({ action: 'sessionStatus' });
+        if (result.export?.confirmed && result.export.confirmedRevision === result.export.requestedRevision) {
+          localStorage.setItem(_publicStorageKeys.recoverySessions, JSON.stringify(_publicRecoveryIds().filter(id => id !== sessionId)));
+        }
+      }
     }
 
 
-    // --- v13.5: almacenamiento de respuestas y reanudacion en el mismo navegador ---
-    const BATCH_CONFIG = {
-      size: 1,
-      currentBatchNumber: 0,
-      resumeTimeoutMinutes: 1, // ajuste del servidor, NO plazo de expiracion local
-      useIndexedDB: true // Solo IndexedDB local: conserva respuestas y reanudacion
-    };
-    // v13.7: el servidor de ExpBuilder consolida los CSV parciales en Drive
-    // al recibir useIndexedDB=false en los METADATOS de Firebase. Este valor
-    // es independiente del almacenamiento IndexedDB local activado arriba.
-    // Confirmado en prueba real: archivo parcial, reanudacion y actualizacion
-    // del mismo archivo al finalizar. No cambiar BATCH_CONFIG.useIndexedDB.
-    const FIREBASE_SESSION_USE_INDEXEDDB = false;
-    await TrialDB.init();
-    // No borrar las sesiones incompletas mientras las estamos recuperando.
-    await TrialDB.cleanExpiredData(trialSessionId);
-    const BATCH_ACK_KEY = `expbuilder:public:${window.JSPSYCH_EXPERIMENT_ID}:batch-ack-v2`;
-    let resumeRouteDecision = null;
-    let resumedSession = false;
-    let restoredLastResponse = null;
-    const previousRows = isResuming ? await TrialDB.getSession(trialSessionId) : [];
-    const previousCheckpoint = previousRows.length
-      ? previousRows[previousRows.length - 1].__resumeCheckpoint
-      : null;
-    const previousResumeRaw = localStorage.getItem(_publicStorageKeys.resumeTrial);
-    let parsedResume = previousCheckpoint ? _resolveResumeBranch(JSON.stringify(previousCheckpoint)) : null;
-    // Compatibilidad con copias IndexedDB creadas por la v13.1.
-    if (!parsedResume && previousRows.length && previousResumeRaw) {
-      parsedResume = _resolveResumeBranch(previousResumeRaw);
+    let _publicConnected = false, _publicRuntimeReady = false, _publicReconnecting = null;
+    let sessionRef = null, _publicRetryResume = () => {};
+    function _publicWriterPermission() { return { ..._publicWriter }; }
+    function _adoptPublicClosure(result) {
+      if (['resume_required', 'session_in_use'].includes(result.decision)) {
+        _publicConnected = false;
+        if (_publicRuntimeReady) jsPsych.pauseExperiment();
+      }
+      if (!['expired', 'completed'].includes(result.lifecycle)) return false;
+      _publicSessionState = { ..._publicSessionState, ...result };
+      _publicConnected = false;
+      if (_publicRuntimeReady) {
+        publicRecoveryMode = true; publicClosing = true; jsPsych.pauseExperiment();
+        setTimeout(() => publicFinishHandler(), 0);
+      }
+      return true;
     }
-    const modeMismatch = Boolean(isResuming && _existingPilotMode !== VALIDACION_PRUEBA_ACTIVA);
-    const canResume = Boolean(isResuming && !modeMismatch && previousRows.length && parsedResume);
-    if (isResuming) {
-      const choice = await askForSessionChoice({
-        canResume, localCount: previousRows.length,
-        mismatch: modeMismatch, legacy: previousRows.length === 0
+    async function _connectPublicSession(renew = false) {
+      _publicConnected = false;
+      if (renew) _publicSessionState = await createSession('resumeSession', true);
+      if (_adoptPublicClosure(_publicSessionState)) return;
+      if (_publicSessionState.decision !== 'resume_allowed') throw new Error('Session cannot resume: ' + _publicSessionState.decision);
+      const connection = _publicSessionState.connection;
+      _publicWriter.connectionGeneration = connection.generation;
+      sessionRef = db.ref('session_connections/7f4f984c-de8c-47f4-8144-b6284a011f97/' + trialSessionId + '/' + _publicWriter.connectionId);
+      const presence = { generation: connection.generation, token: _publicWriter.writeToken,
+        changedAt: window.firebase.database.ServerValue.TIMESTAMP };
+      // Registration must finish before making the connection visible.
+      await sessionRef.onDisconnect().set({ ...presence, connected: false });
+      if (connection.phase !== 'active') await sessionRef.set({ ...presence, connected: true });
+      const activated = await createSession('activateConnection');
+      if (_adoptPublicClosure(activated)) return;
+      if (activated.decision !== 'resume_allowed' || activated.connection?.phase !== 'active') throw new Error('Connection was not confirmed');
+      _publicSessionState = activated;
+      _publicConnected = true;
+    }
+    async function _retryPublicPresence() {
+      if (publicClosing) return;
+      await _connectPublicSession(true);
+      if (!_publicConnected) return;
+      await _drainPublicResponses();
+      if (BATCH_CONFIG.useIndexedDB) await _flushPublicBatches();
+      _hideLoading(); _publicRetryResume();
+    }
+    function _observePublicConnection() {
+      _publicRuntimeReady = true;
+      const resume = jsPsych.resumeExperiment.bind(jsPsych);
+      let waitingToResume = false, first = true;
+      jsPsych.resumeExperiment = () => {
+        if (_publicConnected && !publicClosing) { waitingToResume = false; resume(); }
+        else waitingToResume = true;
+      };
+      _publicRetryResume = () => { if (waitingToResume) jsPsych.resumeExperiment(); };
+      db.ref('.info/connected').on('value', snapshot => {
+        if (first) { first = false; if (snapshot.val() === true) return; }
+        if (snapshot.val() !== true) {
+          if (publicClosing) return;
+          _publicConnected = false; jsPsych.pauseExperiment(); waitingToResume = true;
+          _showLoading('Connection lost. Waiting to resume this session…');
+          return;
+        }
+        if (publicClosing || _publicReconnecting) return;
+        _publicReconnecting = _retryPublicPresence().catch(_publicPersistenceError).finally(() => { _publicReconnecting = null; });
       });
-      if (choice === 'resume' && canResume) {
-        resumeRouteDecision = parsedResume;
-        resumedSession = true;
-        restoredLastResponse = previousRows[previousRows.length - 1]?.response ?? null;
-      } else {
-        // Un UUID NUEVO, sin tocar la copia anterior ni sus envios remotos.
-        startFreshSession();
-      }
     }
-    window.JuiciosReanudacionDiagnostico = {
-      version: '13.7', get sessionId() { return trialSessionId; },
-      get recovered() { return resumedSession; },
-      get recoveredRows() { return resumedSession ? previousRows.length : 0; },
-      get testMode() { return VALIDACION_PRUEBA_ACTIVA; },
-      async localRows() { return (await TrialDB.getSession(trialSessionId)).length; }
-    };
-    let batchAck = { sessionId: trialSessionId, lastAckId: 0, batchNumber: 0 };
-    try {
-      const previous = JSON.parse(localStorage.getItem(BATCH_ACK_KEY) || 'null');
-      if (previous && previous.sessionId === trialSessionId) {
-        batchAck = { sessionId: trialSessionId,
-          lastAckId: Number(previous.lastAckId) || 0,
-          batchNumber: Number(previous.batchNumber) || 0 };
-      }
-    } catch (_) { /* La ausencia de ACK no elimina respuestas. */ }
-    BATCH_CONFIG.currentBatchNumber = batchAck.batchNumber;
 
-    // SIEMPRE llamar a createSession (para crear documento en Firestore)
-    // El backend maneja sesiones duplicadas (409) y las retorna correctamente
-    _setLoadingMsg('Creando sesión…');
-    const savedNumber = Number(storedParticipantNumber);
-    participantNumber = (resumedSession && Number.isInteger(savedNumber) && savedNumber > 0)
-      ? savedNumber : await createSession();
+    if (_publicSessionState.sessionProtocolVersion === 3) await _connectPublicSession();
+
+
+    const effectiveCaptcha = _publicSessionState.configuration.captchaConfig;
+    if (!['completed', 'expired'].includes(_publicSessionState.lifecycle) && effectiveCaptcha.enabled && effectiveCaptcha.siteKey
+        && !sessionStorage.getItem(_publicStorageKeys.captchaPassed)) {
+      const loading = document.getElementById('jspsych-loading-overlay');
+      if (loading) loading.style.display = 'none';
+      await _showCaptchaGate(effectiveCaptcha.siteKey, effectiveCaptcha.provider);
+      sessionStorage.setItem(_publicStorageKeys.captchaPassed, '1');
+      if (loading) loading.style.display = 'flex';
+    }
+    if (BATCH_CONFIG.useIndexedDB) await TrialDB.init();
+    participantNumber = _publicSessionState.participantNumber;
+    if (typeof participantNumber !== 'number' || !Number.isFinite(participantNumber)) {
+      throw new Error('participantNumber not assigned');
+    }
+    if (BATCH_CONFIG.useIndexedDB) await TrialDB.syncManifest(_publicSessionState.receivedEvents || []);
+    const _savedLocalState = BATCH_CONFIG.useIndexedDB ? await TrialDB.getState() : null;
+    const _serverSequence = _publicSessionState.resumeCheckpointSequence ?? -1;
+    const _backedCheckpoint = _savedLocalState?.checkpoint && (_savedLocalState.checkpointSequence ?? -1) >= _serverSequence
+      ? _savedLocalState.checkpoint : _publicSessionState.resumeCheckpoint;
+    let _cachedCheckpoint = null;
+    try { _cachedCheckpoint = JSON.parse(localStorage.getItem(_publicStorageKeys.resumeTrial) || 'null'); } catch (_) {}
+    const _canKeepStartCursor = _backedCheckpoint && _cachedCheckpoint
+      && _canonicalPublicEvent(_cachedCheckpoint.completed) === _canonicalPublicEvent(_backedCheckpoint.completed);
+    if (['completed', 'expired'].includes(_publicSessionState.lifecycle) || !_backedCheckpoint) {
+      localStorage.removeItem(_publicStorageKeys.resumeTrial);
+    } else if (!_canKeepStartCursor) {
+      localStorage.setItem(_publicStorageKeys.resumeTrial, JSON.stringify(_backedCheckpoint));
+    }
+
+    const resumeRaw = localStorage.getItem("expbuilder:public:7f4f984c-de8c-47f4-8144-b6284a011f97:resume-trial");
+    const resumeRouteDecision = isResuming && resumeRaw ? _resolveResumeBranch(resumeRaw) : null;
+    if (isResuming && resumeRaw && !resumeRouteDecision) throw new Error('The saved navigation checkpoint is invalid');
+  
 
     // If session name has counter token, generate final name now that participantNumber is known
-    if (!resumedSession && _sessionNameHasDynamic() && typeof participantNumber === 'number' && !isNaN(participantNumber)) {
+    if (_sessionNameHasDynamic() && typeof participantNumber === 'number' && !isNaN(participantNumber)) {
       const _finalName = _generateSessionName(participantNumber);
       if (_finalName) {
         // Session IDs are durable identities. The generated name is display metadata.
-        await _updateSessionName(trialSessionId, (VALIDACION_PRUEBA_ACTIVA ? 'PRUEBA3-' : '') + _finalName);
+        _updateSessionName(trialSessionId, (VALIDACION_PRUEBA_ACTIVA ? 'PRUEBA3-' : '') + _finalName);
       }
     }
 
@@ -1283,44 +1433,10 @@ const m9e = decideBranch;
     localStorage.setItem(_publicStorageKeys.participant, participantNumber.toString());
 
     if (typeof participantNumber !== "number" || isNaN(participantNumber)) {
-      alert("No se pudo asignar el número de participante. Intenta nuevamente.");
+      alert("The participant number is not assigned. Please, wait.");
       throw new Error("participantNumber not assigned");
     }
     
-    // Esperar e inicializar Firebase
-    _setLoadingMsg('Cargando recursos…');
-    await waitForFirebase();
-    if (!window.firebase.apps.length) {
-      window.firebase.initializeApp(firebaseConfig);
-    }
-    const db = window.firebase.database();
-
-    // --- Configurar onDisconnect para finalizar sesión automáticamente ---
-    const sessionRef = db.ref('sessions/7f4f984c-de8c-47f4-8144-b6284a011f97/' + trialSessionId);
-    // update, no set: al reanudar NO borrar respuestas guardadas en la sesion.
-    await sessionRef.update({
-      connected: true,
-      experimentID: '7f4f984c-de8c-47f4-8144-b6284a011f97',
-      sessionId: trialSessionId,
-      participantNumber: participantNumber,
-      ...(resumedSession ? { resumedAt: window.firebase.database.ServerValue.TIMESTAMP } :
-        { startedAt: window.firebase.database.ServerValue.TIMESTAMP }),
-      storage: 'googledrive',
-      storageProvider: 'googledrive',
-      state: resumedSession ? 'resumed' : 'initiated',
-      lastUpdate: window.firebase.database.ServerValue.TIMESTAMP,
-      metadata: metadata,
-      resumeTimeoutMinutes: BATCH_CONFIG.resumeTimeoutMinutes,
-      useIndexedDB: FIREBASE_SESSION_USE_INDEXEDDB
-    });
-    
-    sessionRef.onDisconnect().update({
-      connected: false,
-      state: 'disconnected',
-      disconnectedAt: window.firebase.database.ServerValue.TIMESTAMP,
-      storage: 'googledrive'
-    });
-
     const evaluateCondition = window.ExpBuilderBranching.evaluateCondition;
 
     if (resumeRouteDecision !== null) {
@@ -1342,347 +1458,239 @@ const m9e = decideBranch;
     const _mturkTurkSubmitTo = _urlParams.get('turkSubmitTo');
     const _mturkIsPreview = _mturkAssignmentID === 'ASSIGNMENT_ID_NOT_AVAILABLE';
 
-    
+    const effectiveRecruitment = _publicSessionState.configuration.recruitmentConfig;
+    // MTurk preview mode: block experiment from starting
+    if (effectiveRecruitment.platform === 'mturk' && _mturkIsPreview) {
+      document.getElementById('jspsych-container').innerHTML =
+        '<div style="padding:40px;text-align:center;font-family:sans-serif">' +
+        '<h2>Preview</h2>' +
+        '<p>Accept the HIT to start the experiment.</p>' +
+        '</div>';
+      return;
+    }
 
-    // Guardado incremental: 1 ensayo por envio y copia local persistente en IndexedDB.
-    // El ACK de apiData confirma recepcion por la API, no necesariamente que
-    // Google Drive ya haya creado/actualizado el CSV.
-    // apiDataComplete al terminar consolida la sesion y valida el archivo final.
-    let batchQueue = Promise.resolve();
-    let lastBatchError = null;
-    const PERSIST_ID = window.JSPSYCH_EXPERIMENT_ID;
-    const BATCH_ENDPOINT = 'https://us-central1-test-e4cf9.cloudfunctions.net/apiData';
+    const pendingBatchSaves = [];
 
-    // Guardado remoto adicional: cada respuesta queda en Realtime Database
-    // independientemente de la consolidacion final del CSV en Google Drive.
-    // Los permisos reales dependen de las reglas del servidor Firebase; comprobarlos.
-    const checkpointRef = sessionRef.child('trial_checkpoints');
-    let checkpointQueue = Promise.resolve();
-    let lastCheckpointError = null;
-    let checkpointConfirmed = 0;
-    let lastCheckpointAck = null;
-    const failedCheckpoints = new Map();
-    function checkpointKey(row) {
-      if (!Number.isSafeInteger(row.id) || row.id <= 0) throw new Error('La respuesta no tiene id local valido');
-      return 'r' + String(row.id).padStart(7, '0');
-    }
-    async function saveCheckpoint(row) {
-      const key = checkpointKey(row);
-      const payload = { ...JSON.parse(JSON.stringify(stripLocalResumeFields(row))), sessionId: trialSessionId,
-        experimentID: PERSIST_ID, checkpointVersion: 1,
-        savedAt: window.firebase.database.ServerValue.TIMESTAMP };
-      // Establecer un ID estable por registro: un reintento sobreescribe ese
-      // registro y no crea respuestas duplicadas.
-      await checkpointRef.child(key).set(payload);
-      failedCheckpoints.delete(key);
-      checkpointConfirmed++;
-      lastCheckpointAck = { key, trialIndex: row.trial_index,
-        at: new Date().toISOString() };
-      lastCheckpointError = null;
-    }
-    function queueCheckpoint(row) {
-      const key = checkpointKey(row);
-      const promise = checkpointQueue.then(() => saveCheckpoint(row));
-      checkpointQueue = promise.catch(err => {
-        failedCheckpoints.set(key, row);
-        lastCheckpointError = err.message || String(err);
-        console.warn('[Juicios morales] Respaldo Firebase pendiente:', key, lastCheckpointError);
-      });
-      return promise;
-    }
-    // Reenviar las respuestas existentes al reanudar es seguro porque cada
-    // registro conserva su clave estable (set en lugar de push).
-    if (resumedSession) {
-      (await TrialDB.getAll()).filter(row => row.sessionId === trialSessionId)
-        .forEach(row => { void queueCheckpoint(row).catch(() => {}); });
-    }
-    async function drainCheckpoints() {
-      await checkpointQueue;
-      // Un reintento al finalizar sin perder la copia local.
-      for (const row of Array.from(failedCheckpoints.values())) {
-        try { await queueCheckpoint(row); }
-        catch (_) { /* Drive completo es la segunda via de recuperacion. */ }
-      }
-      await checkpointQueue;
-    }
-    window.JuiciosCheckpointDiagnostics = {
-      version:'11.0', path: 'sessions/' + PERSIST_ID + '/' + trialSessionId + '/trial_checkpoints',
-      get firebaseConfirmed() { return checkpointConfirmed; },
-      get firebasePending() { return failedCheckpoints.size; },
-      get lastFirebaseAck() { return lastCheckpointAck; },
-      get lastFirebaseError() { return lastCheckpointError; },
-      reintentar: drainCheckpoints,
-    };
-
-
-    // Verificación desde la sesión piloto sin acceso a Firebase Console.
-    // Lectura de un checkpoint PROPIO: si no hay permiso de lectura, eso no
-    // implica que la escritura haya fallado. No abre ni cambia reglas.
-    window.JuiciosVerificacionRemota = {
-      version: '12.0',
-      async estado() {
-        return {
-          experimentID: PERSIST_ID,
-          apiConfirmadas: batchAck.batchNumber,
-          firebaseConfirmadas: checkpointConfirmed,
-          firebasePendientes: failedCheckpoints.size,
-          firebaseError: lastCheckpointError,
-          ultimaConfirmada: lastCheckpointAck ? { key: lastCheckpointAck.key, trialIndex: lastCheckpointAck.trialIndex } : null,
-          registrosLocales: (await TrialDB.getAll()).filter(x => x.sessionId === trialSessionId).length,
-          lecturaNoVerificada: true
-        };
-      },
-      async verificar() {
-        await checkpointQueue;
-        if (!lastCheckpointAck) return { estado: 'sin_escritura_confirmada',
-          explicacion: 'Aún no hay checkpoints confirmados por Firebase.' };
-        try {
-          const snap = await checkpointRef.child(lastCheckpointAck.key).once('value');
-          const value = snap.val();
-          const ok = value && value.sessionId === trialSessionId &&
-            value.experimentID === PERSIST_ID &&
-            ('r'+String(value.id).padStart(7,'0')) === lastCheckpointAck.key;
-          return {
-            estado: ok ? 'lectura_remota_verificada' : 'lectura_no_coincide',
-            clave: lastCheckpointAck.key,
-            explicacion: ok ? 'El servidor devolvió la última respuesta almacenada.' :
-              'El servidor no devolvió el checkpoint esperado.'
-          };
-        } catch (error) {
-          return { estado: 'lectura_no_disponible',
-            explicacion: 'La API de lectura falló o no está autorizada; esto no invalida una confirmación de escritura.',
-            detalle: error?.message || String(error) };
+    let publicBatchTail = Promise.resolve();
+    async function sendBatchConcatenated(records, batchNumber) {
+      if (!records.length) return;
+      const events = await Promise.all(records.map(_publicEventEnvelope));
+      const batchPromise = (async () => {
+        const response = await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: publicRecoveryMode ? 'recoverEvents' : 'appendEvents', experimentID: "7f4f984c-de8c-47f4-8144-b6284a011f97",
+            sessionId: trialSessionId, ...(typeof _publicWriterPermission === 'function' ? _publicWriterPermission() : {}), data: { protocolVersion: 1, events }, batchNumber })
+        });
+        if (!response.ok) {
+          const failure = await response.json().catch(() => ({}));
+          if (typeof _adoptPublicClosure === 'function') _adoptPublicClosure(failure);
+          throw new Error(failure.message || 'Batch upload was not confirmed');
         }
-      },
-      exportarRespaldo: () => window.ValidacionBatchDiagnostics.exportLocalCopy()
-    };
-
-    // Envio incremental, una solicitud apiData por ensayo terminado.
-    // La copia IndexedDB NO se borra al recibir el ACK y conserva el cursor.
-    let lastRemoteAck = null;
-    async function sendBatchConcatenated(trials, batchNumber) {
-      if (trials.length !== 1) throw new Error('El modo por ensayo requiere exactamente un registro.');
-      const row = trials[0];
-      const payload = {
-        ...stripLocalResumeFields(row),
-        sessionId: trialSessionId,
-        experimentID: PERSIST_ID,
-        clientTrialKey: `${trialSessionId}:${row.id}`,
-        envio_incremental: true,
-        numero_envio: batchNumber
-      };
-      const response = await fetch(BATCH_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: '*/*' },
-        body: JSON.stringify({
-          experimentID: PERSIST_ID,
-          sessionId: trialSessionId,
-          data: payload,
-          storage: 'googledrive'
-        })
+        const result = await response.json();
+        const expected = new Map(events.map(event => [event.eventId, event]));
+        if (result?.success !== true || result.experimentID !== "7f4f984c-de8c-47f4-8144-b6284a011f97"
+            || result.sessionId !== trialSessionId || !Array.isArray(result.acknowledged)
+            || result.acknowledged.length !== events.length) throw new Error('Invalid batch acknowledgement');
+        for (const item of result.acknowledged) {
+          const event = expected.get(item.eventId);
+          if (!event || item.sequence !== event.sequence || item.payloadHash !== event.payloadHash) {
+            throw new Error('Batch acknowledgement does not match saved events');
+          }
+          expected.delete(item.eventId);
+        }
+      })();
+      pendingBatchSaves.push(batchPromise);
+      try { await batchPromise; }
+      finally { pendingBatchSaves.splice(pendingBatchSaves.indexOf(batchPromise), 1); }
+    }
+    function _flushPublicBatches(force = false) {
+      const operation = publicBatchTail.then(async () => {
+        const size = BATCH_CONFIG.size;
+        if (size <= 0 && !force) return;
+        while (await TrialDB.count() >= (force ? 1 : size)) {
+          const selected = await TrialDB.getN(size > 0 ? size : 100);
+          let offset = 0;
+          while (offset < selected.length) {
+            const batch = [];
+            let bytes = 0;
+            while (offset < selected.length && batch.length < 100) {
+              const record = selected[offset];
+              const length = new TextEncoder().encode(JSON.stringify({ payload: record.payload, checkpoint: record.checkpoint })).byteLength + 256;
+              if (batch.length && bytes + length > 900000) break;
+              batch.push(record); bytes += length; offset++;
+            }
+            await sendBatchConcatenated(batch, ++BATCH_CONFIG.currentBatchNumber);
+            await TrialDB.deleteIds(batch.map(record => record.id));
+          }
+        }
       });
-      if (!response.ok) {
-        throw new Error(`El ensayo ${row.trial_index ?? row.id} recibió HTTP ${response.status}: ${await response.text()}`);
-      }
-      const result = await response.json();
-      if (result?.success !== true) {
-        throw new Error(`La API no confirmó el ensayo ${row.trial_index ?? row.id}: ${result?.message || 'sin confirmación'}`);
-      }
-      lastRemoteAck = {
-        localId: row.id, trialIndex: row.trial_index ?? null,
-        time: new Date().toISOString(), sessionId: trialSessionId
-      };
-      return result;
-    }
-
-    async function doFlushBatches(includePartial = false) {
-      for (;;) {
-        const all = await TrialDB.getAll();
-        const unsent = all.filter(row => row.sessionId === trialSessionId && row.id > batchAck.lastAckId);
-        if (unsent.length < BATCH_CONFIG.size && !includePartial) break;
-        if (unsent.length === 0) break;
-        const batch = unsent.slice(0, BATCH_CONFIG.size);
-        const number = batchAck.batchNumber + 1;
-        await sendBatchConcatenated(batch, number);
-        // Confirmar el cursor después del HTTP y del success: true.
-        // Si se interrumpe justo aquí, un reintento puede reenviar el mismo lote;
-        // por ello se conservan su número e índices para depuración en el servidor.
-        batchAck = { sessionId: trialSessionId, lastAckId: batch[batch.length-1].id,
-          batchNumber: number };
-        BATCH_CONFIG.currentBatchNumber = number;
-        if (BATCH_CONFIG.useIndexedDB) localStorage.setItem(BATCH_ACK_KEY, JSON.stringify(batchAck));
-        lastBatchError = null;
-        window.ValidacionBatchDiagnostics && (window.ValidacionBatchDiagnostics.lastError = null);
-        console.info(`[Juicios morales] Ensayo ${batch[0].trial_index ?? batch[0].id} confirmado por apiData (${number}).`);
-      }
-    }
-
-    function flushBatches(includePartial = false) {
-      const operation = batchQueue.then(() => doFlushBatches(includePartial));
-      // La cola continúa operativa si un envío anterior falló. La promesa original
-      // sigue rechazándose para que el llamador pueda presentar una advertencia.
-      batchQueue = operation.catch(() => {});
+      publicBatchTail = operation.catch(() => {});
       return operation;
     }
 
-    window.ValidacionBatchDiagnostics = {
-      batchSize: BATCH_CONFIG.size,
-      useIndexedDB: BATCH_CONFIG.useIndexedDB,
-      firebaseSessionUseIndexedDB: FIREBASE_SESSION_USE_INDEXEDDB,
-      resumeTimeoutMinutes: BATCH_CONFIG.resumeTimeoutMinutes,
-      get sessionNameConfig() { return _SESSION_NAME_TOKENS.map(x => ({...x})); },
-      get sessionNameState() { return {..._sessionNameState}; },
-      experimentID: PERSIST_ID,
-      backendExperiment: 'jucios_morales_validation',
-      get lastRemoteAck() { return lastRemoteAck; },
-      get apiConfirmed() { return batchAck.batchNumber; },
-      get sessionId() { return trialSessionId; },
-      get confirmedBatches() { return batchAck.batchNumber; },
-      get lastConfirmedLocalId() { return batchAck.lastAckId; },
-      lastError: null,
-      async localCount() { return (await TrialDB.getAll()).length; },
-      async unsentCount() { return (await TrialDB.getAll()).filter(row =>
-        row.sessionId === trialSessionId && row.id > batchAck.lastAckId).length; },
-      async exportLocalCopy() {
-        const rows = (await TrialDB.getAll()).filter(row => row.sessionId === trialSessionId);
-        const blob = new Blob([JSON.stringify({ experimentID: PERSIST_ID, sessionId: trialSessionId,
-          exportedAt: new Date().toISOString(), rows }, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url; link.download = `jucios-morales-respaldo-${trialSessionId}.json`;
-        document.body.append(link); link.click(); link.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
-        return rows.length;
-      }
-    };
 
-    // Función para enviar experimento completo directo al storage
-    async function sendCompleteExperiment(trials) {
-      if (trials.length === 0) return;
-      
-      console.log(`Sending complete experiment with ${trials.length} trials directly to storage`);
-      
-      // Agregar metadata a cada trial
-      const trialsWithMetadata = trials.map(trial => ({
-        ...stripLocalResumeFields(trial),
-        session_browser: metadata.browser || "",
-        session_browser_version: metadata.browserVersion || "",
-        session_os: metadata.os || "",
-        session_screen_resolution: metadata.screenResolution || "",
-        session_language: metadata.language || "",
-        session_started_at: metadata.startedAt || "",
-        session_id: trialSessionId,
-      }));
-      
-      // Enviar trials como JSON - el backend los convertirá a CSV
-      const apiBaseUrl = "https://us-central1-test-e4cf9.cloudfunctions.net/apiData".replace('/apiData', '');
-      return fetch(`${apiBaseUrl}/apiDataComplete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "*/*" },
-        body: JSON.stringify({
-          experimentID: "7f4f984c-de8c-47f4-8144-b6284a011f97",
-          sessionId: trialSessionId,
-          trialsData: trialsWithMetadata,
-          storage: "googledrive",
-        }),
-      })
-      .then(res => {
-        if (!res.ok) {
-          return res.text().then(text => {
-            console.warn('Error sending complete experiment:', text);
-            throw new Error(text);
-          });
-        }
-        return res.json();
-      })
-      .then(result => {
-        if (!result || result.success !== true) {
-          throw new Error('Backend did not confirm complete result upload');
-        }
-        console.log('Complete experiment sent successfully to storage');
-        return result;
-      })
-      .catch(error => {
-        console.warn('Error in sendCompleteExperiment:', error);
-        throw error;
-      });
+    const publicResponses = [];
+    let publicResponseTail = Promise.resolve();
+    let publicClosing = false;
+    let publicFinishHandler;
+    let publicOwnsPause = false;
+    let publicPreparationError = null;
+    let publicExportRetryRequested = false;
+    let publicFinishInFlight = null;
+    let publicFinished = false;
+    let publicRecoveryMode = ['completed', 'expired'].includes(_publicSessionState.lifecycle);
+    const publicManifest = new Map((_publicSessionState.receivedEvents || []).map(event => [event.sequence, event]));
+    let publicDirectSequence = Math.max(-1, ...publicManifest.keys()) + 1;
+    const publicPersistenceReady = BATCH_CONFIG.useIndexedDB
+      ? TrialDB.syncManifest(_publicSessionState.receivedEvents || []) : Promise.resolve();
+
+    function _mirrorPublicCheckpoint(checkpoint) {
+      if (!checkpoint) return;
+      try { localStorage.setItem(_publicStorageKeys.resumeTrial, JSON.stringify(checkpoint)); }
+      catch (error) { console.error('Cannot mirror saved checkpoint:', error); }
     }
-
-    // Reintento manual y descarga cuando falla el guardado remoto.
-    // IndexedDB retiene la copia al cerrar o recargar este navegador.
-    function showSaveRecovery(error, retry) {
-      _hideLoading();
-      document.getElementById('validacion-save-recovery')?.remove();
+    function _resumePublicAfterBackup() {
+      if (!publicOwnsPause || publicClosing || publicResponses.some(item => !item.persisted)
+          || window.ExpBuilderNavigation.isTransitionPending()) return;
+      publicOwnsPause = false;
+      jsPsych.resumeExperiment();
+    }
+    function _publicPersistenceError(error) {
+      console.error('Error saving trial data:', error);
+      window.ExpBuilderRuntime?.reportError(error, { source: 'public-persistence' });
+      _setLoadingMsg('Data could not be confirmed. Keep this page open and retry saving.');
+      const existingPanel = document.getElementById('expbuilder-retry-save');
+      if (existingPanel) {
+        if (typeof _showPublicExpiredNotice === 'function') _showPublicExpiredNotice();
+        return;
+      }
       const panel = document.createElement('div');
-      panel.id = 'validacion-save-recovery';
-      panel.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:#f4f7f6;' +
-        'display:flex;align-items:center;justify-content:center;padding:18px;font:16px system-ui,sans-serif;color:#17282b';
-      panel.innerHTML = `<section style="width:min(100%,560px);background:#fff;border:1px solid #bdcdcc;` +
-        `border-radius:14px;padding:24px;box-shadow:0 10px 30px #0001">` +
-        `<h2 style="margin:0 0 12px;font-size:22px">Guardado pendiente</h2>` +
-        `<p>Las respuestas están almacenadas localmente en este navegador, ` +
-        `pero el servidor no ha confirmado el guardado final. Puedes reintentar ` +
-        `el envío. Descarga también una copia para mayor seguridad.</p>` +
-        `<p id="validacion-save-detail" style="color:#85462c;font-size:13px;overflow-wrap:anywhere"></p>` +
-        `<div style="display:flex;gap:12px;flex-wrap:wrap">` +
-        `<button id="validacion-save-retry" style="padding:12px;cursor:pointer">Reintentar guardado</button>` +
-        `<button id="validacion-save-backup" style="padding:12px;cursor:pointer">Descargar respaldo JSON</button>` +
-        `</div></section>`;
-      document.body.appendChild(panel);
-      panel.querySelector('#validacion-save-detail').textContent = error?.message || String(error);
-      panel.querySelector('#validacion-save-backup').onclick = () =>
-        window.ValidacionBatchDiagnostics.exportLocalCopy().catch(e => {
-          panel.querySelector('#validacion-save-detail').textContent = 'No se pudo exportar: ' + e.message;
-        });
-      panel.querySelector('#validacion-save-retry').onclick = async () => {
-        const btn = panel.querySelector('#validacion-save-retry');
-        btn.disabled = true;
-        panel.querySelector('#validacion-save-detail').textContent = 'Reintentando…';
-        panel.remove();
-        await retry();
+      panel.id = 'expbuilder-retry-save';
+      panel.style.cssText = 'position:fixed;bottom:20px;left:20px;right:20px;z-index:2147483647;padding:16px;background:white;color:#222;box-shadow:0 2px 12px #888;font-family:sans-serif';
+      panel.append('Data could not be confirmed. Keep this page open. Retry saving or contact the study team. ');
+      const button = document.createElement('button'); button.textContent = 'Retry saving';
+      button.onclick = async () => {
+        button.disabled = true;
+        try {
+          if (typeof _publicConnected !== 'undefined' && !_publicConnected && !publicClosing) await _retryPublicPresence();
+          await _drainPublicResponses();
+          if (publicClosing) { publicExportRetryRequested = true; await publicFinishHandler(); }
+          else { panel.remove(); _resumePublicAfterBackup(); }
+        } catch (failure) { console.error('Retry failed:', failure); }
+        finally { button.disabled = false; }
       };
+      panel.append(button);
+      if (typeof _showPublicExpiredNotice === 'function') _showPublicExpiredNotice();
+      document.body.append(panel);
+    }
+    function _drainPublicResponses() {
+      const operation = publicResponseTail.then(async () => {
+        if (publicPreparationError) throw publicPreparationError;
+        await publicPersistenceReady;
+        for (const item of publicResponses) {
+          if (item.persisted) continue;
+          if (BATCH_CONFIG.useIndexedDB) {
+            item.record = await TrialDB.add(item.data, item.checkpoint);
+          } else {
+            if (!item.record) {
+              item.record = { eventId: _publicEventId(), sequence: publicDirectSequence++, payload: JSON.parse(JSON.stringify(item.data)) };
+              item.record.checkpoint = _bindPublicCheckpoint(item.checkpoint, item.record.eventId, item.record.sequence);
+            }
+            await sendBatchConcatenated([item.record], ++BATCH_CONFIG.currentBatchNumber);
+          }
+          const envelope = await _publicEventEnvelope(item.record);
+          publicManifest.set(envelope.sequence, { eventId: envelope.eventId,
+            sequence: envelope.sequence, payloadHash: envelope.payloadHash });
+          item.persisted = true;
+          _mirrorPublicCheckpoint(item.record.checkpoint);
+          if (!publicRecoveryMode) window.ExpBuilderNavigation.onTrialPersisted(item.data);
+          item.data = null; item.record = null;
+          if (typeof _showPublicExpiredNotice === 'function') _showPublicExpiredNotice();
+        }
+      });
+      publicResponseTail = operation.catch(() => {});
+      return operation;
+    }
+    function _persistPublicResponse(data, checkpoint) {
+      publicResponses.push({ data: JSON.parse(JSON.stringify(data)), checkpoint, persisted: false, record: null });
+      return _drainPublicResponses();
     }
 
-    async function finishSave() {
-      _showLoading('Guardando respuestas…');
-      try {
-        // jsPsych no espera los callbacks async de on_data_update por sí mismo.
-        // La navegación de ExpBuilder registra las operaciones pendientes.
-        await window.ExpBuilderPersistence.whenIdle();
-        await drainCheckpoints();
-        await flushBatches(true);
-        _setLoadingMsg('Confirmando el archivo final…');
-        const allRows = (await TrialDB.getAll()).filter(row => row.sessionId === trialSessionId);
-        if (!allRows.length) throw new Error('No se encontraron registros locales para finalizar.');
-        await sendCompleteExperiment(allRows);
-        // No solicitar agregación adicional de los lotes: apiDataComplete ya confirma
-        // una copia de la sesión completa (evita finalización duplicada).
-        _setLoadingMsg('Cerrando sesión…');
-        await sessionRef.update({
-          connected: false, finished: true, needsFinalization: false,
-          state: 'completed',
-          finishedAt: window.firebase.database.ServerValue.TIMESTAMP,
-          lastUpdate: window.firebase.database.ServerValue.TIMESTAMP
-        });
-        sessionRef.onDisconnect().cancel();
-        await TrialDB.deleteSession(trialSessionId);
-        localStorage.removeItem(BATCH_ACK_KEY);
-        window.ExpBuilderNavigation.clearTransientState();
-        localStorage.removeItem(_publicStorageKeys.sessionId);
-        if (VALIDACION_PRUEBA_ACTIVA) localStorage.removeItem(_pilotStorageKey);
-        localStorage.removeItem(_publicStorageKeys.participant);
-        sessionStorage.removeItem(_publicStorageKeys.captchaPassed);
-        document.getElementById('validacion-save-recovery')?.remove();
-        _showSuccess();
-      } catch (error) {
-        // El runtime guard de ExpBuilder trata console.error como error fatal.
-        // Los fallos de red se comunican al usuario sin ocultar el botón de respaldo.
-        console.warn('[Validación] Guardado remoto pendiente:', error);
-        lastBatchError = error.message;
-        if (window.ValidacionBatchDiagnostics) window.ValidacionBatchDiagnostics.lastError = error.message;
-        showSaveRecovery(error, finishSave);
+
+    async function _publicExportStatus(action = 'sessionStatus') {
+      const response = await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, experimentID: "7f4f984c-de8c-47f4-8144-b6284a011f97", sessionId: trialSessionId }) });
+      if (!response.ok) throw new Error('Export status could not be checked');
+      return response.json();
+    }
+    async function _waitForPublicExport(result, expected, recovery = false) {
+      const deadline = Date.now() + 600000;
+      let delay = 750;
+      while (true) {
+        if (result?.success !== true || result.experimentID !== "7f4f984c-de8c-47f4-8144-b6284a011f97" || result.sessionId !== trialSessionId) {
+          throw new Error('Invalid export status identity');
+        }
+        const receipt = recovery ? result.export : result.completion;
+        if (!receipt) throw new Error('Missing export receipt');
+        if (!recovery && Object.keys(expected).some(key => receipt[key] !== expected[key])) {
+          throw new Error('Completion receipt differs from the expected responses');
+        }
+        if (receipt.confirmed === true) {
+          if (recovery && (receipt.eventCount !== expected.expectedEventCount || receipt.eventsHash !== expected.eventsHash
+              || receipt.confirmedRevision !== receipt.requestedRevision)) throw new Error('Recovery receipt does not confirm all pending responses');
+          publicExportRetryRequested = false;
+          return receipt;
+        }
+        if (publicExportRetryRequested) {
+          publicExportRetryRequested = false;
+          result = await _publicExportStatus('retryExport');
+          continue;
+        }
+        if (!result.export?.status || result.export.status === 'needs_attention') throw new Error('Storage export needs a retry or support');
+        if (Date.now() >= deadline) throw new Error('Storage export is still pending; retry checking its status');
+        _setLoadingMsg('Saving your data…');
+        await new Promise(resolve => setTimeout(resolve, delay));
+        result = await _publicExportStatus(); delay = Math.min(5000, delay * 1.5);
       }
     }
+    function _showPublicRecoveryComplete() {
+      _hideLoading?.();
+      document.getElementById('expbuilder-expired-session')?.remove();
+      const panel = document.createElement('div');
+      panel.style.cssText = 'padding:40px;text-align:center;font-family:sans-serif';
+      panel.textContent = 'This session has ended. The available responses have been saved.';
+      if (typeof _offerNewPublicSession === 'function') _offerNewPublicSession(panel);
+      (document.getElementById('jspsych-container') || document.body).replaceChildren(panel);
+    }
+
+
+    async function _completePublicSession() {
+      await window.ExpBuilderPersistence.whenIdle();
+      await _drainPublicResponses();
+      if (BATCH_CONFIG.useIndexedDB) await _flushPublicBatches(true);
+      await publicBatchTail;
+      const generation = publicResponses.length;
+      const saved = BATCH_CONFIG.useIndexedDB ? (await TrialDB.getState()).events : [...publicManifest.values()];
+      const events = saved.map(({ eventId, sequence, payloadHash }) => ({ eventId, sequence, payloadHash }))
+        .sort((a, b) => a.sequence - b.sequence);
+      if (events.some((event, index) => event.sequence !== index)) throw new Error('The expected event set has missing responses');
+      const expected = { expectedEventCount: events.length, expectedLastSequence: events.length - 1,
+        eventsHash: await _publicHash(events) };
+      if (publicRecoveryMode) return _waitForPublicExport(await _publicExportStatus(), expected, true);
+      const response = await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'completeSession', experimentID: "7f4f984c-de8c-47f4-8144-b6284a011f97", sessionId: trialSessionId, ...(typeof _publicWriterPermission === 'function' ? _publicWriterPermission() : {}), ...expected })
+      });
+      if (!response.ok) {
+        const failure = await response.json().catch(() => ({}));
+        if (typeof _adoptPublicClosure === 'function') _adoptPublicClosure(failure);
+        throw new Error(failure.message || 'Completion was not confirmed');
+      }
+      const receipt = await _waitForPublicExport(await response.json(), expected);
+      if (publicResponses.length !== generation) throw new Error('New responses arrived during completion');
+      return receipt;
+    }
+
 
     // Clean up stale jsPsych wrappers from previous runs (prevents stacking on restarts)
     document.querySelectorAll('.jspsych-content-wrapper').forEach(el => el.remove());
@@ -1694,9 +1702,9 @@ const m9e = decideBranch;
 
       on_trial_start: function(trial) {
         window.ExpBuilderNavigation.checkpointTrialStart(trial?.data ?? {});
-        const lastTrialData = jsPsych.data.get().last(1).values()[0];
-        if (trial.data && (lastTrialData || resumedSession)) {
-          trial.data.prev_response = lastTrialData?.response ?? restoredLastResponse;
+        const lastTrialData = jsPsych.data.get()
+        if (lastTrialData && trial.data) {
+        trial.data.prev_response = lastTrialData.response;
         }
       },
 
@@ -1704,62 +1712,128 @@ const m9e = decideBranch;
 
       on_data_update: async function (data) {
         const persistenceToken = window.ExpBuilderPersistence.start();
+        if (!window.ExpBuilderNavigation.isTransitionPending()) {
+          jsPsych.pauseExperiment();
+          publicOwnsPause = true;
+        }
+        let backed = false;
+        let queued = false;
         try {
-
-        // Agregar timestamp del cliente para ordenamiento correcto
-        data.clientTimestamp = Date.now();
-        data.sessionId = trialSessionId;
-        data.experimentID = "7f4f984c-de8c-47f4-8144-b6284a011f97";
-        data.version_experimento = "jucios_morales_validation-v13.7";
-        if (VALIDACION_PRUEBA_ACTIVA) {
-          data.modo_prueba = true;
-          data.version_parche_prueba = VALIDACION_PRUEBA_VERSION;
-          data.limite_ensayos_principales = 3;
-        }
-        const completedCursor = (data.builder_id !== undefined && data.builder_id !== null)
-          ? _createResumeCheckpoint(data) : null;
-
-        // Actualizar estado a 'in-progress' en la primera actualización
-        if (data.trial_index === 0) {
-          sessionRef.update({
-            state: 'in-progress',
-            lastUpdate: window.firebase.database.ServerValue.TIMESTAMP
-          }).catch(err => console.error('Error updating state:', err));
-        }
-
-        // Primero commit local + cursor; despues liberar la navegacion.
-        const checkpointId = await TrialDB.add(data, completedCursor);
-        if (completedCursor) {
-          localStorage.setItem(_publicStorageKeys.resumeTrial, JSON.stringify(completedCursor));
-        }
-        const checkpointRow = { ...data, id: checkpointId };
-        // Respaldo Firebase por ensayo (sujeto a permisos de ese proyecto).
-        void queueCheckpoint(checkpointRow).catch(() => {});
-        window.ExpBuilderNavigation.onTrialPersisted(data);
-        // Envío individual a apiData; la cola serializa solicitudes y evita
-        // solapamientos cuando un participante responde rápidamente.
-        const pendingCount = (await TrialDB.getAll()).filter(row =>
-          row.sessionId === trialSessionId && row.id > batchAck.lastAckId).length;
-        if (pendingCount >= BATCH_CONFIG.size) {
-          void flushBatches(false).catch(error => {
-            console.warn('[Juicios morales] El ensayo no ha sido confirmado por apiData:', error.message);
-            lastBatchError = error.message;
-            window.ValidacionBatchDiagnostics.lastError = error.message;
-          });
-        }
-
-        
+          data.clientTimestamp = Date.now();
+          data.sessionId = trialSessionId;
+          data.experimentID = "7f4f984c-de8c-47f4-8144-b6284a011f97";
+          if (VALIDACION_PRUEBA_ACTIVA) { data.modo_prueba = '3_ensayos'; data.version_parche_prueba = VALIDACION_PRUEBA_VERSION; }
+          const checkpoint = data.builder_id !== undefined && data.builder_id !== null
+            ? _createResumeCheckpoint(data) : null;
+          if (data.trial_index === 0 && _publicSessionState.sessionProtocolVersion !== 3) {
+            sessionRef.update({ state: 'in-progress', lastUpdate: window.firebase.database.ServerValue.TIMESTAMP })
+              .catch(error => console.error('Error updating state:', error));
+          }
+          const persistence = _persistPublicResponse(data, checkpoint);
+          queued = true;
+          await persistence;
+          backed = true;
+          
+        } catch (error) {
+          if (!queued) publicPreparationError = error;
+          _publicPersistenceError(error);
         } finally {
           window.ExpBuilderPersistence.finish(persistenceToken);
+          if (backed) _resumePublicAfterBackup();
+        }
+        if (backed && BATCH_CONFIG.useIndexedDB && BATCH_CONFIG.size > 0) {
+          try { await _flushPublicBatches(); }
+          catch (error) {
+            console.error('Batch retained for retry:', error);
+            window.ExpBuilderRuntime?.reportError(error, { source: 'public-batch' });
+          }
         }
       },
 
-      on_finish: async function() {
+      on_finish: publicFinishHandler = async function() {
+        if (publicFinished) return;
+        if (publicFinishInFlight) return publicFinishInFlight;
+        publicFinishInFlight = (async () => {
         if (window.ExpBuilderNavigation.isTransitionPending()) {
-          window.ExpBuilderRuntime?.emit('experiment-finish-suppressed', { reason: 'branching' });
+          window.ExpBuilderRuntime?.emit(
+            'experiment-finish-suppressed',
+            { reason: 'branching' }
+          );
           return;
         }
-        await finishSave();
+        publicClosing = true;
+        _showLoading('Saving your data…');
+        if (typeof _showPublicExpiredNotice === 'function') _showPublicExpiredNotice();
+        await new Promise(resolve => setTimeout(resolve, 0));
+        try {
+          await _completePublicSession();
+        } catch (error) {
+          _publicPersistenceError(error);
+          return;
+        }
+
+        if (_publicSessionState.lifecycle === 'expired') {
+          document.getElementById('expbuilder-retry-save')?.remove();
+          window.ExpBuilderNavigation.clearTransientState();
+          _showPublicRecoveryComplete(); publicFinished = true;
+          return;
+        }
+        _setLoadingMsg('Finishing up…');
+        
+        try {
+          if (_publicSessionState.sessionProtocolVersion !== 3) await sessionRef.update({
+            connected: false,
+            finished: true,
+            needsFinalization: false,
+            sessionProtocolVersion: 2,
+            finalizationProcessed: true,
+            state: 'completed',
+            finishedAt: window.firebase.database.ServerValue.TIMESTAMP,
+            lastUpdate: window.firebase.database.ServerValue.TIMESTAMP
+          });
+          // Cancel only after the durable completed state was confirmed.
+          await sessionRef?.onDisconnect().cancel();
+        } catch (error) {
+          _publicPersistenceError(error);
+          return;
+        }
+
+        document.getElementById('expbuilder-retry-save')?.remove();
+
+        window.ExpBuilderNavigation.clearTransientState();
+        localStorage.removeItem(_publicStorageKeys.sessionId);
+        localStorage.removeItem(_publicStorageKeys.participant);
+        sessionStorage.removeItem(_publicStorageKeys.captchaPassed);
+
+        publicFinished = true;
+        // --- Recruitment platform redirect ---
+        const recruitment = _publicSessionState.configuration.recruitmentConfig;
+        if (recruitment.platform === 'prolific') {
+        if (_prolificPID && recruitment.prolificCompletionCode) {
+          _setLoadingMsg('Redirecting to Prolific…');
+          await new Promise(r => setTimeout(r, 300));
+          window.location.href = 'https://app.prolific.com/submissions/complete?cc=' + encodeURIComponent(recruitment.prolificCompletionCode);
+        } else {
+          // No Prolific URL params — testing mode or direct access
+          _showSuccess();
+        }
+        } else if (recruitment.platform === 'mturk') {
+        if (_mturkTurkSubmitTo && _mturkAssignmentID && !_mturkIsPreview) {
+          _setLoadingMsg('Submitting to MTurk…');
+          const _mturkForm = document.createElement('form');
+          _mturkForm.method = 'POST';
+          _mturkForm.action = _mturkTurkSubmitTo + '/mturk/externalSubmit';
+          _mturkForm.innerHTML = '<input name="assignmentId" value="' + _mturkAssignmentID + '">';
+          document.body.appendChild(_mturkForm);
+          _mturkForm.submit();
+        } else {
+          _showSuccess();
+        }
+        } else {
+          _showSuccess();
+        }
+        })();
+        try { await publicFinishInFlight; } finally { publicFinishInFlight = null; }
       }
     });
     // __INIT_JSPSYCH_END__
@@ -1767,9 +1841,31 @@ const m9e = decideBranch;
     // Uncomment to see the json results after finishing a session experiment
     // jsPsych.data.displayData('csv');
 
-    
+    if (['prolific', 'mturk'].includes(_publicSessionState.configuration.recruitmentConfig.platform)) {
+    // Add platform IDs to all trials automatically (after initJsPsych)
+    jsPsych.data.addProperties({
+      prolific_pid: _prolificPID || "",
+      prolific_study_id: _prolificStudyID || "",
+      prolific_session_id: _prolificSessionID || "",
+      mturk_worker_id: _mturkWorkerID || "",
+      mturk_assignment_id: _mturkAssignmentID || "",
+      mturk_hit_id: _mturkHitID || "",
+    });
+    }
 
-    
+    if (typeof _recoverOlderPublicSessions === 'function') _recoverOlderPublicSessions().catch(error => {
+      console.error('Earlier responses retained for recovery:', error);
+      const notice = document.createElement('p'); notice.textContent = 'Earlier session responses are still pending recovery. Keep this browser data and contact the study team if this persists.';
+      document.body.append(notice);
+    });
+    if (_publicSessionState.sessionProtocolVersion === 3 && !['completed', 'expired'].includes(_publicSessionState.lifecycle)) {
+      await _connectPublicSession();
+      _observePublicConnection();
+    }
+    if (['completed', 'expired'].includes(_publicSessionState.lifecycle)) {
+      await publicFinishHandler();
+    } else {
+      
 window.ExpBuilderExecutionAddresses = Object.freeze(
   {"version":3,"revision":"2026-11-03T15:53:14.065Z","nextBySource":{"1793294903896":"1793296406082","1793296406082":"1793300185149","1793300185149":"1793300783371","1793300783371":"1793301139332","1793301139332":"1793301815311","1793301815311":"1793302653029","1793302653029":"1793303572323","1793303572323":"1793304006966","1793304006966":"1793304388942","1793579048529":"1793642521181","1793304388942":"1793579048529","1793642521181":"1793649983720"},"addressesByTarget":{"1793294903896":{"targetId":1793294903896,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793296406082":{"targetId":1793296406082,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793300185149":{"targetId":1793300185149,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793300783371":{"targetId":1793300783371,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793301139332":{"targetId":1793301139332,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793301815311":{"targetId":1793301815311,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793301875690":{"targetId":1793301875690,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793302653029":{"targetId":1793302653029,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793303572323":{"targetId":1793303572323,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793304006966":{"targetId":1793304006966,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"loop_1793578740463":{"targetId":"loop_1793578740463","targetKind":"loop","targetOwnerId":null,"enterLoopIds":[]},"1793579048529":{"targetId":1793579048529,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"loop_1793650037960":{"targetId":"loop_1793650037960","targetKind":"loop","targetOwnerId":null,"enterLoopIds":[]},"1793649983720":{"targetId":1793649983720,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793304388942":{"targetId":1793304388942,"targetKind":"trial","targetOwnerId":"loop_1793578740463","enterLoopIds":["loop_1793578740463"]},"1793642521181":{"targetId":1793642521181,"targetKind":"trial","targetOwnerId":"loop_1793650037960","enterLoopIds":["loop_1793650037960"]}},"entries":{"root":"1793294903896","loop_1793578740463":"1793304388942","loop_1793650037960":"1793642521181"},"loopContinuations":{"loop_1793578740463":null,"loop_1793650037960":"1793649983720"},"scopes":{"root":["1793294903896","1793296406082","1793300185149","1793300783371","1793301139332","1793301815311","1793301875690","1793302653029","1793303572323","1793304006966","loop_1793578740463","1793579048529","loop_1793650037960","1793649983720"],"loop_1793578740463":["1793304388942"],"loop_1793650037960":["1793642521181"]},"allScopes":{"root":["1793294903896","1793296406082","1793300185149","1793300783371","1793301139332","1793301815311","1793301875690","1793302653029","1793303572323","1793304006966","loop_1793578740463","1793579048529","loop_1793650037960","1793649983720"],"loop_1793578740463":["1793304388942"],"loop_1793650037960":["1793642521181"]}}
 );
@@ -5073,12 +5169,10 @@ window.ExpBuilderNavigation?.registerTrial(1793649983720, Final$20$Experimento_p
     window.ExpBuilderNavigation?.attach(jsPsych, timeline);
     jsPsych.run(timeline);
 
+    }
 
-  })().catch(function(error) {
-    console.error('[session-persistence] experiment startup blocked', {
-      experimentID: window.JSPSYCH_EXPERIMENT_ID,
-      sessionId: window.JSPSYCH_SESSION_ID || null,
-      error: error.message
-    });
-    _setLoadingMsg('No se pudo iniciar el experimento. Revisa tu conexión.');
-  });
+})().catch(error => {
+  console.error('Public session could not start:', error);
+  _showLoading('This session cannot start: ' + error.message + '. Pending responses are preserved.');
+});
+

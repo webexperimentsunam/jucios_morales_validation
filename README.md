@@ -1,38 +1,44 @@
-# Juicios Morales v13.8 — Evaluaciones verticales en orden fijo
+# Validación — adaptación de almacenamiento al protocolo de sesiones v3 de ExpBuilder
 
-## Base
-Se tomó el proyecto completo **v13.7**, cuya combinación de almacenamiento local (IndexedDB activado) y metadatos de Firebase (`useIndexedDB=false`) permitió, en las pruebas del investigador, guardar archivos parciales en Drive y reanudar sesiones.
+## Qué se modificó
 
-## Cambios únicos de esta versión
-- `evaluacion.css`: las cuatro escalas aparecen siempre en **una columna**, también en escritorio. Cada escala conserva sus **nueve botones en una fila** horizontal.
-- `evaluacion.js`: habilitación secuencial obligatoria: Moralidad → Competencia → Informatividad → Credibilidad. Las escalas 2-4 se activan después de contestar la inmediatamente anterior; un participante puede corregir una respuesta previamente elegida.
-- `index.html`: nuevas referencias `evaluacion.css?v=13.8` y `evaluacion.js?v=13.8` para evitar caché. `experiment.js?v=13.7` permanece igual.
-- El dato adicional `je_layout` ahora registra `v13.8_columna`. Las claves originales de respuesta (Moralidad_response, Competencia_response, Informatividad_response, Credibilidad_response y, en práctica, Informatividad_copy_response) no cambian.
+- `experiment.js`: ahora usa el ciclo de vida oficial del `index.html` proporcionado por el desarrollador (acciones `createSession`, `resumeSession`, `activateConnection`, `appendEvents`, `completeSession`, consulta de estado, recuperación y acuse de exportación a Drive).
+- `index.html`: actualiza únicamente la referencia a `jspsych-expbuilder-plugin-dynamic@1.1.0` y al `experiment.js` nuevo.
+- Se conserva la tarea experimental original (cuestionarios, navegación, tres ensayos de práctica, 480 principales, cuatro escalas, etiquetas y aleatorización). Las nueve listas `data/` y todas las imágenes y módulos visuales son idénticos a los adjuntos.
+- `?prueba=3` limita a tres ensayos principales y etiqueta los registros de prueba; **sigue enviando a la API real**. Use sesiones piloto con navegador/perfil separado.
 
-**No se modificaron** `experiment.js`, su identificador de estudio, la nomenclatura, `batchSize = 1`, IndexedDB, el valor de `useIndexedDB` comunicado a Firebase, el tiempo de espera, las nueve listas de estímulos, la cantidad de ensayos, la aleatorización, los textos de consentimiento o los demás archivos.
+## Qué cambia en el guardado
 
-## Instalación
-En GitHub `webexperimentsunam/jucios_morales_validation`, reemplaza **solo** estos tres archivos de la raíz con los del parche:
-1. `index.html`
-2. `evaluacion.js`
-3. `evaluacion.css`
+- El plazo de reanudación lo establece el **backend** por estudio en `configuration.batchConfig.resumeTimeoutMinutes` (por ejemplo, 1 minuto). No se define con un temporizador local del HTML.
+- La API decide si se puede reanudar (`resume_allowed`) o si la sesión ya expiró/finalizó. Un HTTP 409 de una petición antigua no equivale a un éxito; no se trata automáticamente como guardado confirmado.
+- IndexedDB funciona como copia de eventos y cursors de recuperación, y se mantiene el esquema `trials-v1` de este ID de experimento, migrado a versión 3 con `eventId`, `sequence` y acuses.
+- Los ensayos se envían en lotes cuando los datos locales están persistidos; se reciben acuses para cada evento. El cierre usa `completeSession` y espera confirmación de exportación. **No** se llama a `apiDataComplete`.
+- Una sesión expirada se considera terminada; no se reabre por tener datos en IndexedDB. Los eventos pendientes se intentan recuperar hacia la sesión original, no se mezclan con una nueva.
 
-No vuelvas a subir `experiment.js`, ni carpetas `data/`, `img/`. La versión de lógica de guardado seguirá reportándose como **v13.7**, porque no se ha cambiado.
+## Publicación
 
-## Verificaciones locales
-- Sintaxis JavaScript correcta mediante `node --check`.
-- Pruebas con DOM simulado para práctica y evaluación principal: 4 escalas, orden de activación, valores registrados y esquema original.
-- Verificación de CSS para una columna, y de referencias de scripts en HTML.
-- Comparación SHA-256 de `experiment.js` y de los 9 JSON de estímulos con v13.7: idénticos.
-- No se pudo realizar captura funcional con Chromium en este entorno por una restricción del navegador. La apariencia y la conexión real deben probarse en el sitio publicado.
+1. Hacer copia del repositorio actualmente publicado y exportar los registros locales pendientes de pruebas anteriores si los hubiera.
+2. Subir **todos los archivos del ZIP** a la raíz del repositorio para asegurar coherencia. También se puede reemplazar solamente `index.html` y `experiment.js` si el resto coincide exactamente con la entrega adjunta.
+3. Recargar sin caché o probar en ventana privada nueva. No borrar manualmente IndexedDB si contiene datos sin enviar.
+4. Usar `?prueba=3` para las pruebas con la API real; luego ejecutar una sesión de producción de extremo a extremo.
 
-## Pruebas recomendadas
-1. Abrir `?prueba=3` en computadora: comprobar cuatro escalas apiladas y orden de activación.
-2. Elegir los extremos y puntos medios en las cuatro escalas, comprobar que `Siguiente` funciona.
-3. Repetir en celular (320-390 px) y comprobar que los 9 valores de cada escala siguen en una fila.
-4. Abandonar, revisar el archivo parcial de Drive y reanudar hasta finalizar.
-5. Probar comenzar una sesión nueva y verificar conservación de la anterior.
-6. Verificar las columnas del CSV contra la versión v13.7.
+## Validaciones necesarias en el servidor real
 
-## Reanudación: duración
-El código de v13.7 usa `resumeTimeoutMinutes=1` para metadatos del servidor, **no** como caducidad de la copia local. `TrialDB.TTL_DAYS=3` limpia registros antiguos de sesiones distintas, pero excluye expresamente el identificador de sesión actualmente recuperable. Esto no garantiza recuperación indefinida: depende del navegador, almacenamiento local, posibles restricciones del servidor y borrado de datos del sitio. Probar reanudación después de un día antes de anunciar plazos a participantes.
+- Comprobar que `/apiData` reconoce este experimentID y habilita `sessionProtocolVersion: 3`; el archivo solo **no** permite modificar configuraciones del proyecto en Firebase.
+- Confirmar los valores reales de `batchSize`, `useIndexedDB` y `resumeTimeoutMinutes` devueltos por `createSession`.
+- Probar abandono y regreso antes del plazo: misma sesión, mismo orden, sin registros duplicados.
+- Probar regreso después del plazo: sesión anterior exportada a Drive; nuevo `sessionId` para seguir participando; recuperar pendientes si los hay.
+- Verificar en Google Drive tanto el archivo parcial como el completo, número de eventos, CSV y ausencia de duplicados.
+- Verificar el comportamiento para cortes de red y dos pestañas, que son casos en los que un `409` puede ser una respuesta deliberada de conflicto.
+
+## Limitaciones
+
+La nueva implementación se validó por comparación estructural y sintaxis JavaScript. No se han ejecutado escrituras reales en Firebase o Drive ni una sesión real usando el plugin remoto. El código de la nueva API se ha trasplantado fielmente del `index.html` adjunto; su política de expiración y permisos reside en el backend.
+
+**Precaución sobre sesiones previas:** `experiment.js` v13.8 utilizaba un protocolo anterior en el mismo ID de estudio. El SDK nuevo puede actualizar el esquema IndexedDB existente, pero no garantiza que el servidor permita reanudar sesiones que ya fueron expiradas o completadas. No borrar las respuestas locales antiguas sin respaldo y confirmación de exportación.
+
+## Interpretación del HTTP 409
+
+`409 Conflict` indica que el servidor considera incompatible la operación con el estado de la sesión. **No prueba por sí solo** que falten datos o que se hayan guardado. Para precisar la causa, en Herramientas del desarrollador → Network → seleccionar la petición `/apiData` con 409 → revisar `Request Payload` (`action`) y `Response`. No publicar el `writeToken`, `sessionId` ni las respuestas de participantes. El protocolo v3 contempla el bloqueo de escrituras en sesiones expiradas/finalizadas y en conexiones no vigentes; la respuesta exacta debe interpretarse a partir de su cuerpo.
+
+`storage.js`, `screen-plugin.js` y algunos archivos del directorio proceden de variantes anteriores y se conservan como parte del respaldo. El `index.html` incluido **no carga `storage.js`**: el guardado efectivo está en `experiment.js`.
