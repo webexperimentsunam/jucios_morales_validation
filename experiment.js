@@ -1,3 +1,4 @@
+window.ValidacionVersion = "v14.1-reentrada-diagnostico";
 
 
   // --- FileUploadResponseComponent endpoint (Firebase Cloud Function) ---
@@ -1258,7 +1259,8 @@ const J8e = decideBranch;
       _offerNewPublicSession(panel);
     }
     function _offerNewPublicSession(panel) {
-      if (_publicSessionState.lifecycle !== 'expired') return;
+      // Una sesión cerrada (expirada O completada) nunca debe reanudarse.
+      if (!['expired', 'completed'].includes(_publicSessionState.lifecycle)) return;
       const existing = panel.querySelector('[data-new-session]');
       if (existing) { existing.disabled = publicResponses.some(item => !item.persisted); return; }
       const button = document.createElement('button'); button.dataset.newSession = 'true';
@@ -1276,6 +1278,52 @@ const J8e = decideBranch;
       };
       panel.append(document.createElement('br'), button);
     }
+    // No volver a completar ni forzar la exportación de una sesión que el
+    // servidor ya cerró. La vista debe permitir comenzar una sesión nueva;
+    // las respuestas antiguas en IndexedDB se conservan para recuperación.
+    function _showClosedPublicSessionGate() {
+      _hideLoading();
+      document.getElementById('expbuilder-expired-session')?.remove();
+      const panel = document.createElement('section');
+      panel.id = 'expbuilder-closed-session-gate';
+      panel.setAttribute('role', 'status');
+      panel.style.cssText = [
+        'position:fixed', 'inset:0', 'z-index:2147483000',
+        'display:flex', 'align-items:center', 'justify-content:center',
+        'padding:24px', 'box-sizing:border-box', 'background:#f8fafb',
+        'color:#16202b', 'font-family:system-ui,sans-serif'
+      ].join(';');
+      const card = document.createElement('div');
+      card.style.cssText = [
+        'max-width:540px', 'width:100%', 'padding:28px',
+        'border:1px solid #dce2e6', 'border-radius:14px',
+        'background:#fff', 'text-align:center', 'line-height:1.5'
+      ].join(';');
+      const heading = document.createElement('h1');
+      heading.textContent = 'La sesión anterior ha terminado';
+      heading.style.cssText = 'margin:0 0 12px;font-size:22px';
+      const info = document.createElement('p');
+      info.style.cssText = 'font-size:16px;margin:0 0 14px';
+      info.textContent = 'El plazo para reanudar esa sesión terminó. Puedes iniciar una nueva participación.';
+      const exportInfo = document.createElement('p');
+      exportInfo.style.cssText = 'color:#495661;font-size:13px;margin:0 0 18px';
+      const receipt = _publicSessionState.export;
+      const exportConfirmed = receipt?.confirmed === true &&
+        receipt.confirmedRevision === receipt.requestedRevision;
+      exportInfo.textContent = exportConfirmed
+        ? 'El servidor confirma la exportación de la sesión anterior.'
+        : 'Este mensaje no confirma la exportación anterior. Los datos locales se conservan para recuperación, si existen.';
+      card.append(heading, info, exportInfo);
+      _offerNewPublicSession(card);
+      const button = card.querySelector('[data-new-session]');
+      if (button) {
+        button.textContent = 'Iniciar nueva participación';
+        button.style.cssText = 'font:inherit;padding:11px 18px;border:0;border-radius:8px;background:#A3B18A;color:#13211b;cursor:pointer';
+      }
+      panel.append(card);
+      document.body.append(panel);
+    }
+
     async function _recoverOlderPublicSessions() {
       for (const sessionId of _publicRecoveryIds()) {
         if (sessionId === trialSessionId) continue;
@@ -1556,8 +1604,13 @@ const J8e = decideBranch;
       jsPsych.resumeExperiment();
     }
     function _publicPersistenceError(error) {
-      console.error('Error saving trial data:', error);
-      window.ExpBuilderRuntime?.reportError(error, { source: 'public-persistence' });
+      // Un problema de exportación recuperable no debe activar el error fatal global.
+      const exportOnly = /Storage export|Missing export receipt/i.test(String(error?.message || ''));
+      if (exportOnly) console.warn('Validación: exportación sin confirmar:', window.ValidacionEstadoExportacion || error);
+      else {
+        console.error('Error saving trial data:', error);
+        window.ExpBuilderRuntime?.reportError(error, { source: 'public-persistence' });
+      }
       _setLoadingMsg('Data could not be confirmed. Keep this page open and retry saving.');
       const existingPanel = document.getElementById('expbuilder-retry-save');
       if (existingPanel) {
@@ -1627,6 +1680,17 @@ const J8e = decideBranch;
       const deadline = Date.now() + 600000;
       let delay = 750;
       while (true) {
+        // Diagnóstico de exportación, sin IDs ni credenciales personales.
+        window.ValidacionEstadoExportacion = {
+          version: window.ValidacionVersion,
+          lifecycle: result?.lifecycle ?? null,
+          expectedEventCount: expected?.expectedEventCount ?? null,
+          serverEventCount: result?.export?.eventCount ?? null,
+          completionConfirmed: result?.completion?.confirmed === true,
+          exportStatus: result?.export?.status ?? null,
+          exportConfirmed: result?.export?.confirmed === true,
+          lastError: result?.export?.lastError ?? null
+        };
         if (result?.success !== true || result.experimentID !== "7f4f984c-de8c-47f4-8144-b6284a011f97" || result.sessionId !== trialSessionId) {
           throw new Error('Invalid export status identity');
         }
@@ -1854,7 +1918,9 @@ const J8e = decideBranch;
     }
 
     if (typeof _recoverOlderPublicSessions === 'function') _recoverOlderPublicSessions().catch(error => {
-      console.error('Earlier responses retained for recovery:', error);
+      // La recuperación de otra sesión no debe disparar el error fatal global
+      // en la sesión nueva: mantener la advertencia y los datos locales.
+      console.warn('Earlier responses retained for recovery:', error);
       const notice = document.createElement('p'); notice.textContent = 'Earlier session responses are still pending recovery. Keep this browser data and contact the study team if this persists.';
       document.body.append(notice);
     });
@@ -1863,7 +1929,9 @@ const J8e = decideBranch;
       _observePublicConnection();
     }
     if (['completed', 'expired'].includes(_publicSessionState.lifecycle)) {
-      await publicFinishHandler();
+      // Reentrada: no invocar publicFinishHandler(), pues intenta finalizar
+      // nuevamente una sesión cuyo ciclo de vida ya terminó en el servidor.
+      _showClosedPublicSessionGate();
     } else {
       
 window.ExpBuilderExecutionAddresses = Object.freeze(
