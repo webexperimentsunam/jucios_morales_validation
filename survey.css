@@ -70,3 +70,17 @@
  #juicios-survey .jm-footer-info{font-size:11px}
 }
 @media(max-width:360px){#juicios-survey .jm-footer-info{display:none}#juicios-survey .jm-submit{width:100%}}
+
+/* Captura de grados/años completos aprobados por nivel educativo. */
+#juicios-survey .jm-grid-school-years {gap:16px 22px;margin:16px 0 12px}
+#juicios-survey .jm-input-year {max-width:190px;font-variant-numeric:tabular-nums}
+#juicios-survey .jm-year-field .jm-label {margin-bottom:7px}
+#juicios-survey .jm-year-field:last-child {
+  grid-column:1/-1;padding-top:12px;border-top:1px solid #e4ebef;
+}
+#juicios-survey .jm-section>.jm-hint {font-size:13px;line-height:1.6;margin:0 0 14px}
+#juicios-survey .jm-grid-school-years+.jm-hint {margin:13px 0 0}
+@media(max-width:640px){
+  #juicios-survey .jm-input-year {max-width:none}
+  #juicios-survey .jm-year-field:last-child {grid-column:auto}
+}

@@ -93,6 +93,16 @@
         panel.append(ul);tips.append(panel);
       }
       container.append(tips);
+      // Informar el plazo de reanudacion sin modificar la gestion de sesiones de ExpBuilder.
+      const resume=el('section','vi-resume');
+      resume.append(el('h2','vi-resume-title','¿Necesitas interrumpir la tarea?'));
+      resume.append(el('p','vi-resume-text',
+        'Puedes interrumpir la tarea y retomarla donde te quedaste durante un máximo de 24 horas desde cada interrupción. Si regresas dentro de ese plazo y después vuelves a interrumpirla, tendrás nuevamente hasta 24 horas para regresar.'));
+      resume.append(el('p','vi-resume-text',
+        'Para recuperar tu progreso, utiliza el mismo dispositivo y navegador. Evita las ventanas privadas o de incógnito y no borres los datos del navegador: al cerrar una sesión privada podrías perder el acceso a tu participación.'));
+      resume.append(el('p','vi-resume-text',
+        'Si pasan más de 24 horas sin que regreses, la sesión anterior se cerrará y no podrás continuarla. Las respuestas registradas hasta ese momento se conservarán de acuerdo con el sistema de guardado del estudio; para participar otra vez, deberás empezar una sesión nueva.'));
+      container.append(resume);
       return;
     }
     texts.forEach((t,i)=>appendTextComponent(container,t,i===0?'title':'body'));

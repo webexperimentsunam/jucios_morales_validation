@@ -1,10 +1,24 @@
-/* Juicios Morales v11: Cuestionario sociodemografico como ensayo nativo de jsPsych.
-   Respeta trial_id, nombre de componente y claves de respuesta del original. */
+/* Juicios Morales v12: Cuestionario sociodemografico como ensayo nativo de jsPsych.
+   Conserva el trial_id y las claves originales y anade escolaridad por grados aprobados. */
 (function (win, doc) {
   'use strict';
-  const diagnostics = { version:'11.0', installed:0, rendered:0, submitted:0,
+  const diagnostics = { version:'12.0-escolaridad', installed:0, rendered:0, submitted:0,
     invalid:0, lastError:null, lastKeys:[] };
   win.JuiciosSurveyDiagnostics = diagnostics;
+
+  // Los anios se miden por ciclos/grados COMPLETOS aprobados, no por tiempo inscrito.
+  // Los estudios de otra(s) licenciatura(s) se guardan por separado para no inflar
+  // automaticamente los anios de la trayectoria principal usados en baremos.
+  const SCHOOL_YEARS = [
+    { name:'Años aprobados - Primaria', label:'Primaria', max:6 },
+    { name:'Años aprobados - Secundaria', label:'Secundaria', max:6 },
+    { name:'Años aprobados - Bachillerato', label:'Bachillerato o equivalente', max:6 },
+    { name:'Años aprobados - Licenciatura principal', label:'Licenciatura principal', max:12 },
+    { name:'Años aprobados - Especialidad', label:'Especialidad', max:6 },
+    { name:'Años aprobados - Maestría', label:'Maestría', max:6 },
+    { name:'Años aprobados - Doctorado', label:'Doctorado', max:10 },
+    { name:'Años aprobados - Otras licenciaturas', label:'Otras licenciaturas (formación adicional)', max:30, additional:true }
+  ];
 
   const elem = (tag, className, text) => {
     const node=doc.createElement(tag);
@@ -89,6 +103,49 @@
     if (q.name==='Estado de la República')smallHelp(box,'Selecciona la entidad donde has vivido la mayor parte del tiempo.');
     form.append(box);return {box,control};
   }
+
+  function addSchoolYears(form) {
+    smallHelp(form,'Indica cuántos años o grados COMPLETOS aprobaste en cada nivel. Escribe 0 si no lo cursaste o no aprobaste ningún grado. No cuentes ciclos reprobados, repetidos ni tiempo adicional por cursar menos materias.');
+    const grid=elem('div','jm-grid jm-grid-school-years');
+    for (const spec of SCHOOL_YEARS) {
+      const box=elem('div','jm-field jm-year-field');
+      box.dataset.field=spec.name;
+      const id='jm-school-'+SCHOOL_YEARS.indexOf(spec);
+      const label=elem('label','jm-label',spec.label+' — años aprobados');
+      label.htmlFor=id;
+      label.append(elem('span','jm-required',' *'));
+      const control=elem('input','jm-input jm-input-year');
+      control.id=id;control.name=spec.name;control.type='number';
+      control.min='0';control.max=String(spec.max);control.step='1';
+      control.inputMode='numeric';control.required=true;control.placeholder='0';
+      box.append(label,control);
+      if(spec.additional)smallHelp(box,'No los sumes a la licenciatura principal. Si realizaste otra carrera, anota sus años aprobados aquí; si no, escribe 0.');
+      grid.append(box);
+    }
+    form.append(grid);
+    smallHelp(form,'Ejemplo: si concluiste una licenciatura de cuatro años en ocho años calendario, registra 4 en licenciatura principal. Si además completaste otra de cuatro años, registra 4 en otras licenciaturas.');
+  }
+
+  function collectSchoolYears(form) {
+    const response={},missing=[];
+    for (const spec of SCHOOL_YEARS) {
+      const raw=form.elements.namedItem(spec.name)?.value?.trim() ?? '';
+      const value=Number(raw);
+      if(raw===''||!Number.isInteger(value)||value<0||value>spec.max){
+        missing.push(spec.name);
+      }else{
+        response[spec.name]=value;
+      }
+    }
+    if(!missing.length) {
+      response['Años de escolaridad - trayectoria principal'] = SCHOOL_YEARS
+        .filter(spec=>!spec.additional)
+        .reduce((sum,spec)=>sum+response[spec.name],0);
+      response['Años de escolaridad - otras licenciaturas'] = response['Años aprobados - Otras licenciaturas'];
+      response['Criterio de años de escolaridad'] = 'Años o grados completos aprobados, sin contar repetidos';
+    }
+    return {response,missing};
+  }
   function addRadios(form,q,questionHelp) {
     const {box,label}=fieldBox(q);
     const options=elem('div','jm-options');
@@ -118,7 +175,7 @@
   }
   function explainErrors(form,missing) {
     const box=form.querySelector('.jm-error');
-    box.textContent='Revisa las preguntas obligatorias: '+missing.join(', ')+'.';
+    box.textContent='Revisa estas preguntas: '+missing.join(', ')+'. Los años deben ser números enteros dentro del rango indicado.';
     box.hidden=false;
     const first=form.querySelector('[data-field="'+missing[0]+'"]');
     if(first){first.scrollIntoView({behavior:'smooth',block:'center'});first.querySelector('input,select')?.focus({preventScroll:true});}
@@ -167,7 +224,7 @@
     const {node,row,questions} = getSource(timeline);
     const previousFinish=node.on_finish;
     class SurveyNativePlugin {
-      static info={name:'juicios-survey-nativo',version:'11.0',parameters:{}};
+      static info={name:'juicios-survey-nativo',version:'12.0',parameters:{}};
       constructor(jsPsych){this.jsPsych=jsPsych;}
       trial(display) {
         const started=performance.now();
@@ -193,6 +250,8 @@
         const study=section(scroll,'Formación académica');
         const edu={...questions[3],type:'dropdown'};
         addSelect(study,edu,'Selecciona tu nivel de estudios');
+        const schoolYears=section(scroll,'Años de escolaridad aprobados');
+        addSchoolYears(schoolYears);
         const residency=section(scroll,'Lugar de residencia');
         addYesNo(residency,questions[4]);
         const state={...questions[5],type:'dropdown'};
@@ -219,7 +278,10 @@
         form.addEventListener('submit',ev=>{
           ev.preventDefault();if(done)return;
           const {response,missing}=collect(questions,form);
+          const years=collectSchoolYears(form);
+          missing.push(...years.missing);
           if(missing.length){diagnostics.invalid++;explainErrors(form,missing);return;}
+          Object.assign(response,years.response);
           done=true;submit.disabled=true;error.hidden=true;
           const rect=card.getBoundingClientRect();
           const data={rt:Math.round(performance.now()-started),
