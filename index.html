@@ -4966,7 +4966,7 @@ window.ExpBuilderNavigation?.registerTrial(1793579048529, Final$20$ensayo_proced
     
         const test_stimuli_previous_loop_1793650037960 = (await Promise.all(
       ["data/estimulos_001.json", "data/estimulos_002.json", "data/estimulos_003.json", "data/estimulos_004.json", "data/estimulos_005.json", "data/estimulos_006.json", "data/estimulos_007.json", "data/estimulos_008.json", "data/estimulos_009.json"].map(async (path) => {
-        const response = await fetch(path, {cache: 'default'});
+        const response = await fetch(path + '?corpus=final-listas-v1', {cache: 'default'});
         if (!response.ok) throw new Error(`Failed to load ${path}: HTTP ${response.status}`);
         const rows = await response.json();
         if (!Array.isArray(rows)) throw new Error(`Invalid stimulus file: ${path}`);
@@ -4976,9 +4976,30 @@ window.ExpBuilderNavigation?.registerTrial(1793579048529, Final$20$ensayo_proced
     if (test_stimuli_previous_loop_1793650037960.length !== 480) {
       throw new Error('Incomplete stimulus data: expected 480 records.');
     }
+    // La columna Lista del corpus final es la unica fuente de asignacion.
+    const _metadataResponse = await fetch('data/main.json?corpus=final-listas-v1', {cache: 'default'});
+    if (!_metadataResponse.ok) throw new Error('No se pudo cargar la columna Lista del corpus final');
+    const _metadataFilas = await _metadataResponse.json();
+    if (!Array.isArray(_metadataFilas) || _metadataFilas.length !== test_stimuli_previous_loop_1793650037960.length) {
+      throw new Error('Las filas del corpus final no coinciden con los ensayos');
+    }
+    const _listasDesdeColumna = _metadataFilas.map((fila, indice) => {
+      const ensayo = test_stimuli_previous_loop_1793650037960[indice];
+      if (Number(fila.ID) !== ensayo.stimulus_id || String(fila['Versión Final']) !== ensayo.stimulus_texto) {
+        throw new Error('Desajuste entre la oracion y su ID en la fila ' + (indice + 2));
+      }
+      if (!/^Lista [1-6]$/.test(fila.Lista)) throw new Error('Lista no valida en la fila ' + (indice + 2));
+      if (Number(fila['ID Asociado']) !== ensayo.stimulus_id_asociado) {
+        throw new Error('ID asociado distinto en la fila ' + (indice + 2));
+      }
+      return 'List_' + fila.Lista.slice(-1);
+    });
+    const _countsPorLista = Array.from({length:6}, (_,i) => _listasDesdeColumna.filter(v => v === 'List_' + (i+1)).length);
+    if (_countsPorLista.some(n => n !== 80)) throw new Error('El corpus no tiene 80 oraciones por lista');
+
     if (typeof participantNumber === "number" && Number.isInteger(participantNumber) && participantNumber > 0) {
       const stimuliOrders = [];
-      const categoryData = ["List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_1","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_2","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_3","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_4","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_5","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6","List_6"];
+      const categoryData = _listasDesdeColumna;
       
       
       if (categoryData.length > 0) {
@@ -4988,6 +5009,14 @@ window.ExpBuilderNavigation?.registerTrial(1793579048529, Final$20$ensayo_proced
         // Determine which category corresponds to this participant
         const categoryIndex = (participantNumber - 1) % allCategories.length;
         const participantCategory = allCategories[categoryIndex];
+        window.ValidacionAsignacion = {
+          participante: participantNumber,
+          lista: participantCategory.replace('List_', 'Lista '),
+          tamanoLista: 80,
+          modoPiloto: Boolean(VALIDACION_PRUEBA_ACTIVA)
+        };
+        console.info('[Validación] Lista asignada:', window.ValidacionAsignacion.lista,
+          '(participante', participantNumber + ')');
         
         // Find the indices that correspond to this category
         const categoryIndices = [];
@@ -5061,6 +5090,11 @@ data: {
     builder_id: 1793642521181,
     trial_name: "Behavioral Statements",
     isInLoop: true,
+    participant_number: participantNumber,
+    stimulus_id: jsPsych.timelineVariable("stimulus_id"),
+    stimulus_id_asociado: jsPsych.timelineVariable("stimulus_id_asociado"),
+    stimulus_lista: jsPsych.timelineVariable("stimulus_lista"),
+    stimulus_texto: jsPsych.timelineVariable("stimulus_texto"),
     branches: [1793649983720],
     branchConditions: [],
     defaultNextTrialId: 1793649983720,

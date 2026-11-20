@@ -1,0 +1,16 @@
+{
+  "version": "final-listas-v1",
+  "total": 480,
+  "lista_counts": {
+    "Lista 1": 80,
+    "Lista 2": 80,
+    "Lista 3": 80,
+    "Lista 4": 80,
+    "Lista 5": 80,
+    "Lista 6": 80
+  },
+  "id_unicos": 480,
+  "funciones_guardado_sin_modificar": true,
+  "programa": "((participantNumber - 1) % 6) + 1",
+  "scripts_inline_validados": 2
+}
