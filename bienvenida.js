@@ -83,7 +83,7 @@
                 if(access?.modalidad==='estudiante'){
                   const note=create('section','vb-group-note');
                   note.append(create('h2','', 'Participación por curso'));
-                  note.append(create('p','', 'Accedes desde el enlace de '+access.etiquetaCurso+'. Al terminar y confirmarse el guardado recibirás un código que podrás entregar a tu profesor o profesora. El código no acredita puntos automáticamente: el equipo revisará los registros y los tiempos de respuesta. No solicites ni escribas tu nombre o matrícula en la tarea.'));
+                  note.append(create('p','', 'Accedes desde el enlace de '+access.etiquetaCurso+'. Al terminar y confirmarse el guardado recibirás un código que podrás entregar a tu profesor o profesora. El código no acredita puntos automáticamente: el equipo comprobará que completaste la tarea con atención. Lee cada afirmación y responde de manera cuidadosa, sin apresurarte ni elegir opciones al azar. No escribas tu nombre ni tu matrícula en la tarea.'));
                   content.append(note);
                 }
                 const footer = create('footer', 'vb-footer');

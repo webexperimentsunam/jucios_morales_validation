@@ -161,7 +161,7 @@
   return api;
 })(window, document);
 </script><link rel="stylesheet" href="./bienvenida.css?v=17.0-grupos">
-<script src="./bienvenida.js?v=17.0-grupos"></script>
+<script src="./bienvenida.js?v=17.1-texto"></script>
 <link rel="stylesheet" href="./consentimiento.css?v=15.0-funcional">
 <script src="./consentimiento.js?v=15.0-funcional"></script>
 <link rel="stylesheet" href="./pantallas.css?v=17.0-grupos">
@@ -171,7 +171,8 @@
 <link rel="stylesheet" href="./evaluacion.css?v=17.0-grupos">
 <script src="./evaluacion.js?v=17.0-grupos"></script>
 <script src="./validacion-config.js?v=17.0-grupos"></script>
-<script src="./validacion-grupos.js?v=17.0-grupos"></script>
+<script src="./validacion-grupos.js?v=17.1-texto"></script>
+<script>window.ValidacionVersion = "v17.1-texto-diagnostico";</script>
 <script id="generated-script">
 
   // --- FileUploadResponseComponent endpoint (Firebase Cloud Function) ---
@@ -1811,7 +1812,23 @@ const J8e = decideBranch;
           result = await _publicExportStatus('retryExport');
           continue;
         }
-        if (!result.export?.status || result.export.status === 'needs_attention') throw new Error('Storage export needs a retry or support');
+        if (!result.export?.status || result.export.status === 'needs_attention') {
+          // Diagnóstico de solo lectura: NO contiene identificadores de sesión,
+          // permisos de escritura ni datos personales. No modifica la API.
+          const diagnostic = Object.freeze({
+            version: window.ValidacionVersion,
+            lifecycle: result.lifecycle || null,
+            expectedEventCount: expected.expectedEventCount,
+            serverEventCount: result.export?.eventCount ?? null,
+            completionConfirmed: result.completion?.confirmed === true,
+            exportStatus: result.export?.status || null,
+            exportConfirmed: result.export?.confirmed === true,
+            lastError: result.export?.lastError || null
+          });
+          window.ValidacionEstadoExportacion = diagnostic;
+          console.warn('[Validación] Exportación sin confirmar:', diagnostic);
+          throw new Error('Storage export needs a retry or support');
+        }
         if (Date.now() >= deadline) throw new Error('Storage export is still pending; retry checking its status');
         _setLoadingMsg('Saving your data…');
         await new Promise(resolve => setTimeout(resolve, delay));

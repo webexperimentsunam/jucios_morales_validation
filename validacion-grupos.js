@@ -99,9 +99,9 @@
    btn.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(access.codigo);btn.textContent='Código copiado';}catch(_){btn.textContent='Selecciona el código para copiarlo';}});
    const disclaimer=doc.createElement('p');disclaimer.textContent=access.piloto
      ?'Este código es de PRUEBA y no acredita puntos.'
-     :'La entrega del código no garantiza puntos: el equipo revisará la integridad de las respuestas y los tiempos de reacción.';
+     :'La entrega del código no garantiza puntos: el equipo verificará que la tarea esté completa y respondida con atención, sin elegir opciones al azar.';
    disclaimer.style.cssText='color:#637b85;font-size:13px;line-height:1.55;margin-top:22px';
    card.append(heading,intro,course,code,btn,disclaimer);overlay.append(card);
  }
- win.ValidacionGrupos=Object.freeze({version:'17.0',initialize,decorate,showReceipt,getRecord,validateLink});
+ win.ValidacionGrupos=Object.freeze({version:'17.1',initialize,decorate,showReceipt,getRecord,validateLink});
 })(window,document);

@@ -1,3 +1,31 @@
+# Validación — revisión 17.1: texto de grupos y diagnóstico de exportación
+
+Esta versión parte de `Validacion_grupos_escolaridad_v17` y **no altera la creación de sesión, el envío de eventos, la función `completeSession`, `retryExport` ni los parámetros de Firebase y Google Drive**.
+
+## Cambios de esta revisión
+
+- En la bienvenida de los cursos se solicita responder con atención, sin apresurarse ni elegir opciones al azar. Se elimina la mención explícita a la revisión de tiempos de respuesta.
+- El texto que acompaña el código del participante deja de mencionar los tiempos de reacción.
+- Si el servidor devuelve `export.status = needs_attention` o no devuelve un estado de exportación, el navegador registra en consola un objeto de **solo diagnóstico** accesible mediante `window.ValidacionEstadoExportacion`. No incluye `sessionId`, credenciales, tokens ni respuestas de participantes.
+- El identificador de versión verificable es `window.ValidacionVersion` = `v17.1-texto-diagnostico`; se cambió el parámetro de caché de los dos archivos modificados.
+
+## Diagnóstico del error de guardado
+
+La alerta `Storage export needs a retry or support` **no acredita por sí sola** que haya un problema de permisos o credenciales: la respuesta de `apiData` debe revisarse para saber el motivo. En caso de fallar, abrir DevTools → Consola y escribir `window.ValidacionEstadoExportacion`. Revisar `exportStatus`, `lastError` y los conteos; no enviar capturas de tokens ni identificadores de sesión.
+
+Si `lastError` indica `Storage credentials require attention`, corresponde revisar las credenciales/destino de Drive en el backend de ExpBuilder. Cambiar el texto inicial no soluciona ese tipo de fallo. Si aparece un error distinto, diagnosticarlo antes de alterar el código de guardado.
+
+## Pruebas recomendadas
+
+1. Conservar respaldada la versión que guardaba correctamente. Subir todos los archivos del proyecto, evitando actualizar mientras existan sesiones activas.
+2. Probar primero `?prueba=3` en modo general y luego `?modalidad=estudiante&curso=grupo-01&prueba=3`, con perfiles independientes para evitar reanudación accidental de sesiones anteriores.
+3. Confirmar el CSV en Drive y, en modo grupo, confirmar que el código mostrado coincide con `vm_codigo_participacion`.
+4. Si falla, preservar IndexedDB y la pestaña hasta decidir cómo recuperar el guardado. El botón `Retry saving` utiliza la API original.
+
+**Limitación**: la publicación, el estado de las credenciales y la exportación real a Drive solo se pueden verificar mediante pruebas contra el servidor.
+
+---
+
 # Validación — versión 17: escolaridad, instrucciones y grupos
 
 **Base:** versión funcional `Validacion_revision_2026_11_20`, que conserva las 480 oraciones y la capa ExpBuilder v3 de sesiones, IndexedDB, Firebase y exportación a Drive. **Esta revisión NO cambia el protocolo del backend ni el tiempo del servidor.** El guardado real de esta revisión debe probarse en GitHub Pages antes de reclutar.
