@@ -160,16 +160,18 @@
   emit("runtime-ready", { version: api.version });
   return api;
 })(window, document);
-</script><link rel="stylesheet" href="./bienvenida.css?v=15.0-funcional">
-<script src="./bienvenida.js?v=15.0-funcional"></script>
+</script><link rel="stylesheet" href="./bienvenida.css?v=17.0-grupos">
+<script src="./bienvenida.js?v=17.0-grupos"></script>
 <link rel="stylesheet" href="./consentimiento.css?v=15.0-funcional">
 <script src="./consentimiento.js?v=15.0-funcional"></script>
-<link rel="stylesheet" href="./pantallas.css?v=16.0-ajustes">
-<script src="./pantallas.js?v=16.0-ajustes"></script>
-<link rel="stylesheet" href="./survey.css?v=16.0-ajustes">
-<script src="./survey.js?v=16.0-ajustes"></script>
-<link rel="stylesheet" href="./evaluacion.css?v=16.0-ajustes">
-<script src="./evaluacion.js?v=16.0-ajustes"></script>
+<link rel="stylesheet" href="./pantallas.css?v=17.0-grupos">
+<script src="./pantallas.js?v=17.0-grupos"></script>
+<link rel="stylesheet" href="./survey.css?v=17.0-grupos">
+<script src="./survey.js?v=17.0-grupos"></script>
+<link rel="stylesheet" href="./evaluacion.css?v=17.0-grupos">
+<script src="./evaluacion.js?v=17.0-grupos"></script>
+<script src="./validacion-config.js?v=17.0-grupos"></script>
+<script src="./validacion-grupos.js?v=17.0-grupos"></script>
 <script id="generated-script">
 
   // --- FileUploadResponseComponent endpoint (Firebase Cloud Function) ---
@@ -1182,6 +1184,8 @@ const J8e = decideBranch;
   window.JSPSYCH_SESSION_ID = trialSessionId;
   // Keep the identity even if registration commits but its HTTP response is lost.
   localStorage.setItem(_publicStorageKeys.sessionId, trialSessionId);
+  // Asociación estable de grupo/folio a esta sesión (no cambia el backend).
+  window.ValidacionGrupos.initialize(trialSessionId);
 
   let participantNumber;
 
@@ -1278,6 +1282,9 @@ const J8e = decideBranch;
       <p style="margin:0;color:#555;font-size:14px">You can now close this window.</p>
     `;
     document.body.appendChild(overlay);
+    // Solo después de la confirmación remota y solo en modalidad estudiante.
+    try { window.ValidacionGrupos.showReceipt(overlay, trialSessionId); }
+    catch (error) { console.error("No se pudo mostrar el código de participación", error); }
   }
 
   function _showLoading(msg) {
@@ -1880,6 +1887,7 @@ const J8e = decideBranch;
           data.clientTimestamp = Date.now();
           data.sessionId = trialSessionId;
           data.experimentID = "7f4f984c-de8c-47f4-8144-b6284a011f97";
+          window.ValidacionGrupos.decorate(data, trialSessionId);
           const checkpoint = data.builder_id !== undefined && data.builder_id !== null
             ? _createResumeCheckpoint(data) : null;
           if (data.trial_index === 0 && _publicSessionState.sessionProtocolVersion !== 3) {
