@@ -74,16 +74,7 @@
       for(const line of questions){
         const m=line.match(/^(Moralidad|Competencia|Informatividad|Credibilidad):\s*(.*)$/);
         const box=el('section','vi-dimension');
-        if(m){
-          box.append(el('h2','vi-dimension-name',m[1]));
-          const content={
-            'Moralidad': '¿Qué tan moralmente mala o buena consideras la conducta descrita? Evalúa la conducta desde el punto de vista moral, aunque la persona haya sido capaz de realizarla. (−4 = Moralmente muy mala; 0 = Neutral; +4 = Moralmente muy buena).',
-            'Competencia': '¿Qué tan competente consideras a la persona a partir de la conducta descrita? Evalúa lo que indica acerca de su capacidad o habilidad para realizar acciones. (−4 = Muy incapaz; 0 = Neutral; +4 = Muy capaz).',
-            'Informatividad': '¿Qué tan útil es esta información para formarte una impresión de cómo es la persona? Considera cuánto te permite conocer o inferir características de ella, no solo la cantidad de detalles. (0 = Nada informativa; 8 = Muy informativa).',
-            'Credibilidad': '¿Qué tan creíble te parece la situación descrita? Evalúa qué tan posible es que ocurra en la vida real, no si sabes que ocurrió realmente. (0 = Nada creíble; 8 = Muy creíble).'
-          };
-          box.append(el('p','vi-dimension-question',content[m[1]]||m[2]));
-        }
+        if(m){box.append(el('h2','vi-dimension-name',m[1]));box.append(el('p','vi-dimension-question',m[2]));}
         else box.append(el('p','vi-dimension-question',line));
         grid.append(box);
       }

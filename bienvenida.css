@@ -80,7 +80,3 @@
   #validacion-bienvenida .vb-next {width:100%;}
 }
 @media (prefers-reduced-motion:reduce) {#validacion-bienvenida .vb-next {transition:none}}
-
-#validacion-bienvenida .vb-group-note{max-width:640px;margin:20px auto 0;padding:14px 18px;border:1px solid #d7e4e9;border-radius:12px;background:#f5f9fa;text-align:left}
-#validacion-bienvenida .vb-group-note h2{margin:0 0 6px;font-size:16px;color:#20516b}
-#validacion-bienvenida .vb-group-note p{margin:0;font-size:14px;line-height:1.55;color:#456271}
