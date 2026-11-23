@@ -1,37 +1,30 @@
-# Validación — ajustes aprobados al cuestionario e instrucciones
+# Validación — integración sobre el HTML funcional de ExpBuilder
 
-Versión de revisión: `16.0-ajustes` (20 de noviembre de 2026). Base: `Validacion_listas_finales.zip`, cuyo guardado a Firebase/Google Drive y distribución cíclica de listas ya fueron probados por el equipo.
+Este paquete utiliza **exactamente el motor de sesiones y exportación** del archivo `index (1).html` que proporcionaste. El código de las funciones de registro, sesiones, IndexedDB, envío de eventos, finalización, comprobación y reintentos de exportación se conservó sin cambios. Solo se sustituyó el ensayo de ejemplo por la tarea de Validación y se incluyeron los recursos visuales de la versión previa.
 
-## Cambios implementados
+## Instalación
 
-1. **Escolaridad por años completos aprobados.** Se agregan ocho campos numéricos obligatorios al cuestionario nativo: primaria, secundaria, bachillerato o equivalente, licenciatura principal, especialidad, maestría, doctorado y otras licenciaturas. Si no se cursó el nivel, se registra `0`. No se cuentan años repetidos, reprobados ni años calendario adicionales sin grados completos aprobados. Se acepta solo un entero entre 0 y el máximo validado por campo. Una licenciatura concluida en 8 años calendario cuyo plan aprobado equivalga a 4 años se registra como `4` en la licenciatura principal; una segunda licenciatura se registra aparte.
-2. **Cálculo independiente de escolaridad.** En `SurveyComponent_1_response` se agregan `Años de escolaridad - trayectoria principal` (suma de primaria, secundaria, bachillerato, licenciatura principal, especialidad, maestría y doctorado) y `Años de escolaridad - otras licenciaturas` (valor aparte). Estas sumas son *descriptivas* y no sustituyen las reglas de puntuación de una prueba neuropsicológica particular. Se preservan las seis variables previas, incluido `Estudios`.
-3. **Máximo nivel de estudios.** La antigua pregunta «Nivel de estudios actual» pasa a «Máximo nivel de estudios alcanzado». Se incorporan «Especialidad (incompleta)» y «Especialidad (completa)». También se permiten niveles inferiores al bachillerato, para que el selector sea aplicable a todas las trayectorias.
-4. **Moralidad.** Los extremos de −4 y +4 se muestran y se registran como «Moralmente muy mala» / «Moralmente muy buena», sin modificar la codificación −4...+4 ni las otras dimensiones. El texto de las instrucciones se actualizó en el mismo sentido.
-5. **Interrupciones.** Se añade un apartado visual en español que explica las 24 horas para volver desde cada interrupción, la necesidad de usar el mismo navegador/dispositivo y las limitaciones del modo incógnito. No altera el algoritmo de recuperación ni permite extender una sesión ya expirada.
+1. Crea una **rama o repositorio de prueba**. No sustituyas todavía el experimento usado para participantes.
+2. Sube **todo el contenido de esta carpeta**, incluidos `index.html`, los `.js`, los `.css`, `img/` y `data/`, a la raíz de GitHub Pages. No es necesario subir el ZIP ni los CSV de resultados.
+3. Abre `?prueba=3` para comprobar bienvenida, consentimiento, cuestionario, práctica y **tres estímulos principales**. **Este modo sí envía los datos a Firebase/Drive** y los marca como prueba.
+4. Sin `?prueba=3`, se habilitan los **480 estímulos principales**.
 
-## Importante: configurar 24 horas en ExpBuilder
+## Qué se conserva
 
-El timeout real depende de la configuración **del servidor**, `configuration.batchConfig.resumeTimeoutMinutes`. Para 24 horas, configurar **1440 minutos** en ExpBuilder y republicar la configuración correspondiente. **Este paquete no cambia esa configuración**. La renovación del plazo en interrupciones sucesivas debe validarse en el entorno de publicación. La descripción en pantalla asume que el servidor está configurado para 24 horas y que aplica la renovación del plazo descrita por el equipo.
+- ID de estudio y endpoints de Firebase del HTML del desarrollador.
+- El motor de `createSession`, `resumeSession`, `appendEvents`, `completeSession`, `sessionStatus` y `retryExport`, incluida la gestión de IndexedDB.
+- Los nombres de sesión originales del HTML funcional, sin prefijos `PRUEBA3-`.
+- Los componentes, sus datos y la selección/aleatorización de práctica y tarea principal de la versión de Validación.
+- Los archivos existentes de imagen, estilos y pantallas especializadas.
 
-## Qué no se modificó
+## Límites y validación pendiente
 
-- Ninguna de las 480 oraciones finales de `data/main.json` ni de los nueve archivos de estímulos.
-- Los seis grupos/listas: 80 oraciones por lista.
-- La asignación cíclica del número de participante y la aleatorización original.
-- Los ensayos de práctica y el modo `?prueba=3`.
-- El motor original de sesiones, IndexedDB, Firebase, recuperación y exportación a Google Drive del HTML funcional de ExpBuilder.
+- `node --check` y verificaciones de estructura/activos superadas.
+- **No se ha realizado una prueba de escritura real a Firebase/Drive desde este entorno.**
+- No debe considerarse lista para reclutamiento sin comprobar: completado de 3 estímulos y CSV; reanudación con 1 o 2 minutos (mismo navegador); reingreso tras vencimiento; ejecución de los 480 ensayos y exportación completa.
+- La ruta de sesión expirada del HTML funcional se ha conservado tal cual, incluso aunque el flujo de reingreso requiera una adaptación posterior. La prioridad fue no modificar su código de almacenamiento.
+- Verifica que las etiquetas y la orientación de «Competencia» reflejen el protocolo aprobado antes de tomar datos reales.
 
-## Archivos actualizados
+## Comprobaciones
 
-`index.html`, `survey.js`, `survey.css`, `pantallas.js`, `pantallas.css`, `evaluacion.js` y `data/definition.json`. Los demás archivos se incluyen para que sea posible publicar el ZIP como proyecto completo. Los recursos externos usan un nuevo parámetro de versión `?v=16.0-ajustes` para evitar caché.
-
-## Verificación realizada
-
-- Sintaxis de los tres módulos JS modificados y del bloque JavaScript incrustado en el HTML.
-- Formulario ejecutado con un navegador de pruebas (375 y 1440 píxeles). Se comprobaron los ocho campos nuevos, la validación de campos vacíos, la opción de especialidad, un total de 19 años principales y cuatro de formación adicional, sin errores JS.
-- Instrucciones ejecutadas con el navegador de pruebas (375 y 1440 píxeles), sin desbordamiento horizontal.
-- Pantalla de evaluación verificada (320 y 1440 píxeles): los dos polos de moralidad se muestran correctamente y el dato numérico en cero se conserva.
-- Integridad de las 480 oraciones, sus listas y los archivos de estímulos respecto a la versión funcional.
-
-**Pendiente:** probar el proceso completo y la exportación a Google Drive en un navegador real con la versión publicada, y probar el timeout definitivo de 1440 minutos. No sustituir archivos mientras un participante tenga una sesión activa.
+El archivo `verificacion.json` contiene el hash SHA-256 del motor de almacenamiento original y de la integración, que deben coincidir.

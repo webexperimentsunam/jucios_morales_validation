@@ -98,22 +98,3 @@
   #validacion-pantalla .vi-dimension {padding:14px 16px;}
   #validacion-pantalla .vi-tip {padding:15px 16px;}
 }
-
-/* Instrucciones de interrupcion y reanudacion, legibles en movil. */
-#validacion-pantalla .vi-resume {
-  margin-top:24px;padding:19px 21px;border-radius:12px;
-  border:1px solid #d5e2e6;background:#f2f7f7;
-}
-#validacion-pantalla .vi-resume-title {
-  margin:0 0 10px;font-size:19px;line-height:1.4;
-  font-weight:730;color:#1b475a;
-}
-#validacion-pantalla .vi-resume-text {
-  margin:0 0 12px;font-size:15px;line-height:1.62;color:#3a5561;
-}
-#validacion-pantalla .vi-resume-text:last-child {margin-bottom:0}
-@media(max-width:600px){
-  #validacion-pantalla .vi-resume {padding:16px 15px;margin-top:19px}
-  #validacion-pantalla .vi-resume-title {font-size:18px}
-  #validacion-pantalla .vi-resume-text {font-size:14px}
-}
