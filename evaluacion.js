@@ -59,6 +59,21 @@
     const competence=pairs[1];
     const left=competence[0].text.trim(),right=competence[1].text.trim();
     const visibleTexts={};
+    // Adaptacion linguistica solicitada: la escala numerica original -4..+4
+    // no cambia. La redaccion visible es consistente con las instrucciones.
+    const moral=pairs[0];
+    const leftMoral=moral[0].text.trim(),rightMoral=moral[1].text.trim();
+    if(['Malo','Muy moralmente mala','Moralmente muy mala'].includes(leftMoral) &&
+       ['Bueno','Muy moralmente buena','Moralmente muy buena'].includes(rightMoral)){
+      visibleTexts[moral[0].name]='Moralmente muy mala';
+      visibleTexts[moral[1].name]='Moralmente muy buena';
+      pairs[0]=[
+        Object.assign({},moral[0],{text:'Moralmente muy mala'}),
+        Object.assign({},moral[1],{text:'Moralmente muy buena'})
+      ];
+    } else {
+      throw Error('Etiquetas de Moralidad inesperadas: '+leftMoral+' / '+rightMoral);
+    }
     if(left==='Capaz'&&right==='Incapaz'){
       // Cambiamos SOLO la capa visible y el registro de las etiquetas mostradas.
       // Nunca modificar los componentes de las listas ni su orden.

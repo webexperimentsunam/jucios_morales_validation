@@ -1,4 +1,4 @@
-/* Validación v17 — adaptación del acceso por curso y folios de CAFE.
+/* Validación v18 — adaptación del acceso por curso y folios de CAFE.
  * Folio aleatorio asociado a sessionId, presente en TODAS las filas del CSV.
  * NUNCA acredita automáticamente. Se muestra después de export.confirmed. */
 (function(win,doc){
@@ -103,5 +103,5 @@
    disclaimer.style.cssText='color:#637b85;font-size:13px;line-height:1.55;margin-top:22px';
    card.append(heading,intro,course,code,btn,disclaimer);overlay.append(card);
  }
- win.ValidacionGrupos=Object.freeze({version:'17.1',initialize,decorate,showReceipt,getRecord,validateLink});
+ win.ValidacionGrupos=Object.freeze({version:'18.0',initialize,decorate,showReceipt,getRecord,validateLink});
 })(window,document);

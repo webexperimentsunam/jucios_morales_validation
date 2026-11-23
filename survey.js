@@ -1,10 +1,23 @@
-/* Juicios Morales v11: Cuestionario sociodemografico como ensayo nativo de jsPsych.
-   Respeta trial_id, nombre de componente y claves de respuesta del original. */
+/* Juicios Morales v12: Cuestionario sociodemografico como ensayo nativo de jsPsych.
+   Conserva el trial_id y las claves originales y anade escolaridad por grados aprobados. */
 (function (win, doc) {
   'use strict';
-  const diagnostics = { version:'11.0', installed:0, rendered:0, submitted:0,
+  const diagnostics = { version:'17.0-estudios-formales', installed:0, rendered:0, submitted:0,
     invalid:0, lastError:null, lastKeys:[] };
   win.JuiciosSurveyDiagnostics = diagnostics;
+
+  // Los anios se miden por ciclos/grados COMPLETOS aprobados, no por tiempo inscrito.
+  // Los estudios de otra(s) licenciatura(s) se guardan por separado para no inflar
+  // automaticamente los anios de la trayectoria principal usados en baremos.
+  const SCHOOL_YEARS = [
+    { name:'Años aprobados - Primaria', label:'Primaria', max:6 },
+    { name:'Años aprobados - Secundaria', label:'Secundaria', max:6 },
+    { name:'Años aprobados - Bachillerato', label:'Bachillerato o equivalente', max:6 },
+    { name:'Años aprobados - Licenciatura principal', label:'Licenciatura principal', max:12 },
+    { name:'Años aprobados - Especialidad', label:'Especialidad', max:6 },
+    { name:'Años aprobados - Maestría', label:'Maestría', max:6 },
+    { name:'Años aprobados - Doctorado', label:'Doctorado', max:10 }
+  ];
 
   const elem = (tag, className, text) => {
     const node=doc.createElement(tag);
@@ -89,6 +102,163 @@
     if (q.name==='Estado de la República')smallHelp(box,'Selecciona la entidad donde has vivido la mayor parte del tiempo.');
     form.append(box);return {box,control};
   }
+
+  function addSchoolYears(form) {
+    smallHelp(form,'Indica cuántos años o grados COMPLETOS aprobaste en cada nivel. Escribe 0 si no lo cursaste o no aprobaste ningún grado. No cuentes ciclos reprobados, repetidos ni tiempo adicional por cursar menos materias.');
+    const grid=elem('div','jm-grid jm-grid-school-years');
+    for (const spec of SCHOOL_YEARS) {
+      const box=elem('div','jm-field jm-year-field');
+      box.dataset.field=spec.name;
+      const id='jm-school-'+SCHOOL_YEARS.indexOf(spec);
+      const label=elem('label','jm-label',spec.label);
+      label.htmlFor=id;
+      label.append(elem('span','jm-required',' *'));
+      const control=elem('input','jm-input jm-input-year');
+      control.id=id;control.name=spec.name;control.type='number';
+      control.min='0';control.max=String(spec.max);control.step='1';
+      control.inputMode='numeric';control.required=true;control.placeholder='0';
+      box.append(label,control);
+      grid.append(box);
+    }
+    form.append(grid);
+    smallHelp(form,'Ejemplo: si terminaste un programa de cuatro años en ocho años calendario, registra 4. Los otros programas formales se indican en la siguiente sección.');
+  }
+
+  function collectSchoolYears(form) {
+    const response={},missing=[];
+    for (const spec of SCHOOL_YEARS) {
+      const raw=form.elements.namedItem(spec.name)?.value?.trim() ?? '';
+      const value=Number(raw);
+      if(raw===''||!Number.isInteger(value)||value<0||value>spec.max){
+        missing.push(spec.name);
+      }else{
+        response[spec.name]=value;
+      }
+    }
+    if(!missing.length) {
+      response['Años de escolaridad - trayectoria principal'] = SCHOOL_YEARS
+        .reduce((sum,spec)=>sum+response[spec.name],0);
+      response['Criterio de años de escolaridad'] = 'Años o grados completos aprobados, sin contar repetidos';
+    }
+    return {response,missing};
+  }
+  const ADDITIONAL_LEVELS=['Primaria','Secundaria','Bachillerato','Técnico superior / TSU','Licenciatura','Especialidad','Maestría','Doctorado','Otro estudio formal'];
+  const MAX_ADDITIONAL=8;
+  function addAdditionalProgram(container) {
+    const cards=container.querySelector('.jm-additional-cards');
+    if(cards.children.length>=MAX_ADDITIONAL)return;
+    const index=cards.children.length+1;
+    const card=elem('fieldset','jm-additional-card');card.dataset.program=String(index);
+    const legend=elem('legend','jm-additional-legend','Programa adicional '+index);card.append(legend);
+    const fields=elem('div','jm-additional-fields');
+    const levelBox=elem('div','jm-field');
+    const levelLabel=elem('label','jm-label','Nivel educativo');
+    const level=elem('select','jm-select');level.name='additional-level-'+index;level.required=true;
+    level.append(new Option('Selecciona un nivel',''));
+    for(const name of ADDITIONAL_LEVELS)level.append(new Option(name,name));
+    levelLabel.htmlFor='additional-level-'+index;level.id=levelLabel.htmlFor;levelBox.append(levelLabel,level);fields.append(levelBox);
+    const yearsBox=elem('div','jm-field');
+    const yearsLabel=elem('label','jm-label','Años o grados completos');
+    const years=elem('input','jm-input');years.id='additional-years-'+index;years.name=years.id;
+    years.type='number';years.min='0';years.max='30';years.step='1';years.required=true;
+    years.inputMode='numeric';yearsLabel.htmlFor=years.id;yearsBox.append(yearsLabel,years);fields.append(yearsBox);
+    const finishedBox=elem('div','jm-field');
+    const finishedLabel=elem('label','jm-label','¿Concluiste este programa?');
+    const finished=elem('select','jm-select');finished.name='additional-finished-'+index;finished.id=finished.name;
+    finished.append(new Option('Selecciona una respuesta',''),new Option('Sí','true'),new Option('No','false'));
+    finished.required=true;finishedLabel.htmlFor=finished.id;finishedBox.append(finishedLabel,finished);fields.append(finishedBox);
+    card.append(fields);
+    const remove=elem('button','jm-remove-additional','Quitar programa');remove.type='button';
+    remove.addEventListener('click',()=>{card.remove();reindexAdditional(cards);});card.append(remove);
+    cards.append(card);
+  }
+  function reindexAdditional(cards){
+    Array.from(cards.children).forEach((card,i)=>{
+      const num=i+1;card.dataset.program=String(num);card.querySelector('legend').textContent='Programa adicional '+num;
+      const controls=card.querySelectorAll('select,input');
+      const types=['additional-level-','additional-years-','additional-finished-'];
+      controls.forEach((c,j)=>{c.id=types[j]+num;c.name=c.id;});
+      card.querySelectorAll('label').forEach((label,j)=>label.htmlFor=types[j]+num);
+    });
+  }
+  function addAdditionalStudies(sectionEl){
+    smallHelp(sectionEl,'Registra únicamente otros programas de educación formal, por ejemplo otra licenciatura, especialidad, maestría o doctorado. No incluyas cursos, talleres, diplomados de educación continua ni estudios ya anotados arriba.');
+    const yesNo=elem('div','jm-options jm-binary');
+    for(const [text,value] of [['Sí','si'],['No','no']]){
+      const wrap=elem('label','jm-option');const input=elem('input','jm-radio');input.type='radio';input.name='has-additional';input.value=value;input.required=true;
+      wrap.append(input,elem('span','',text));yesNo.append(wrap);
+    }
+    const prompt=elem('p','jm-label','¿Has cursado otros programas formales adicionales?');sectionEl.append(prompt,yesNo);
+    const panel=elem('div','jm-additional-panel');panel.hidden=true;
+    const cards=elem('div','jm-additional-cards');panel.append(cards);
+    const add=elem('button','jm-add-additional','+ Agregar otro programa');add.type='button';
+    add.addEventListener('click',()=>addAdditionalProgram(panel));panel.append(add);sectionEl.append(panel);
+    yesNo.addEventListener('change',()=>{
+      panel.hidden=sectionEl.querySelector('input[name="has-additional"]:checked')?.value!=='si';
+      if(!panel.hidden && !cards.children.length)addAdditionalProgram(panel);
+      if(panel.hidden)cards.replaceChildren();
+    });
+  }
+  function collectAdditional(form){
+    const answer=form.querySelector('input[name="has-additional"]:checked')?.value;
+    const response={},missing=[],programs=[];
+    if(!answer){missing.push('Estudios adicionales');return {response,missing};}
+    if(answer==='si'){
+      const cards=form.querySelectorAll('.jm-additional-card');
+      if(!cards.length)missing.push('Agrega al menos un programa adicional');
+      cards.forEach((card,index)=>{
+        const no=index+1;
+        const level=card.querySelector('[name="additional-level-'+no+'"]')?.value || '';
+        const raw=card.querySelector('[name="additional-years-'+no+'"]')?.value ?? '';
+        const finished=card.querySelector('[name="additional-finished-'+no+'"]')?.value || '';
+        const years=Number(raw);
+        if(!ADDITIONAL_LEVELS.includes(level)||raw===''||!Number.isInteger(years)||years<0||years>30||!['true','false'].includes(finished))
+          missing.push('Programa adicional '+no);
+        else programs.push({nivel:level,anios_aprobados:years,concluido:finished==='true'});
+      });
+    }
+    if(!missing.length){
+      response['Otros estudios formales']=programs.length>0;
+      response['Otros estudios formales - número de programas']=programs.length;
+      response['Otros estudios formales - programas']=JSON.stringify(programs);
+      response['Otros estudios formales - años aprobados']=programs.reduce((sum,p)=>sum+p.anios_aprobados,0);
+      // Columnas individuales para facilitar revisión en el CSV sin depender del JSON.
+      programs.forEach((p,i)=>{
+        const j=i+1;response['Programa adicional '+j+' - nivel']=p.nivel;
+        response['Programa adicional '+j+' - años']=p.anios_aprobados;
+        response['Programa adicional '+j+' - concluido']=p.concluido;
+      });
+    }
+    return {response,missing};
+  }
+  function deriveEducation(years,highestCompleted,additionalPrograms=[]){
+    const order=[['Doctorado','Doctorado'],['Maestría','Maestria'],['Especialidad','Especialidad'],
+      ['Licenciatura principal','Licenciatura'],['Bachillerato','Bachillerato'],
+      ['Secundaria','Secundaria'],['Primaria','Primaria']];
+    const level=order.find(([label])=>years['Años aprobados - '+label]>0);
+    const orderLevel=order.map((item)=>item[1]);
+    let selected=level?{nivel:level[1],concluido:highestCompleted}:null;
+    for(const program of additionalPrograms){
+      const normalized=program.nivel==='Maestría'?'Maestria':program.nivel;
+      const rank=orderLevel.indexOf(normalized);
+      if(rank<0)continue; // TSU/otros programas no se equiparan automáticamente.
+      const previousRank=selected?orderLevel.indexOf(selected.nivel):Infinity;
+      if(!selected || rank<previousRank || (rank===previousRank && program.concluido && !selected.concluido))
+        selected={nivel:normalized,concluido:program.concluido};
+    }
+    if(!selected)return {label:'Sin escolaridad formal',highest:'Sin escolaridad formal'};
+    let suffix=selected.concluido?'completa':'incompleta';
+    if(['Doctorado','Bachillerato'].includes(selected.nivel))suffix=selected.concluido?'completo':'incompleto';
+    return {label:selected.nivel+' ('+suffix+')',highest:selected.nivel};
+  }
+  function addHighestCompleted(sectionEl){
+    const field=elem('div','jm-field jm-highest-finished');
+    field.append(elem('p','jm-label','¿Concluiste el nivel educativo más alto que registraste?'));
+    smallHelp(field,'Responde Sí si concluiste el programa correspondiente, aunque hayas tardado más años. Si no cursaste educación formal, selecciona «No aplica».');
+    const select=elem('select','jm-select');select.id='jm-highest-completed';select.name='jm-highest-completed';select.required=true;
+    select.append(new Option('Selecciona una respuesta',''),new Option('Sí','si'),new Option('No','no'),new Option('No aplica (sin escolaridad)','na'));
+    field.append(select);sectionEl.append(field);
+  }
   function addRadios(form,q,questionHelp) {
     const {box,label}=fieldBox(q);
     const options=elem('div','jm-options');
@@ -118,7 +288,7 @@
   }
   function explainErrors(form,missing) {
     const box=form.querySelector('.jm-error');
-    box.textContent='Revisa las preguntas obligatorias: '+missing.join(', ')+'.';
+    box.textContent='Revisa estas preguntas: '+missing.join(', ')+'. Los años deben ser números enteros dentro del rango indicado.';
     box.hidden=false;
     const first=form.querySelector('[data-field="'+missing[0]+'"]');
     if(first){first.scrollIntoView({behavior:'smooth',block:'center'});first.querySelector('input,select')?.focus({preventScroll:true});}
@@ -136,7 +306,10 @@
         if (!date || Number.isNaN(date.getTime()) || raw > todayISO || raw < '1900-01-01')
           missing.push(item.title);
         else response[name]=raw;
-      } else if(name==='Estudios' || name==='Estado de la República') {
+      } else if(name==='Estudios') {
+        // Derivado de la escolaridad y el estado de finalización, no se pregunta dos veces.
+        continue;
+      } else if(name==='Estado de la República') {
         const selected=form.elements.namedItem(name)?.value || '';
         if (!selected && item.isRequired && (name!=='Estado de la República' || form.querySelector('input[name="Mayoría de vida en México"][value="true"]')?.checked)) missing.push(item.title);
         else if(selected) response[name]=selected;
@@ -167,7 +340,7 @@
     const {node,row,questions} = getSource(timeline);
     const previousFinish=node.on_finish;
     class SurveyNativePlugin {
-      static info={name:'juicios-survey-nativo',version:'11.0',parameters:{}};
+      static info={name:'juicios-survey-nativo',version:'12.0',parameters:{}};
       constructor(jsPsych){this.jsPsych=jsPsych;}
       trial(display) {
         const started=performance.now();
@@ -190,9 +363,11 @@
         addDate(first,questions[0]);
         addRadios(first,questions[1]);
         addRadios(first,questions[2]);
-        const study=section(scroll,'Formación académica');
-        const edu={...questions[3],type:'dropdown'};
-        addSelect(study,edu,'Selecciona tu nivel de estudios');
+        const schoolYears=section(scroll,'Años de escolaridad aprobados');
+        addSchoolYears(schoolYears);
+        addHighestCompleted(schoolYears);
+        const additional=section(scroll,'Otros estudios formales');
+        addAdditionalStudies(additional);
         const residency=section(scroll,'Lugar de residencia');
         addYesNo(residency,questions[4]);
         const state={...questions[5],type:'dropdown'};
@@ -219,7 +394,24 @@
         form.addEventListener('submit',ev=>{
           ev.preventDefault();if(done)return;
           const {response,missing}=collect(questions,form);
+          const years=collectSchoolYears(form);
+          missing.push(...years.missing);
+          const additional=collectAdditional(form);
+          missing.push(...additional.missing);
+          const highest=form.elements.namedItem('jm-highest-completed')?.value || '';
+          if(!highest)missing.push('Conclusión del nivel más alto');
+          if(!years.missing.length && highest){
+            const total=years.response['Años de escolaridad - trayectoria principal'];
+            if((total===0 && highest!=='na')||(total>0 && highest==='na'))missing.push('Conclusión del nivel más alto');
+          }
           if(missing.length){diagnostics.invalid++;explainErrors(form,missing);return;}
+          Object.assign(response,years.response,additional.response);
+          const additionalPrograms=JSON.parse(additional.response['Otros estudios formales - programas']||'[]');
+          const derived=deriveEducation(years.response,highest==='si',additionalPrograms);
+          response['Estudios']=derived.label;
+          response['Nivel más alto - derivado']=derived.highest;
+          response['Nivel principal más alto - concluido']=highest==='na'?null:highest==='si';
+          response['Nivel más alto - concluido']=derived.label.includes('(complet');
           done=true;submit.disabled=true;error.hidden=true;
           const rect=card.getBoundingClientRect();
           const data={rt:Math.round(performance.now()-started),

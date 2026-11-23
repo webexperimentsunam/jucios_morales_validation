@@ -1,0 +1,17 @@
+{
+  "original_bytes": 96457,
+  "latest_bytes": 263204,
+  "new_bytes": 262422,
+  "original_kernel_identical": true,
+  "kernel_length": 89322,
+  "original_hash": "ced858b0c475d812f79dcd8023e3a89c648416098a60d06e72d426ea34f086a1",
+  "main_current_hash": "389324257c411f1bae9867bf472127de912d57471fc5c20d7988d1f8f75877fa",
+  "original_kernel_hash": "030078232528618d63f54a4d3c9f7856915436803a289b570b0016976af2c42e",
+  "new_kernel_hash": "030078232528618d63f54a4d3c9f7856915436803a289b570b0016976af2c42e",
+  "trial_count": 14,
+  "group_injection_count": 1,
+  "old_group_inline_count": 0,
+  "api_occurrences_original": 8,
+  "api_occurrences_new": 8,
+  "stimulus_row_count": 2
+}

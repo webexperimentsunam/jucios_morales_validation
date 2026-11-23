@@ -74,7 +74,16 @@
       for(const line of questions){
         const m=line.match(/^(Moralidad|Competencia|Informatividad|Credibilidad):\s*(.*)$/);
         const box=el('section','vi-dimension');
-        if(m){box.append(el('h2','vi-dimension-name',m[1]));box.append(el('p','vi-dimension-question',m[2]));}
+        if(m){
+          box.append(el('h2','vi-dimension-name',m[1]));
+          const content={
+            'Moralidad': '¿Qué tan moralmente mala o buena consideras la conducta descrita? Evalúa la conducta desde el punto de vista moral, aunque la persona haya sido capaz de realizarla. (−4 = Moralmente muy mala; 0 = Neutral; +4 = Moralmente muy buena).',
+            'Competencia': '¿Qué tan competente consideras a la persona a partir de la conducta descrita? Evalúa lo que indica acerca de su capacidad o habilidad para realizar acciones. (−4 = Muy incapaz; 0 = Neutral; +4 = Muy capaz).',
+            'Informatividad': '¿Qué tan útil es esta información para formarte una impresión de cómo es la persona? Considera cuánto te permite conocer o inferir características de ella, no solo la cantidad de detalles. (0 = Nada informativa; 8 = Muy informativa).',
+            'Credibilidad': '¿Qué tan creíble te parece la situación descrita? Evalúa qué tan posible es que ocurra en la vida real, no si sabes que ocurrió realmente. (0 = Nada creíble; 8 = Muy creíble).'
+          };
+          box.append(el('p','vi-dimension-question',content[m[1]]||m[2]));
+        }
         else box.append(el('p','vi-dimension-question',line));
         grid.append(box);
       }
@@ -93,6 +102,16 @@
         panel.append(ul);tips.append(panel);
       }
       container.append(tips);
+      // Informar el plazo de reanudacion sin modificar la gestion de sesiones de ExpBuilder.
+      const resume=el('section','vi-resume');
+      resume.append(el('h2','vi-resume-title','¿Necesitas interrumpir la tarea?'));
+      resume.append(el('p','vi-resume-text',
+        'Puedes interrumpir la tarea y retomarla donde te quedaste durante un máximo de 24 horas desde cada interrupción. Si regresas dentro de ese plazo y después vuelves a interrumpirla, tendrás nuevamente hasta 24 horas para regresar.'));
+      resume.append(el('p','vi-resume-text',
+        'Para recuperar tu progreso, utiliza el mismo dispositivo y navegador. Evita las ventanas privadas o de incógnito y no borres los datos del navegador: al cerrar una sesión privada podrías perder el acceso a tu participación.'));
+      resume.append(el('p','vi-resume-text',
+        'Si pasan más de 24 horas sin que regreses, la sesión anterior se cerrará y no podrás continuarla. Las respuestas registradas hasta ese momento se conservarán de acuerdo con el sistema de guardado del estudio; para participar otra vez, deberás empezar una sesión nueva.'));
+      container.append(resume);
       return;
     }
     texts.forEach((t,i)=>appendTextComponent(container,t,i===0?'title':'body'));

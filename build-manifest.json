@@ -1,149 +1,165 @@
 {
   "experimentID": "7f4f984c-de8c-47f4-8144-b6284a011f97",
-  "build": "compatibilidad-protocolo-v3-expbuilder",
-  "version": "14.0",
-  "practice": 3,
-  "main": 480,
-  "files": {
-    "experiment.js": {
-      "sha256": "46fb7892647fc368d6929155afc83c455ad103fbfe52e825fe53911d0cc245bb",
-      "size": 263754
-    },
-    "evaluacion.css": {
-      "sha256": "ba8270ecb9f4fc8223ea2a81c429d636d01ae90e2093350b2bf2594174ff6db1",
-      "size": 6993
-    },
-    "pantallas.css": {
-      "sha256": "991178c5c4e4323f79b4d476d35863cdf03f5d08b556fd2722f9cc2724e91844",
-      "size": 6519
+  "base": "index.html original de ExpBuilder (HTML adjunto, SHA256 ced858b0c475d812f79dcd8023e3a89c648416098a60d06e72d426ea34f086a1)",
+  "version": "18.0",
+  "mode": "rebuild-kernel-identical",
+  "trial_source": "v17.1 latest",
+  "resources": {
+    "README.md": {
+      "sha256": "27725d0cb3f7d0c64af14a0f66a7286a90035db576529d47d857cc6f9caed946",
+      "bytes": 6647
     },
     "bienvenida.css": {
-      "sha256": "926b52c1e1a58aa60b41eb9e699c7f7c19badd429ba54e1df6398fab2c420d75",
-      "size": 3919
+      "sha256": "2cbb8d4b04c77ef7cccc92905439dbb825706ac8de72b705bdae405707edacdf",
+      "bytes": 4273
     },
-    "evaluacion.js": {
-      "sha256": "b254795ba69f8bac12f88bbc76f35283e1d733c276ad59e36f8efa58d361d392",
-      "size": 12624
-    },
-    "responsive-layout.js": {
-      "sha256": "111305457f4558cc3752ab7ee00fb54e6ca470eb1e27a2a16b70edd38a6be001",
-      "size": 19166
-    },
-    "consentimiento.js": {
-      "sha256": "655b84e135b514eacb3f71d4bd58a122adcd0ad149952ee94e65c493f2f59946",
-      "size": 10291
-    },
-    "survey.js": {
-      "sha256": "0244b4fe920b2e40a6c93e3118aec02cc0511dc11dd9730e062b4c374dd0cdc1",
-      "size": 12212
-    },
-    "screen-plugin.js": {
-      "sha256": "f5e95559c2163fb22bc44c8d6ee197a68f85f23b5c5d0324591ef8694315b663",
-      "size": 16606
-    },
-    "survey.css": {
-      "sha256": "a336efdb7a7ce23d043d23bac3e5f30c07a788d21ea422e79417b863736ece03",
-      "size": 5399
-    },
-    "styles.css": {
-      "sha256": "b59c66b86d94575c37ac127e2935c255c18fd04bda3e7a63836d437b3e225853",
-      "size": 7779
-    },
-    "README.md": {
-      "sha256": "9f84bd5d806b068d175c50c7cfd711e4ece0b30ab5e2d0dad912db9aa3b1edca",
-      "size": 5056
+    "bienvenida.js": {
+      "sha256": "96cd948b76391890bdbd8f81015149d764f005630e982949f6a6402779ad4821",
+      "bytes": 7575
     },
     "consentimiento.css": {
       "sha256": "52342b65f810223b9374aae1b0f07220b3f8abe6895bad5f00e2a42810d38485",
-      "size": 4976
+      "bytes": 4976
     },
-    "storage.js": {
-      "sha256": "e33f96a204a83ba689b07ca85421033925c65d1ab6b07ac9a5c62e44966b38f9",
-      "size": 8157
+    "consentimiento.js": {
+      "sha256": "655b84e135b514eacb3f71d4bd58a122adcd0ad149952ee94e65c493f2f59946",
+      "bytes": 10291
     },
-    "pantallas.js": {
-      "sha256": "e721132e89324c45a6f3e8154fad5cbc5ba5251292d4de5df98fae2cf172d559",
-      "size": 9631
-    },
-    "bienvenida.js": {
-      "sha256": "d00f976dbea2ba6a1b886d636e8d6659b37758f1d1206eeff7222d66261d232f",
-      "size": 6797
-    },
-    "experiment-theme.css": {
-      "sha256": "229c5b0aee0984828355755b5cb748b1b1e21211b66bd95ea02316912afeb99a",
-      "size": 7362
-    },
-    "index.html": {
-      "sha256": "87ac66a52935a123853988487af09c6e3f4f04f24833d10dc54f0b6b1aebd19b",
-      "size": 5948
-    },
-    "img/WhatsApp Image 2026-10-26 at 10.53.21.jpeg": {
-      "sha256": "7beebc7a113814c2ca1d4910a67c5978a8695afb5b3d07fd9c130c2c65991efb",
-      "size": 14053
-    },
-    "img/WhatsApp Image 2026-10-26 at 10.53.22 (1).jpeg": {
-      "sha256": "d07702e19859294484ac86d86b32bc4485e87e8037c83db0b50fd6925d1ec17d",
-      "size": 10281
-    },
-    "img/WhatsApp Image 2026-10-26 at 10.53.22.jpeg": {
-      "sha256": "0e3fa7af79d64ded2d4dbbf1cf9e3ebec3a48d227994d3344539ae1e211be7a3",
-      "size": 8839
-    },
-    "img/Mono.png": {
-      "sha256": "376abc85ccc2683ea16fcec54326fc0881fb3a6fa5e390b8df64882a1defdce6",
-      "size": 18472
-    },
-    "img/Mona.png": {
-      "sha256": "0b2d59fe1311a0219ce30047f00134d39635ecd5049a23c56e74d04288a8cedb",
-      "size": 30324
-    },
-    "data/estimulos_002.json": {
-      "sha256": "ace50e31fa276b9788928f2c3fcba8865e55f810909a546078f7b619b00f20e3",
-      "size": 448808
-    },
-    "data/estimulos_005.json": {
-      "sha256": "c3790e54e8cbe5a9c7b69a8d73921805682477fd921fd239893bb81c0f9478a3",
-      "size": 448720
-    },
-    "data/estimulos_006.json": {
-      "sha256": "830f5f464b34bca53732a51a5629218ac6117bc837111e3f2a46b6ffb7177cee",
-      "size": 448696
-    },
-    "data/main.json": {
-      "sha256": "a6b5423b5a3d17a2eeafdeec0e7c30a09ef485d30376741e1c7f3599a45d1933",
-      "size": 78923
-    },
-    "data/estimulos_001.json": {
-      "sha256": "60dabe754e748eaeab87756aa293d0f5ee450636b4799020894b7c86b66917e8",
-      "size": 448548
-    },
-    "data/estimulos_003.json": {
-      "sha256": "ab176b032ca7fda633feec4e94bead97a375f6df9073fb6b761c18ab27ac0d9e",
-      "size": 448730
-    },
-    "data/estimulos_004.json": {
-      "sha256": "9a9d70aa354e84d62930848977220cec208378badcd77ef63c5647fc536b474f",
-      "size": 448746
-    },
-    "data/estimulos_009.json": {
-      "sha256": "437969eb8a86d0a3fe7fb6acd473d5fb00047c816b196408b7f310d94e361489",
-      "size": 256524
-    },
-    "data/estimulos_007.json": {
-      "sha256": "cd906baa66aad1fd2dc38691749d434ffb7e5d37eab689c1a9c339db670f7c9d",
-      "size": 448490
+    "control-expbuilder-original.html": {
+      "sha256": "ced858b0c475d812f79dcd8023e3a89c648416098a60d06e72d426ea34f086a1",
+      "bytes": 173225
     },
     "data/definition.json": {
-      "sha256": "ddcda6ccc5d4989db83e3768d59be3b745f011ef36463a3a9c799ebd5a42432a",
-      "size": 20850
+      "sha256": "ece623de90d7bb9ad7233a17cc408077ac028dcf054c455d8128dd4cee86dd38",
+      "bytes": 36596
+    },
+    "data/estimulos_001.json": {
+      "sha256": "673cc78a987b058b83c29fbdf7696103c1afe91661e55093b4d3c977a9daf95a",
+      "bytes": 459194
+    },
+    "data/estimulos_002.json": {
+      "sha256": "7b988794cb0342afe8004cfafe76e6b935b6067643cb6f0bd8e4ae29cea38278",
+      "bytes": 458866
+    },
+    "data/estimulos_003.json": {
+      "sha256": "8652cfede97d3809c8b30c3320134e4b848648432ccbb28ed1d5dc79edba7451",
+      "bytes": 460026
+    },
+    "data/estimulos_004.json": {
+      "sha256": "090cb5645c56a04002feea5f1f16fe5fbc2cf8231a92d4901a99607f514886b7",
+      "bytes": 459463
+    },
+    "data/estimulos_005.json": {
+      "sha256": "b3b13ab4e105a2a91ea3a6c3c0ee5ff81a5c1fc4104840b50e5afced0787a845",
+      "bytes": 459566
+    },
+    "data/estimulos_006.json": {
+      "sha256": "14e922955af52550dc463e078c0129a0333b74e0954ff5d629fd79159c8501df",
+      "bytes": 459969
+    },
+    "data/estimulos_007.json": {
+      "sha256": "e74dc9e4f7e414bb566dbecc2434f825617bb8c75d957413b41db76509aadc37",
+      "bytes": 459306
+    },
+    "data/estimulos_008.json": {
+      "sha256": "88f468853c88089011bef21c1eab9c79a4ec3ac3b7ef4a7fc7430676eaf87eb7",
+      "bytes": 459527
+    },
+    "data/estimulos_009.json": {
+      "sha256": "5054ac8760e6a518aeea2aa5c771e138054f8fb79335c883526be3d24565ff2a",
+      "bytes": 262677
+    },
+    "data/main.json": {
+      "sha256": "0b9c14a6334d95392dd19bb5a61fcb1a138eee498d04290d4274456f90f89747",
+      "bytes": 94435
     },
     "data/practice.json": {
       "sha256": "8155bd9dff9c22d311ebcb00d3af21146cf820356ca147953356edf3598713a1",
-      "size": 303
+      "bytes": 303
     },
-    "data/estimulos_008.json": {
-      "sha256": "2f320e45e22e1ca97144da7971764d14892d42aebcabe7acb301fdd1018967ec",
-      "size": 448661
+    "evaluacion.css": {
+      "sha256": "ba8270ecb9f4fc8223ea2a81c429d636d01ae90e2093350b2bf2594174ff6db1",
+      "bytes": 6993
+    },
+    "evaluacion.js": {
+      "sha256": "23e5a27c8fabf0ea127b4ed62059459c60cd6f6691e0438a11a62aaad0d6bd46",
+      "bytes": 13423
+    },
+    "experiment-theme.css": {
+      "sha256": "229c5b0aee0984828355755b5cb748b1b1e21211b66bd95ea02316912afeb99a",
+      "bytes": 7362
+    },
+    "img/Mona.png": {
+      "sha256": "0b2d59fe1311a0219ce30047f00134d39635ecd5049a23c56e74d04288a8cedb",
+      "bytes": 30324
+    },
+    "img/Mono.png": {
+      "sha256": "376abc85ccc2683ea16fcec54326fc0881fb3a6fa5e390b8df64882a1defdce6",
+      "bytes": 18472
+    },
+    "img/WhatsApp Image 2026-10-26 at 10.53.21.jpeg": {
+      "sha256": "7beebc7a113814c2ca1d4910a67c5978a8695afb5b3d07fd9c130c2c65991efb",
+      "bytes": 14053
+    },
+    "img/WhatsApp Image 2026-10-26 at 10.53.22 (1).jpeg": {
+      "sha256": "d07702e19859294484ac86d86b32bc4485e87e8037c83db0b50fd6925d1ec17d",
+      "bytes": 10281
+    },
+    "img/WhatsApp Image 2026-10-26 at 10.53.22.jpeg": {
+      "sha256": "0e3fa7af79d64ded2d4dbbf1cf9e3ebec3a48d227994d3344539ae1e211be7a3",
+      "bytes": 8839
+    },
+    "index.html": {
+      "sha256": "389324257c411f1bae9867bf472127de912d57471fc5c20d7988d1f8f75877fa",
+      "bytes": 340390
+    },
+    "pantallas.css": {
+      "sha256": "643cdaf259f8c4577ef4a550b5605300b402c78be6cc0ed80a0541011d2d2d4e",
+      "bytes": 7236
+    },
+    "pantallas.js": {
+      "sha256": "9fd6d880ae595e37aea2da9410b4f3c1af6e29593e01c000faaf0141d3577f47",
+      "bytes": 11882
+    },
+    "revisar_participaciones.py": {
+      "sha256": "d38a25078c4e506a4c1fd7e510c5a2eebd6a730e0ec449e5bc99fdb001e68158",
+      "bytes": 4081
+    },
+    "styles.css": {
+      "sha256": "b59c66b86d94575c37ac127e2935c255c18fd04bda3e7a63836d437b3e225853",
+      "bytes": 7779
+    },
+    "survey.css": {
+      "sha256": "10c497bcf042e869ea91f74b7e53ce76eee4665fef08d78cfb61fd5600785108",
+      "bytes": 6975
+    },
+    "survey.js": {
+      "sha256": "9723e79fac104002248918c9bfbc1281ea1dbfe006c3d1d10d3453537a01ce6c",
+      "bytes": 24501
+    },
+    "validacion-config.js": {
+      "sha256": "44dee17ee693dca2ddae67d4cb98dfb51ca194b5c423237deb0c1d2e2f2adb1b",
+      "bytes": 353
+    },
+    "validacion-grupos.js": {
+      "sha256": "611b3330111f9801178b914fadb3fc1160508428c56a37825ed87412b579b9e2",
+      "bytes": 7361
+    },
+    "validacion-recibo.js": {
+      "sha256": "2c53ed3bd3416df77998febe9cf39df4fc2f98a1d374dba91ea951bdcaf46e8b",
+      "bytes": 965
+    },
+    "verificacion.json": {
+      "sha256": "69f6bc6af2f9d4c6846e70fe840d5dc7ce3578472eca4e01f695cf9c9d63eccf",
+      "bytes": 753
+    },
+    "verificacion_listas.json": {
+      "sha256": "c47972f1438e46cb625d3fad35b6d4fd70e2070a674803d09719f1941fb4ca96",
+      "bytes": 337
+    },
+    "diagnostico_integridad.json": {
+      "sha256": "17fdf06ff3e4f96f08b6be7610ecc8356b18f8adae0ff004c9c2bad602dcc2d9",
+      "bytes": 673
     }
   }
 }
