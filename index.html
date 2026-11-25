@@ -1,8 +1,8 @@
-<!DOCTYPE html><html lang="en"><head>
+<!DOCTYPE html><html lang="es-MX"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <title>Experiment</title>
+    <title>Validación — Experimento</title>
 
     
     
@@ -160,7 +160,24 @@
   emit("runtime-ready", { version: api.version });
   return api;
 })(window, document);
-</script><script id="generated-script">
+</script>
+<script src="https://unpkg.com/@jspsych/plugin-preload@2.1.0"></script>
+<link href="./bienvenida.css?v=18.0-original" rel="stylesheet"/>
+<script src="./bienvenida.js?v=18.0-original"></script>
+<link href="./consentimiento.css?v=18.0-original" rel="stylesheet"/>
+<script src="./consentimiento.js?v=18.0-original"></script>
+<link href="./pantallas.css?v=18.0-original" rel="stylesheet"/>
+<script src="./pantallas.js?v=18.0-original"></script>
+<link href="./survey.css?v=18.0-original" rel="stylesheet"/>
+<script src="./survey.js?v=18.0-original"></script>
+<link href="./evaluacion.css?v=18.0-original" rel="stylesheet"/>
+<script src="./evaluacion.js?v=18.0-original"></script>
+<script src="./validacion-config.js?v=18.0-original"></script>
+<script src="./validacion-grupos.js?v=18.0-original"></script>
+<script src="./validacion-recibo.js?v=18.0-original"></script>
+<script>window.ValidacionVersion = 'v18-original-intacto-sesiones';</script>
+
+<script id="generated-script">
 
   // --- FileUploadResponseComponent endpoint (Firebase Cloud Function) ---
   window.JSPSYCH_FILE_UPLOAD_ENDPOINT = 'https://us-central1-test-e4cf9.cloudfunctions.net/apiData'.replace('/apiData', '/uploadParticipantFile');
@@ -2013,26 +2030,829 @@ const J8e = decideBranch;
       await publicFinishHandler();
     } else {
       
+// Validación: variante abreviada exclusivamente para pruebas internas; no modifica
+// la creación de sesiones ni el guardado del motor funcional de ExpBuilder.
+const VALIDACION_PRUEBA_ACTIVA = new URLSearchParams(location.search).get('prueba') === '3';
+const VALIDACION_PRUEBA_VERSION = 'v15-html-funcional';
+window.ValidacionPrueba = {
+  activa: VALIDACION_PRUEBA_ACTIVA,
+  version: VALIDACION_PRUEBA_VERSION,
+  practica: 3,
+  principal: VALIDACION_PRUEBA_ACTIVA ? 3 : 480
+};
+if (VALIDACION_PRUEBA_ACTIVA) {
+  document.title = '[PRUEBA 3] Validación — Experimento';
+  console.info('[Validación] Piloto de 3 ensayos principales con almacenamiento REAL del HTML funcional.');
+}
+
 window.ExpBuilderExecutionAddresses = Object.freeze(
-  {"version":3,"revision":"2026-11-03T21:24:55.521Z","nextBySource":{},"addressesByTarget":{"1793741076957":{"targetId":1793741076957,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]}},"entries":{"root":"1793741076957"},"loopContinuations":{},"scopes":{"root":["1793741076957"]},"allScopes":{"root":["1793741076957"]}}
+  {"version":3,"revision":"2026-11-03T15:53:14.065Z","nextBySource":{"1793294903896":"1793296406082","1793296406082":"1793300185149","1793300185149":"1793300783371","1793300783371":"1793301139332","1793301139332":"1793301815311","1793301815311":"1793302653029","1793302653029":"1793303572323","1793303572323":"1793304006966","1793304006966":"1793304388942","1793579048529":"1793642521181","1793304388942":"1793579048529","1793642521181":"1793649983720"},"addressesByTarget":{"1793294903896":{"targetId":1793294903896,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793296406082":{"targetId":1793296406082,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793300185149":{"targetId":1793300185149,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793300783371":{"targetId":1793300783371,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793301139332":{"targetId":1793301139332,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793301815311":{"targetId":1793301815311,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793301875690":{"targetId":1793301875690,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793302653029":{"targetId":1793302653029,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793303572323":{"targetId":1793303572323,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793304006966":{"targetId":1793304006966,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"loop_1793578740463":{"targetId":"loop_1793578740463","targetKind":"loop","targetOwnerId":null,"enterLoopIds":[]},"1793579048529":{"targetId":1793579048529,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"loop_1793650037960":{"targetId":"loop_1793650037960","targetKind":"loop","targetOwnerId":null,"enterLoopIds":[]},"1793649983720":{"targetId":1793649983720,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1793304388942":{"targetId":1793304388942,"targetKind":"trial","targetOwnerId":"loop_1793578740463","enterLoopIds":["loop_1793578740463"]},"1793642521181":{"targetId":1793642521181,"targetKind":"trial","targetOwnerId":"loop_1793650037960","enterLoopIds":["loop_1793650037960"]}},"entries":{"root":"1793294903896","loop_1793578740463":"1793304388942","loop_1793650037960":"1793642521181"},"loopContinuations":{"loop_1793578740463":null,"loop_1793650037960":"1793649983720"},"scopes":{"root":["1793294903896","1793296406082","1793300185149","1793300783371","1793301139332","1793301815311","1793301875690","1793302653029","1793303572323","1793304006966","loop_1793578740463","1793579048529","loop_1793650037960","1793649983720"],"loop_1793578740463":["1793304388942"],"loop_1793650037960":["1793642521181"]},"allScopes":{"root":["1793294903896","1793296406082","1793300185149","1793300783371","1793301139332","1793301815311","1793301875690","1793302653029","1793303572323","1793304006966","loop_1793578740463","1793579048529","loop_1793650037960","1793649983720"],"loop_1793578740463":["1793304388942"],"loop_1793650037960":["1793642521181"]}}
 );
 
 const timeline = [];
 
+    const globalPreload = {
+      type: jsPsychPreload,
+      images: ["img/Mona.png","img/Mono.png","img/WhatsApp%20Image%202026-10-26%20at%2010.53.21.jpeg","img/WhatsApp%20Image%202026-10-26%20at%2010.53.22%20(1).jpeg","img/WhatsApp%20Image%202026-10-26%20at%2010.53.22.jpeg"],
+      audio: [],
+      video: []
+    };
+    timeline.push(globalPreload);
+
+    // Sin pantalla completa: el experimento funciona en la ventana normal.
 
 
-
-const test_stimuli_New$20$Trial = [{components: [{ type: "TextComponent", coordinates: {"x":0,"y":0}, zIndex: 1, text: "Hola", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_1", _font_size_runtime_vw: 0.833333333333 }],
-response_components: [{ type: "ButtonResponseComponent", coordinates: {"x":0,"y":-23.1481481481}, zIndex: 2, choices: ["Button"], button_color: "#e7e7e7", button_text_color: "#000000", button_border_radius: 3, button_border_color: "#999999", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_1", _button_font_size_runtime_vw: 0.729166666667, component_id: "ButtonResponseComponent-1793741092383" }]}];
-    const New$20$Trial_timeline = {
+const test_stimuli_Bienvenida = [{components: [{ type: "ImageComponent", coordinates: {"x":-50,"y":50}, width: 15, height: 21, zIndex: 1, stimulus: "img/WhatsApp%20Image%202026-10-26%20at%2010.53.21.jpeg", name: "ImageComponent_1" }, { type: "ImageComponent", coordinates: {"x":0,"y":50}, width: 15, height: 21, zIndex: 2, stimulus: "img/WhatsApp%20Image%202026-10-26%20at%2010.53.22.jpeg", name: "ImageComponent_2" }, { type: "ImageComponent", coordinates: {"x":50,"y":50}, width: 15, height: 21, zIndex: 3, stimulus: "img/WhatsApp%20Image%202026-10-26%20at%2010.53.22%20(1).jpeg", name: "ImageComponent_3" }, { type: "TextComponent", coordinates: {"x":0,"y":-30}, zIndex: 4, text: "Bienvenid@!\n\nLos responsables de este proyecto de investigación\n¡Agradecen tu participación!\nDr. Armando Q. Angulo Chavira (Universidad Nacional Autónoma de México.)\nDra. Alicia Elvira Vélez García (Universidad Nacional Autónoma de México.)", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_1", _font_size_runtime_vw: 3.33333333333 }],
+response_components: [{ type: "ButtonResponseComponent", coordinates: {"x":0,"y":-85}, width: 14.7967578369, height: 5, zIndex: 5, choices: ["Continuar"], button_color: "#A3B18A", button_text_color: "#000000", button_border_radius: 3, button_border_color: "#A3B18A", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_1", _button_font_size_runtime_vw: 2.77777777778, component_id: "ButtonResponseComponent-1793296187620" }]}];
+    const Bienvenida_timeline = {
     type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
 response_components: jsPsych.timelineVariable("response_components"),
 
 data: {
     rt: "rt",
-    trial_id: 1793741076957,
-    builder_id: 1793741076957,
-    trial_name: "New Trial",
+    trial_id: 1793294903896,
+    builder_id: 1793294903896,
+    trial_name: "Bienvenida",
+    
+    branches: [1793296406082],
+    branchConditions: [],
+    defaultNextTrialId: 1793296406082,
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      const branchParameters = window.ExpBuilderNavigation?.takeParameters(trial.data?.builder_id ?? trial.data?.trial_id);
+
+      if (branchParameters && typeof branchParameters === 'object') {
+        Object.entries(branchParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Survey questions can live in a root "elements" array or
+                    // inside "pages"; survey-core ignores page questions when
+                    // both exist.
+                    const findSurveyQuestion = (surveyJson, questionName) => {
+                      if (!surveyJson) return undefined;
+                      const lists = [];
+                      if (Array.isArray(surveyJson.pages)) {
+                        for (const page of surveyJson.pages) {
+                          if (Array.isArray(page && page.elements)) lists.push(page.elements);
+                        }
+                      }
+                      if (Array.isArray(surveyJson.elements)) lists.push(surveyJson.elements);
+                      for (const list of lists) {
+                        const found = list.find((item) => item && item.name === questionName);
+                        if (found) return found;
+                      }
+                      return undefined;
+                    };
+                    const question = findSurveyQuestion(fieldArray[compIndex].survey_json, questionName);
+                    
+                    if (question) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        question.defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+      }
+      
+    },
+    
+    on_finish: function(data) {
+    
+    
+      const branchDecision = window.ExpBuilderBranching.decide(
+        data, [1793296406082], [], 1793296406082
+      );
+      window.ExpBuilderNavigation?.requestBranch(data, branchDecision);
+  
+  },};
+    const Bienvenida_procedure = {
+    timeline: 
+    [Bienvenida_timeline],
+    timeline_variables: test_stimuli_Bienvenida,
+    };
+    timeline.push(Bienvenida_procedure);
+  
+window.ExpBuilderNavigation?.registerTrial(1793294903896, Bienvenida_procedure);
+
+
+const test_stimuli_Consentimiento$20$informado$20$1 = [{components: [{ type: "TextComponent", coordinates: {"x":0,"y":84.5555555556}, zIndex: 1, text: "Facultad de Psicología", font_color: "#000000", font_family: "sans-serif", font_weight: "bold", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_1", _font_size_runtime_vw: 2.77777777778 }, { type: "TextComponent", coordinates: {"x":0,"y":60.7777777778}, width: 61.8791125005, height: 4.47249484185, zIndex: 2, text: "CARTA DE CONSENTIMIENTO INFORMADO\n", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_2", _font_size_runtime_vw: 2.55555555556 }, { type: "TextComponent", coordinates: {"x":-23.4241342005,"y":44.6802194051}, zIndex: 3, text: "Etapa 1. Desarrollo y validación de materiales\n\n", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "left", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_3", _font_size_runtime_vw: 2.77777777778 }, { type: "TextComponent", coordinates: {"x":4.4647546884,"y":13.3333333333}, width: 84.4647546884, height: 27.5555555556, zIndex: 4, text: "A usted se le invita a participar en el estudio “Procesamiento de la información social en la interpretación y evaluación moral de la conducta”, del que es responsable Dr. Armando Quetzalcóatl Angulo Chavira. Puede comunicarse con él a través del correo electrónico institucional angulo_chavira@comunidad.unam.mx.\n\nEste documento contiene la información necesaria para que decida libremente si desea participar. Puede hacer todas las preguntas que considere necesarias antes de decidir. Si acepta, se firmarán dos copias de este consentimiento y una de ellas será para usted.\n", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "left", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_4", _font_size_runtime_vw: 2.22222222222 }, { type: "TextComponent", coordinates: {"x":-52.7574675338,"y":-28.3333333333}, zIndex: 5, text: "Objetivo e importancia\n", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_5", _font_size_runtime_vw: 2.77777777778 }, { type: "TextComponent", coordinates: {"x":4.4647546884,"y":-58.3333333333}, width: 84.8547900896, height: 22.2222222222, zIndex: 6, text: "El objetivo de esta etapa es evaluar y seleccionar enunciados breves que describen conductas y situaciones sociales para contar con materiales adecuados en español de México. Una parte de los enunciados proviene de materiales previamente publicados y adaptados al español; otros fueron elaborados específicamente para este proyecto.\n\nEsta etapa permitirá caracterizar los estímulos que se utilizarán posteriormente para estudiar cómo las personas interpretan y evalúan la conducta de otras personas.\n", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "left", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_6", _font_size_runtime_vw: 2.22222222222 }],
+response_components: [{ type: "ButtonResponseComponent", coordinates: {"x":75.3536435773,"y":-88.3333333333}, width: 13.5607210572, height: 5, zIndex: 7, choices: ["Continuar"], button_color: "#A3B18A", button_text_color: "#000000", button_border_radius: 3, button_border_color: "#A3B18A", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_1", _button_font_size_runtime_vw: 2.77777777778, component_id: "ButtonResponseComponent-1793300082789" }]}];
+    const Consentimiento$20$informado$20$1_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
+response_components: jsPsych.timelineVariable("response_components"),
+
+data: {
+    rt: "rt",
+    trial_id: 1793296406082,
+    builder_id: 1793296406082,
+    trial_name: "Consentimiento informado 1",
+    
+    branches: [1793300185149],
+    branchConditions: [{"id":1793301685512,"rules":[{"column":"","op":"==","value":"Continuar","fieldType":"response_components","componentIdx":"ButtonResponseComponent_1","prop":"response"}],"nextTrialId":"1793300185149","customParameters":{}}],
+    defaultNextTrialId: 1793300185149,
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      const branchParameters = window.ExpBuilderNavigation?.takeParameters(trial.data?.builder_id ?? trial.data?.trial_id);
+
+      if (branchParameters && typeof branchParameters === 'object') {
+        Object.entries(branchParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Survey questions can live in a root "elements" array or
+                    // inside "pages"; survey-core ignores page questions when
+                    // both exist.
+                    const findSurveyQuestion = (surveyJson, questionName) => {
+                      if (!surveyJson) return undefined;
+                      const lists = [];
+                      if (Array.isArray(surveyJson.pages)) {
+                        for (const page of surveyJson.pages) {
+                          if (Array.isArray(page && page.elements)) lists.push(page.elements);
+                        }
+                      }
+                      if (Array.isArray(surveyJson.elements)) lists.push(surveyJson.elements);
+                      for (const list of lists) {
+                        const found = list.find((item) => item && item.name === questionName);
+                        if (found) return found;
+                      }
+                      return undefined;
+                    };
+                    const question = findSurveyQuestion(fieldArray[compIndex].survey_json, questionName);
+                    
+                    if (question) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        question.defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+      }
+      
+    },
+    
+    on_finish: function(data) {
+    
+    
+      const branchDecision = window.ExpBuilderBranching.decide(
+        data, [1793300185149], [{"id":1793301685512,"rules":[{"column":"","op":"==","value":"Continuar","fieldType":"response_components","componentIdx":"ButtonResponseComponent_1","prop":"response"}],"nextTrialId":"1793300185149","customParameters":{}}], 1793300185149
+      );
+      window.ExpBuilderNavigation?.requestBranch(data, branchDecision);
+  
+  },};
+    const Consentimiento$20$informado$20$1_procedure = {
+    timeline: 
+    [Consentimiento$20$informado$20$1_timeline],
+    timeline_variables: test_stimuli_Consentimiento$20$informado$20$1,
+    };
+    timeline.push(Consentimiento$20$informado$20$1_procedure);
+  
+window.ExpBuilderNavigation?.registerTrial(1793296406082, Consentimiento$20$informado$20$1_procedure);
+
+
+const test_stimuli_Consentimiento$20$informado$20$2 = [{components: [{ type: "TextComponent", coordinates: {"x":-48.6666666667,"y":70}, zIndex: 1, text: "¿Qué se le pedirá hacer?\n", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_1", _font_size_runtime_vw: 2.77777777778 }, { type: "TextComponent", coordinates: {"x":5.77777777777,"y":30}, width: 84.455949307, height: 37.5555555556, zIndex: 2, text: "Después de responder un breve cuestionario sociodemográfico y recibir instrucciones, leerá un subconjunto de enunciados y los valorará mediante escalas. Dependiendo de la lista asignada, las valoraciones podrán incluir moralidad, intención atribuida, claridad o ambigüedad, credibilidad, daño, severidad y activación emocional. No existen respuestas correctas o incorrectas; se le pide responder de acuerdo con su percepción.\n\nLa actividad podrá realizarse de manera presencial o en línea y tendrá una duración aproximada de 30 a 45 minutos.\n", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "left", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_2", _font_size_runtime_vw: 2.22222222222 }, { type: "TextComponent", coordinates: {"x":-43,"y":-11.6666666667}, zIndex: 3, text: "Riesgos y molestias posibles\n", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_3", _font_size_runtime_vw: 2.77777777778 }, { type: "TextComponent", coordinates: {"x":-40.5555555556,"y":-46.6666666667}, width: 38.1579700725, height: 37.5555555556, zIndex: 4, text: "La participación se considera de riesgo mínimo. Algunos enunciados pueden describir conductas negativas o situaciones desagradables y ocasionar incomodidad emocional leve. La lectura continua también puede producir cansancio o fatiga. Podrá hacer una pausa o interrumpir la actividad cuando lo desee.\n", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "left", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_4", _font_size_runtime_vw: 2.22222222222 }, { type: "TextComponent", coordinates: {"x":32.7777777778,"y":-10}, zIndex: 5, text: "Beneficios\n", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "left", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_5", _font_size_runtime_vw: 2.77777777778 }, { type: "TextComponent", coordinates: {"x":52.0309618533,"y":-34.2222222222}, width: 42.0309618533, height: 16.8888888889, zIndex: 6, text: "Su participación no implica un beneficio clínico o diagnóstico directo. Su participación contribuirá al desarrollo de materiales en español de México para investigación sobre procesamiento de información social y evaluación moral.", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "left", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_6", _font_size_runtime_vw: 2.22222222222 }],
+response_components: [{ type: "ButtonResponseComponent", coordinates: {"x":70,"y":-75}, width: 15.01200251, height: 5, zIndex: 7, choices: ["Continuar"], button_color: "#A3B18A", button_text_color: "#000000", button_border_radius: 3, button_border_color: "#A3B18A", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_1", _button_font_size_runtime_vw: 2.77777777778, component_id: "ButtonResponseComponent-1793300617429" }, { type: "ButtonResponseComponent", coordinates: {"x":30,"y":-75}, height: 5, zIndex: 8, choices: ["Regresar"], button_color: "#A3B18A", button_text_color: "#000000", button_border_radius: 3, button_border_color: "#A3B18A", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_2", _button_font_size_runtime_vw: 2.77777777778, component_id: "ButtonResponseComponent-1793300718031" }]}];
+    const Consentimiento$20$informado$20$2_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
+response_components: jsPsych.timelineVariable("response_components"),
+
+data: {
+    rt: "rt",
+    trial_id: 1793300185149,
+    builder_id: 1793300185149,
+    trial_name: "Consentimiento informado 2",
+    
+    branches: [1793300783371,"1793296406082"],
+    branchConditions: [{"id":1793301717319,"rules":[{"column":"","op":"==","value":"Continuar","fieldType":"response_components","componentIdx":"ButtonResponseComponent_1","prop":"response"}],"nextTrialId":"1793300783371","customParameters":{}},{"id":1793301736275,"rules":[{"column":"","op":"==","value":"Regresar","fieldType":"response_components","componentIdx":"ButtonResponseComponent_2","prop":"response"}],"nextTrialId":"1793296406082","customParameters":{}}],
+    defaultNextTrialId: 1793300783371,
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      const branchParameters = window.ExpBuilderNavigation?.takeParameters(trial.data?.builder_id ?? trial.data?.trial_id);
+
+      if (branchParameters && typeof branchParameters === 'object') {
+        Object.entries(branchParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Survey questions can live in a root "elements" array or
+                    // inside "pages"; survey-core ignores page questions when
+                    // both exist.
+                    const findSurveyQuestion = (surveyJson, questionName) => {
+                      if (!surveyJson) return undefined;
+                      const lists = [];
+                      if (Array.isArray(surveyJson.pages)) {
+                        for (const page of surveyJson.pages) {
+                          if (Array.isArray(page && page.elements)) lists.push(page.elements);
+                        }
+                      }
+                      if (Array.isArray(surveyJson.elements)) lists.push(surveyJson.elements);
+                      for (const list of lists) {
+                        const found = list.find((item) => item && item.name === questionName);
+                        if (found) return found;
+                      }
+                      return undefined;
+                    };
+                    const question = findSurveyQuestion(fieldArray[compIndex].survey_json, questionName);
+                    
+                    if (question) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        question.defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+      }
+      
+    },
+    
+    on_finish: function(data) {
+    
+    
+      const branchDecision = window.ExpBuilderBranching.decide(
+        data, [1793300783371,"1793296406082"], [{"id":1793301717319,"rules":[{"column":"","op":"==","value":"Continuar","fieldType":"response_components","componentIdx":"ButtonResponseComponent_1","prop":"response"}],"nextTrialId":"1793300783371","customParameters":{}},{"id":1793301736275,"rules":[{"column":"","op":"==","value":"Regresar","fieldType":"response_components","componentIdx":"ButtonResponseComponent_2","prop":"response"}],"nextTrialId":"1793296406082","customParameters":{}}], 1793300783371
+      );
+      window.ExpBuilderNavigation?.requestBranch(data, branchDecision);
+  
+  },};
+    const Consentimiento$20$informado$20$2_procedure = {
+    timeline: 
+    [Consentimiento$20$informado$20$2_timeline],
+    timeline_variables: test_stimuli_Consentimiento$20$informado$20$2,
+    };
+    timeline.push(Consentimiento$20$informado$20$2_procedure);
+  
+window.ExpBuilderNavigation?.registerTrial(1793300185149, Consentimiento$20$informado$20$2_procedure);
+
+
+const test_stimuli_Consentimiento$20$informado$20$3 = [{components: [{ type: "TextComponent", coordinates: {"x":-48.7777777778,"y":80}, zIndex: 1, text: "Devolución de resultados\n", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_1", _font_size_runtime_vw: 2.77777777778 }, { type: "TextComponent", coordinates: {"x":4,"y":60}, width: 84.0019535236, height: 20.8888888889, zIndex: 2, text: "Los resultados generales del estudio podrán solicitarse a la persona responsable a partir de los seis meses posteriores al cierre de la recolección de datos de la etapa correspondiente, mediante el correo angulo_chavira@comunidad.unam.mx. Debido a la naturaleza de las valoraciones, no se proporcionarán interpretaciones individuales.\n", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "left", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_2", _font_size_runtime_vw: 2.22222222222 }, { type: "TextComponent", coordinates: {"x":-17.4444444444,"y":28.3333333333}, zIndex: 3, text: "Confidencialidad y aviso de privacidad simplificado\n", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_3", _font_size_runtime_vw: 2.77777777778 }, { type: "TextComponent", coordinates: {"x":4.11111111111,"y":-24.0976117329}, width: 83.8791892712, height: 60.8888888889, zIndex: 4, text: "Los datos personales recabados se utilizarán exclusivamente para verificar los criterios de participación, describir la muestra y realizar los análisis científicos de este proyecto. A cada participante se le asignará un código y las bases utilizadas para el análisis no incluirán su nombre.\n\nLa información será tratada de manera confidencial, de acuerdo con la Ley General de Protección de Datos Personales en Posesión de Sujetos Obligados, y será almacenada en una carpeta de Google Drive de acceso restringido al equipo de investigación; los documentos que permitan identificar a las personas participantes se conservarán separados de las bases de datos utilizadas para el análisis. Solo tendrán acceso la persona responsable y las personas integrantes del equipo autorizadas para la recopilación, procesamiento y análisis de los datos. Los resultados podrán publicarse o difundirse con fines científicos únicamente de manera agregada o codificada, sin información que permita identificarle.\n", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "left", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_4", _font_size_runtime_vw: 2.22222222222 }],
+response_components: [{ type: "ButtonResponseComponent", coordinates: {"x":63.6666666667,"y":-85}, width: 13.7114253207, height: 5, zIndex: 5, choices: ["Continuar"], button_color: "#A3B18A", button_text_color: "#000000", button_border_radius: 3, button_border_color: "#A3B18A", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_1", _button_font_size_runtime_vw: 2.77777777778, component_id: "ButtonResponseComponent-1793301009795" }, { type: "ButtonResponseComponent", coordinates: {"x":30.3333333333,"y":-85}, height: 5, zIndex: 6, choices: ["Regresar"], button_color: "#A3B18A", button_text_color: "#000000", button_border_radius: 3, button_border_color: "#A3B18A", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_2", _button_font_size_runtime_vw: 2.77777777778, component_id: "ButtonResponseComponent-1793301061685" }]}];
+    const Consentimiento$20$informado$20$3_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
+response_components: jsPsych.timelineVariable("response_components"),
+
+data: {
+    rt: "rt",
+    trial_id: 1793300783371,
+    builder_id: 1793300783371,
+    trial_name: "Consentimiento informado 3",
+    
+    branches: [1793301139332,"1793300185149"],
+    branchConditions: [{"id":1793301774019,"rules":[{"column":"","op":"==","value":"Continuar","fieldType":"response_components","componentIdx":"ButtonResponseComponent_1","prop":"response"}],"nextTrialId":"1793301139332","customParameters":{}},{"id":1793301791226,"rules":[{"column":"","op":"==","value":"Regresar","fieldType":"response_components","componentIdx":"ButtonResponseComponent_2","prop":"response"}],"nextTrialId":"1793300185149","customParameters":{}}],
+    defaultNextTrialId: 1793301139332,
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      const branchParameters = window.ExpBuilderNavigation?.takeParameters(trial.data?.builder_id ?? trial.data?.trial_id);
+
+      if (branchParameters && typeof branchParameters === 'object') {
+        Object.entries(branchParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Survey questions can live in a root "elements" array or
+                    // inside "pages"; survey-core ignores page questions when
+                    // both exist.
+                    const findSurveyQuestion = (surveyJson, questionName) => {
+                      if (!surveyJson) return undefined;
+                      const lists = [];
+                      if (Array.isArray(surveyJson.pages)) {
+                        for (const page of surveyJson.pages) {
+                          if (Array.isArray(page && page.elements)) lists.push(page.elements);
+                        }
+                      }
+                      if (Array.isArray(surveyJson.elements)) lists.push(surveyJson.elements);
+                      for (const list of lists) {
+                        const found = list.find((item) => item && item.name === questionName);
+                        if (found) return found;
+                      }
+                      return undefined;
+                    };
+                    const question = findSurveyQuestion(fieldArray[compIndex].survey_json, questionName);
+                    
+                    if (question) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        question.defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+      }
+      
+    },
+    
+    on_finish: function(data) {
+    
+    
+      const branchDecision = window.ExpBuilderBranching.decide(
+        data, [1793301139332,"1793300185149"], [{"id":1793301774019,"rules":[{"column":"","op":"==","value":"Continuar","fieldType":"response_components","componentIdx":"ButtonResponseComponent_1","prop":"response"}],"nextTrialId":"1793301139332","customParameters":{}},{"id":1793301791226,"rules":[{"column":"","op":"==","value":"Regresar","fieldType":"response_components","componentIdx":"ButtonResponseComponent_2","prop":"response"}],"nextTrialId":"1793300185149","customParameters":{}}], 1793301139332
+      );
+      window.ExpBuilderNavigation?.requestBranch(data, branchDecision);
+  
+  },};
+    const Consentimiento$20$informado$20$3_procedure = {
+    timeline: 
+    [Consentimiento$20$informado$20$3_timeline],
+    timeline_variables: test_stimuli_Consentimiento$20$informado$20$3,
+    };
+    timeline.push(Consentimiento$20$informado$20$3_procedure);
+  
+window.ExpBuilderNavigation?.registerTrial(1793300783371, Consentimiento$20$informado$20$3_procedure);
+
+
+const test_stimuli_Consentimiento$20$informado$20$4 = [{components: [{ type: "TextComponent", coordinates: {"x":-61.4444444444,"y":78.3333333333}, zIndex: 1, text: "Compensación\n", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_1", _font_size_runtime_vw: 2.77777777778 }, { type: "TextComponent", coordinates: {"x":4.77777777778,"y":23.3333333333}, zIndex: 2, text: "Esta etapa no contempla compensación económica ni de otro tipo.\n\nParticipación voluntaria, retiro y atención\n\nSu participación es completamente voluntaria. Puede rechazar la invitación, solicitar una pausa o retirarse en cualquier momento, sin necesidad de dar explicaciones y sin consecuencias académicas, laborales o institucionales. En el transcurso del estudio podrá plantear dudas o solicitar información actualizada a la persona responsable.\n\nSi llegara a experimentar malestar que requiera atención, el equipo podrá orientarle al Programa de Atención Psicológica a Distancia de la Facultad de Psicología de la UNAM, teléfono 55 5025 0855.\n\nSi considera que se incumplieron las condiciones de este consentimiento, recibió un trato inapropiado o desea presentar una queja, puede solicitar orientación mediante la Unidad de Transparencia de la UNAM:", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "left", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_2", _font_size_runtime_vw: 2.22222222222 }, { type: "HtmlComponent", coordinates: {"x":-19.5555555556,"y":-33.2222222222}, zIndex: 3, stimulus: "<p id=\"i8ea\" style=\"box-sizing: border-box;\">https://www.transparencia.unam.mx/unidad-transparencia.html.<br style=\"box-sizing: border-box;\"></p>", name: "HtmlComponent_1" }, { type: "TextComponent", coordinates: {"x":-60.6666666667,"y":-50}, zIndex: 4, text: "Consentimiento\n", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_3", _font_size_runtime_vw: 2.77777777778 }, { type: "TextComponent", coordinates: {"x":3.33333333333,"y":-63.3333333333}, zIndex: 5, text: "Declaro que he leído y comprendido la información anterior, que tuve oportunidad de hacer preguntas y que acepto participar voluntariamente en esta etapa del estudio. Recibiré una copia firmada y fechada de este documento.\n", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "left", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_4", _font_size_runtime_vw: 2.22222222222 }],
+response_components: [{ type: "ButtonResponseComponent", coordinates: {"x":68,"y":-79}, height: 5, zIndex: 6, choices: ["Acepto"], button_color: "#A3B18A", button_text_color: "#000000", button_border_radius: 3, button_border_color: "#A3B18A", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_1", _button_font_size_runtime_vw: 2.41477272727, component_id: "ButtonResponseComponent-1793301474205" }, { type: "ButtonResponseComponent", coordinates: {"x":35.8144102617,"y":-79}, width: 12.9755971087, height: 5, zIndex: 7, choices: ["No acepto"], button_color: "#B85C58", button_text_color: "#000000", button_border_radius: 3, button_border_color: "#B85C58", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_2", _button_font_size_runtime_vw: 2.41477272727, component_id: "ButtonResponseComponent-1793301554175" }, { type: "ButtonResponseComponent", coordinates: {"x":-45.2222222222,"y":-79}, height: 5, zIndex: 8, choices: ["Regresar"], button_color: "#A3B18A", button_text_color: "#000000", button_border_radius: 3, button_border_color: "#A3B18A", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_3", _button_font_size_runtime_vw: 2.41477272727, component_id: "ButtonResponseComponent-1793301586499" }]}];
+    const Consentimiento$20$informado$20$4_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
+response_components: jsPsych.timelineVariable("response_components"),
+
+data: {
+    rt: "rt",
+    trial_id: 1793301139332,
+    builder_id: 1793301139332,
+    trial_name: "Consentimiento informado 4",
+    
+    branches: [1793301815311,1793301875690,"1793300783371"],
+    branchConditions: [{"id":1793301824668,"rules":[{"column":"","op":"==","value":"Acepto","fieldType":"response_components","componentIdx":"ButtonResponseComponent_1","prop":"response"}],"nextTrialId":"1793301815311","customParameters":{}},{"id":1793301909176,"rules":[{"column":"","op":"==","value":"No acepto","fieldType":"response_components","componentIdx":"ButtonResponseComponent_2","prop":"response"}],"nextTrialId":"1793301875690","customParameters":{}},{"id":1793301933055,"rules":[{"column":"","op":"==","value":"Regresar","fieldType":"response_components","componentIdx":"ButtonResponseComponent_3","prop":"response"}],"nextTrialId":"1793300783371","customParameters":{}}],
+    defaultNextTrialId: 1793301815311,
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      const branchParameters = window.ExpBuilderNavigation?.takeParameters(trial.data?.builder_id ?? trial.data?.trial_id);
+
+      if (branchParameters && typeof branchParameters === 'object') {
+        Object.entries(branchParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Survey questions can live in a root "elements" array or
+                    // inside "pages"; survey-core ignores page questions when
+                    // both exist.
+                    const findSurveyQuestion = (surveyJson, questionName) => {
+                      if (!surveyJson) return undefined;
+                      const lists = [];
+                      if (Array.isArray(surveyJson.pages)) {
+                        for (const page of surveyJson.pages) {
+                          if (Array.isArray(page && page.elements)) lists.push(page.elements);
+                        }
+                      }
+                      if (Array.isArray(surveyJson.elements)) lists.push(surveyJson.elements);
+                      for (const list of lists) {
+                        const found = list.find((item) => item && item.name === questionName);
+                        if (found) return found;
+                      }
+                      return undefined;
+                    };
+                    const question = findSurveyQuestion(fieldArray[compIndex].survey_json, questionName);
+                    
+                    if (question) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        question.defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+      }
+      
+    },
+    
+    on_finish: function(data) {
+    
+    
+      const branchDecision = window.ExpBuilderBranching.decide(
+        data, [1793301815311,1793301875690,"1793300783371"], [{"id":1793301824668,"rules":[{"column":"","op":"==","value":"Acepto","fieldType":"response_components","componentIdx":"ButtonResponseComponent_1","prop":"response"}],"nextTrialId":"1793301815311","customParameters":{}},{"id":1793301909176,"rules":[{"column":"","op":"==","value":"No acepto","fieldType":"response_components","componentIdx":"ButtonResponseComponent_2","prop":"response"}],"nextTrialId":"1793301875690","customParameters":{}},{"id":1793301933055,"rules":[{"column":"","op":"==","value":"Regresar","fieldType":"response_components","componentIdx":"ButtonResponseComponent_3","prop":"response"}],"nextTrialId":"1793300783371","customParameters":{}}], 1793301815311
+      );
+      window.ExpBuilderNavigation?.requestBranch(data, branchDecision);
+  
+  },};
+    const Consentimiento$20$informado$20$4_procedure = {
+    timeline: 
+    [Consentimiento$20$informado$20$4_timeline],
+    timeline_variables: test_stimuli_Consentimiento$20$informado$20$4,
+    };
+    timeline.push(Consentimiento$20$informado$20$4_procedure);
+  
+window.ExpBuilderNavigation?.registerTrial(1793301139332, Consentimiento$20$informado$20$4_procedure);
+
+
+const test_stimuli_Precuestionario = [{components: [{ type: "TextComponent", coordinates: {"x":-4.77777777778,"y":65.1111111111}, zIndex: 1, text: "Cuestionario Sociodemográfico", font_color: "#000000", font_family: "sans-serif", font_weight: "bold", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_1", _font_size_runtime_vw: 2.77777777778 }, { type: "TextComponent", coordinates: {"x":0,"y":0}, zIndex: 2, text: "A continuación se te presentaran 6 preguntas, antes de pasar al ensayo. \n\nLa información proporcionada será utilizada únicamente con fines de investigación y será tratada de manera confidencial. Los resultados se analizarán de forma conjunta, sin identificar las respuestas individuales.\n\n\nDa click en el boton para continuar.", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_2", _font_size_runtime_vw: 2.22222222222 }],
+response_components: [{ type: "ButtonResponseComponent", coordinates: {"x":0,"y":-45}, height: 5, zIndex: 3, choices: ["Continuar"], button_color: "#A3B18A", button_text_color: "#000000", button_border_radius: 3, button_border_color: "#A3B18A", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_1", _button_font_size_runtime_vw: 2.77777777778, component_id: "ButtonResponseComponent-1793302580207" }]}];
+    const Precuestionario_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
+response_components: jsPsych.timelineVariable("response_components"),
+
+data: {
+    rt: "rt",
+    trial_id: 1793301815311,
+    builder_id: 1793301815311,
+    trial_name: "Precuestionario",
+    
+    branches: [1793302653029],
+    branchConditions: [],
+    defaultNextTrialId: 1793302653029,
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      const branchParameters = window.ExpBuilderNavigation?.takeParameters(trial.data?.builder_id ?? trial.data?.trial_id);
+
+      if (branchParameters && typeof branchParameters === 'object') {
+        Object.entries(branchParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Survey questions can live in a root "elements" array or
+                    // inside "pages"; survey-core ignores page questions when
+                    // both exist.
+                    const findSurveyQuestion = (surveyJson, questionName) => {
+                      if (!surveyJson) return undefined;
+                      const lists = [];
+                      if (Array.isArray(surveyJson.pages)) {
+                        for (const page of surveyJson.pages) {
+                          if (Array.isArray(page && page.elements)) lists.push(page.elements);
+                        }
+                      }
+                      if (Array.isArray(surveyJson.elements)) lists.push(surveyJson.elements);
+                      for (const list of lists) {
+                        const found = list.find((item) => item && item.name === questionName);
+                        if (found) return found;
+                      }
+                      return undefined;
+                    };
+                    const question = findSurveyQuestion(fieldArray[compIndex].survey_json, questionName);
+                    
+                    if (question) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        question.defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+      }
+      
+    },
+    
+    on_finish: function(data) {
+    
+    
+      const branchDecision = window.ExpBuilderBranching.decide(
+        data, [1793302653029], [], 1793302653029
+      );
+      window.ExpBuilderNavigation?.requestBranch(data, branchDecision);
+  
+  },};
+    const Precuestionario_procedure = {
+    timeline: 
+    [Precuestionario_timeline],
+    timeline_variables: test_stimuli_Precuestionario,
+    };
+    timeline.push(Precuestionario_procedure);
+  
+window.ExpBuilderNavigation?.registerTrial(1793301815311, Precuestionario_procedure);
+
+
+const test_stimuli_Consentimiento$20$Rechazado = [{components: [{ type: "ImageComponent", coordinates: {"x":-74.4505494505,"y":63.8837609609}, zIndex: 1, stimulus: "img/WhatsApp%20Image%202026-10-26%20at%2010.53.21.jpeg", name: "ImageComponent_1" }, { type: "ImageComponent", coordinates: {"x":2.1978021978,"y":63.0056379489}, zIndex: 2, stimulus: "img/WhatsApp%20Image%202026-10-26%20at%2010.53.22.jpeg", name: "ImageComponent_2" }, { type: "ImageComponent", coordinates: {"x":65.1098901099,"y":58.1759613825}, zIndex: 3, stimulus: "img/WhatsApp%20Image%202026-10-26%20at%2010.53.22%20(1).jpeg", name: "ImageComponent_3" }, { type: "TextComponent", coordinates: {"x":0,"y":0}, zIndex: 4, text: "", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_1", _font_size_runtime_vw: 1.77777777778 }, { type: "TextComponent", coordinates: {"x":0,"y":-12.6666933468}, zIndex: 6, text: "¡Gracias por tu tiempo y participación!\n\nEl equipo de investigación y los organizadores agradecen mucho tu interés y el tiempo que dedicaste a este estudio. \n\n¡Que tengas un buen día!", font_color: "#000000", font_family: "sans-serif", font_weight: "bold", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_2", _font_size_runtime_vw: 2.77777777778 }],
+response_components: [{ type: "ButtonResponseComponent", coordinates: {"x":2.1978021978,"y":-64.7777777778}, zIndex: 5, choices: ["Salir"], button_color: "#A3B18A", button_text_color: "#000000", button_border_radius: 3, button_border_color: "#A3B18A", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_1", _button_font_size_runtime_vw: 2.77777777778, component_id: "ButtonResponseComponent-1793302365843" }]}];
+    const Consentimiento$20$Rechazado_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
+response_components: jsPsych.timelineVariable("response_components"),
+
+data: {
+    rt: "rt",
+    trial_id: 1793301875690,
+    builder_id: 1793301875690,
+    trial_name: "Consentimiento Rechazado",
     
     branches: [],
     branchConditions: [],
@@ -2142,16 +2962,2437 @@ data: {
       window.ExpBuilderNavigation?.requestBranch(data, branchDecision);
   
   },};
-    const New$20$Trial_procedure = {
+    const Consentimiento$20$Rechazado_procedure = {
     timeline: 
-    [New$20$Trial_timeline],
-    timeline_variables: test_stimuli_New$20$Trial,
+    [Consentimiento$20$Rechazado_timeline],
+    timeline_variables: test_stimuli_Consentimiento$20$Rechazado,
     };
-    timeline.push(New$20$Trial_procedure);
+    timeline.push(Consentimiento$20$Rechazado_procedure);
   
-window.ExpBuilderNavigation?.registerTrial(1793741076957, New$20$Trial_procedure);
+window.ExpBuilderNavigation?.registerTrial(1793301875690, Consentimiento$20$Rechazado_procedure);
 
+
+const test_stimuli_Cuestionario = [{components: [],
+response_components: [{ type: "SurveyComponent", coordinates: {"x":0,"y":0}, zIndex: 1, survey_json: {"pages":[{"elements":[{"type":"text","name":"Fecha de nacimiento","title":"Fecha de nacimiento (DD/MM/AAA)","isRequired":true},{"type":"radiogroup","name":"Sexo biológico","title":"Sexo biológico","isRequired":true,"choices":[{"value":"Mujer","text":"Mujer","imageLink":""},{"value":"Hombre","text":"Hombre","imageLink":""},{"value":"Prefiero no responder","text":"Prefiero no responder","imageLink":""}]},{"type":"radiogroup","name":"Género","title":"Género","isRequired":true,"choices":[{"value":"Femenino","text":"Femenino","imageLink":""},{"value":"Masculino","text":"Masculino","imageLink":""},{"value":"No binario","text":"No binario","imageLink":""},{"value":"Otro","text":"Otro","imageLink":""}]},{"type":"radiogroup","name":"Estudios","title":"Máximo nivel de estudios alcanzado","isRequired":true,"choices":[{"value":"Sin escolaridad formal","text":"Sin escolaridad formal","imageLink":""},{"value":"Primaria (incompleta)","text":"Primaria (incompleta)","imageLink":""},{"value":"Primaria (completa)","text":"Primaria (completa)","imageLink":""},{"value":"Secundaria (incompleta)","text":"Secundaria (incompleta)","imageLink":""},{"value":"Secundaria (completa)","text":"Secundaria (completa)","imageLink":""},{"value":"Bachillerato (incompleto)","text":"Bachillerato (incompleto)","imageLink":""},{"value":"Bachillerato (completo)","text":"Bachillerato (completo)","imageLink":""},{"value":"Licenciatura (incompleta)","text":"Licenciatura (incompleta)","imageLink":""},{"value":"Licenciatura (completa)","text":"Licenciatura (completa)","imageLink":""},{"value":"Especialidad (incompleta)","text":"Especialidad (incompleta)","imageLink":""},{"value":"Especialidad (completa)","text":"Especialidad (completa)","imageLink":""},{"value":"Maestria (incompleta)","text":"Maestria (incompleta)","imageLink":""},{"value":"Maestria (completa)","text":"Maestria (completa)","imageLink":""},{"value":"Doctorado (incompleto)","text":"Doctorado (incompleto)","imageLink":""},{"value":"Doctorado (completo)","text":"Doctorado (completo)","imageLink":""}]},{"type":"boolean","name":"Mayoría de vida en México","title":"¿Has vivido la mayor parte de tu vida en México?","isRequired":true},{"type":"radiogroup","name":"Estado de la República","title":"¿En qué Estado de la República?","isRequired":true,"choices":[{"value":"Aguascalientes","text":"Aguascalientes","imageLink":""},{"value":"Baja California","text":"Baja California","imageLink":""},{"value":"Baja California Sur","text":"Baja California Sur","imageLink":""},{"value":"Campeche","text":"Campeche","imageLink":""},{"value":"Chiapas","text":"Chiapas","imageLink":""},{"value":"Chihuaha","text":"Chihuaha","imageLink":""},{"value":"Coahuila de Zaragoza","text":"Coahuila de Zaragoza","imageLink":""},{"value":"Colima","text":"Colima","imageLink":""},{"value":"Ciudad de México","text":"Ciudad de México","imageLink":""},{"value":"Durango","text":"Durango","imageLink":""},{"value":"Guanajuato","text":"Guanajuato","imageLink":""},{"value":"Guerrero","text":"Guerrero","imageLink":""},{"value":"Hidalgo","text":"Hidalgo","imageLink":""},{"value":"Jalisco","text":"Jalisco","imageLink":""},{"value":"Estado de México","text":"Estado de México","imageLink":""},{"value":"Michoacan de Ocampo","text":"Michoacan de Ocampo","imageLink":""},{"value":"Morelos","text":"Morelos","imageLink":""},{"value":"Nayarit","text":"Nayarit","imageLink":""},{"value":"Nuevo León","text":"Nuevo León","imageLink":""},{"value":"Oaxaca","text":"Oaxaca","imageLink":""},{"value":"Puebla","text":"Puebla","imageLink":""},{"value":"Querétaro","text":"Querétaro","imageLink":""},{"value":"Quintana Roo","text":"Quintana Roo","imageLink":""},{"value":"San Luis Potosí","text":"San Luis Potosí","imageLink":""},{"value":"Sinaloa","text":"Sinaloa","imageLink":""},{"value":"Sonora","text":"Sonora","imageLink":""},{"value":"Tabasco","text":"Tabasco","imageLink":""},{"value":"Tamaulipas","text":"Tamaulipas","imageLink":""},{"value":"Tlaxcala","text":"Tlaxcala","imageLink":""},{"value":"Veracruz de Ignacio de la Llave","text":"Veracruz de Ignacio de la Llave","imageLink":""},{"value":"Yucatán ","text":"Yucatán ","imageLink":""},{"value":"Zacatecas","text":"Zacatecas","imageLink":""}]}]}]}, name: "SurveyComponent_1", component_id: "SurveyComponent-1793302679353" }]}];
+    const Cuestionario_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
+response_components: jsPsych.timelineVariable("response_components"),
+
+data: {
+    rt: "rt",
+    trial_id: 1793302653029,
+    builder_id: 1793302653029,
+    trial_name: "Cuestionario",
+    
+    branches: [1793303572323],
+    branchConditions: [],
+    defaultNextTrialId: 1793303572323,
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      const branchParameters = window.ExpBuilderNavigation?.takeParameters(trial.data?.builder_id ?? trial.data?.trial_id);
+
+      if (branchParameters && typeof branchParameters === 'object') {
+        Object.entries(branchParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Survey questions can live in a root "elements" array or
+                    // inside "pages"; survey-core ignores page questions when
+                    // both exist.
+                    const findSurveyQuestion = (surveyJson, questionName) => {
+                      if (!surveyJson) return undefined;
+                      const lists = [];
+                      if (Array.isArray(surveyJson.pages)) {
+                        for (const page of surveyJson.pages) {
+                          if (Array.isArray(page && page.elements)) lists.push(page.elements);
+                        }
+                      }
+                      if (Array.isArray(surveyJson.elements)) lists.push(surveyJson.elements);
+                      for (const list of lists) {
+                        const found = list.find((item) => item && item.name === questionName);
+                        if (found) return found;
+                      }
+                      return undefined;
+                    };
+                    const question = findSurveyQuestion(fieldArray[compIndex].survey_json, questionName);
+                    
+                    if (question) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        question.defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+      }
+      
+    },
+    
+    on_finish: function(data) {
+    
+    
+      const branchDecision = window.ExpBuilderBranching.decide(
+        data, [1793303572323], [], 1793303572323
+      );
+      window.ExpBuilderNavigation?.requestBranch(data, branchDecision);
+  
+  },};
+    const Cuestionario_procedure = {
+    timeline: 
+    [Cuestionario_timeline],
+    timeline_variables: test_stimuli_Cuestionario,
+    };
+    timeline.push(Cuestionario_procedure);
+  
+window.ExpBuilderNavigation?.registerTrial(1793302653029, Cuestionario_procedure);
+
+
+const test_stimuli_Instrucciones = [{components: [{ type: "TextComponent", coordinates: {"x":0,"y":78.3333333333}, zIndex: 1, text: "Tarea de evaluación de afirmaciones", font_color: "#000000", font_family: "sans-serif", font_weight: "bold", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_1", _font_size_runtime_vw: 2.77777777778 }, { type: "TextComponent", coordinates: {"x":5.22222222222,"y":20}, width: 84.9667197217, height: 37.5555555556, zIndex: 2, text: "Leerás afirmaciones que describen conductas o situaciones de distintas personas. Imagina que cada afirmación describe a una persona diferente y evalúala por separado. No hay respuestas correctas o incorrectas: nos interesa tu valoración personal.\n\nMoralidad: ¿Qué tan moralmente mala o buena consideras la conducta descrita? (−4 = Moralmente muy mala; 0 = Neutral; +4 = Moralmente muy buena).\nCompetencia: ¿Qué tan competente demuestra ser la persona según la conducta descrita? (−4 = Muy incapaz; 0 = Neutral; +4 = Muy capaz).\nInformatividad: ¿Qué tan útil es la información para formarte una impresión de la persona? (0 = Nada informativa; 8 = Muy informativa).\nCredibilidad: ¿Qué tan creíble te parece la situación descrita? Piensa qué tan posible es que ocurra en la vida real. (0 = Nada creíble; 8 = Muy creíble).", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "left", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_2", _font_size_runtime_vw: 2.22222222222 }, { type: "TextComponent", coordinates: {"x":-56.4444444444,"y":64.2222222222}, zIndex: 3, text: "¿Cómo responder?", font_color: "#000000", font_family: "sans-serif", font_weight: "bold", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_3", _font_size_runtime_vw: 2.77777777778 }, { type: "TextComponent", coordinates: {"x":-40.5555555556,"y":-56.6666666667}, width: 39.4714128232, height: 37.5555555556, zIndex: 4, text: "• Lee cada afirmación con atención.\n• Selecciona una de las nueve opciones en cada dimensión.\n• Puedes elegir cualquier valor, incluido el punto medio o los extremos.\n• Evalúa las cuatro dimensiones por separado.\n• Primero realizarás tres ensayos de práctica.", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "left", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_4", _font_size_runtime_vw: 2.22222222222 }, { type: "TextComponent", coordinates: {"x":-51,"y":-24.2222222222}, zIndex: 5, text: "Responde así", font_color: "#000000", font_family: "sans-serif", font_weight: "bold", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_5", _font_size_runtime_vw: 2.77777777778 }, { type: "TextComponent", coordinates: {"x":50,"y":-43.3333333333}, width: 38.495179794, height: 24.2222222222, zIndex: 6, text: "• No intentes buscar una respuesta correcta.\n• No te bases en información que no aparece en la afirmación.\n• No relaciones la afirmación con las anteriores.", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "left", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_6", _font_size_runtime_vw: 2.22222222222 }, { type: "TextComponent", coordinates: {"x":46.6666666667,"y":-24.2222222222}, zIndex: 7, text: "Ten en cuenta", font_color: "#000000", font_family: "sans-serif", font_weight: "bold", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_7", _font_size_runtime_vw: 2.77777777778 }],
+response_components: [{ type: "ButtonResponseComponent", coordinates: {"x":74.6666666667,"y":-75}, height: 5, zIndex: 8, choices: ["Continuar"], button_color: "#A3B18A", button_text_color: "#000000", button_border_radius: 3, button_border_color: "#A3B18A", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_1", _button_font_size_runtime_vw: 2.77777777778, component_id: "ButtonResponseComponent-1793303924531" }]}];
+    const Instrucciones_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
+response_components: jsPsych.timelineVariable("response_components"),
+
+data: {
+    rt: "rt",
+    trial_id: 1793303572323,
+    builder_id: 1793303572323,
+    trial_name: "Instrucciones",
+    
+    branches: [1793304006966],
+    branchConditions: [{"id":1793304037561,"rules":[{"column":"","op":"==","value":"Continuar","fieldType":"response_components","componentIdx":"ButtonResponseComponent_1","prop":"response"}],"nextTrialId":"1793304006966","customParameters":{}}],
+    defaultNextTrialId: 1793304006966,
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      const branchParameters = window.ExpBuilderNavigation?.takeParameters(trial.data?.builder_id ?? trial.data?.trial_id);
+
+      if (branchParameters && typeof branchParameters === 'object') {
+        Object.entries(branchParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Survey questions can live in a root "elements" array or
+                    // inside "pages"; survey-core ignores page questions when
+                    // both exist.
+                    const findSurveyQuestion = (surveyJson, questionName) => {
+                      if (!surveyJson) return undefined;
+                      const lists = [];
+                      if (Array.isArray(surveyJson.pages)) {
+                        for (const page of surveyJson.pages) {
+                          if (Array.isArray(page && page.elements)) lists.push(page.elements);
+                        }
+                      }
+                      if (Array.isArray(surveyJson.elements)) lists.push(surveyJson.elements);
+                      for (const list of lists) {
+                        const found = list.find((item) => item && item.name === questionName);
+                        if (found) return found;
+                      }
+                      return undefined;
+                    };
+                    const question = findSurveyQuestion(fieldArray[compIndex].survey_json, questionName);
+                    
+                    if (question) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        question.defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+      }
+      
+    },
+    
+    on_finish: function(data) {
+    
+    
+      const branchDecision = window.ExpBuilderBranching.decide(
+        data, [1793304006966], [{"id":1793304037561,"rules":[{"column":"","op":"==","value":"Continuar","fieldType":"response_components","componentIdx":"ButtonResponseComponent_1","prop":"response"}],"nextTrialId":"1793304006966","customParameters":{}}], 1793304006966
+      );
+      window.ExpBuilderNavigation?.requestBranch(data, branchDecision);
+  
+  },};
+    const Instrucciones_procedure = {
+    timeline: 
+    [Instrucciones_timeline],
+    timeline_variables: test_stimuli_Instrucciones,
+    };
+    timeline.push(Instrucciones_procedure);
+  
+window.ExpBuilderNavigation?.registerTrial(1793303572323, Instrucciones_procedure);
+
+
+const test_stimuli_Pre$2d$ensayo = [{components: [{ type: "TextComponent", coordinates: {"x":0.111111111111,"y":74.2222222222}, zIndex: 1, text: "Ensayo", font_color: "#000000", font_family: "sans-serif", font_weight: "bold", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_1", _font_size_runtime_vw: 2.77777777778 }, { type: "TextComponent", coordinates: {"x":0,"y":0}, zIndex: 2, text: "A continuación realizaras tres ensayos, antes de pasar a la prueba. Recuerda responder honestamente, lo más pronto que puedas y seleccionar una respuesta para cada escala.\n\nDa click en el boton para comenzar.", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_2", _font_size_runtime_vw: 2.22222222222 }],
+response_components: [{ type: "ButtonResponseComponent", coordinates: {"x":35.3333333333,"y":-65}, height: 5, zIndex: 3, choices: ["Continuar"], button_color: "#A3B18A", button_text_color: "#000000", button_border_radius: 3, button_border_color: "#A3B18A", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_1", _button_font_size_runtime_vw: 2.77777777778, component_id: "ButtonResponseComponent-1793304165500" }, { type: "ButtonResponseComponent", coordinates: {"x":-35.5555555556,"y":-65}, width: 14.4599917954, height: 5, zIndex: 4, choices: ["Regresar"], button_color: "#A3B18A", button_text_color: "#000000", button_border_radius: 3, button_border_color: "#A3B18A", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_2", _button_font_size_runtime_vw: 2.77777777778, component_id: "ButtonResponseComponent-1793304300333" }]}];
+    const Pre$2d$ensayo_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
+response_components: jsPsych.timelineVariable("response_components"),
+
+data: {
+    rt: "rt",
+    trial_id: 1793304006966,
+    builder_id: 1793304006966,
+    trial_name: "Pre-ensayo",
+    
+    branches: [1793304388942,"1793303572323"],
+    branchConditions: [{"id":1793578539211,"rules":[{"column":"","op":"==","value":"Continuar","fieldType":"response_components","componentIdx":"ButtonResponseComponent_1","prop":"response"}],"nextTrialId":"1793304388942","customParameters":{}},{"id":1793578565552,"rules":[{"column":"","op":"==","value":"Regresar","fieldType":"response_components","componentIdx":"ButtonResponseComponent_2","prop":"response"}],"nextTrialId":"1793303572323","customParameters":{}}],
+    defaultNextTrialId: 1793304388942,
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      const branchParameters = window.ExpBuilderNavigation?.takeParameters(trial.data?.builder_id ?? trial.data?.trial_id);
+
+      if (branchParameters && typeof branchParameters === 'object') {
+        Object.entries(branchParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Survey questions can live in a root "elements" array or
+                    // inside "pages"; survey-core ignores page questions when
+                    // both exist.
+                    const findSurveyQuestion = (surveyJson, questionName) => {
+                      if (!surveyJson) return undefined;
+                      const lists = [];
+                      if (Array.isArray(surveyJson.pages)) {
+                        for (const page of surveyJson.pages) {
+                          if (Array.isArray(page && page.elements)) lists.push(page.elements);
+                        }
+                      }
+                      if (Array.isArray(surveyJson.elements)) lists.push(surveyJson.elements);
+                      for (const list of lists) {
+                        const found = list.find((item) => item && item.name === questionName);
+                        if (found) return found;
+                      }
+                      return undefined;
+                    };
+                    const question = findSurveyQuestion(fieldArray[compIndex].survey_json, questionName);
+                    
+                    if (question) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        question.defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+      }
+      
+    },
+    
+    on_finish: function(data) {
+    
+    
+      const branchDecision = window.ExpBuilderBranching.decide(
+        data, [1793304388942,"1793303572323"], [{"id":1793578539211,"rules":[{"column":"","op":"==","value":"Continuar","fieldType":"response_components","componentIdx":"ButtonResponseComponent_1","prop":"response"}],"nextTrialId":"1793304388942","customParameters":{}},{"id":1793578565552,"rules":[{"column":"","op":"==","value":"Regresar","fieldType":"response_components","componentIdx":"ButtonResponseComponent_2","prop":"response"}],"nextTrialId":"1793303572323","customParameters":{}}], 1793304388942
+      );
+      window.ExpBuilderNavigation?.requestBranch(data, branchDecision);
+  
+  },};
+    const Pre$2d$ensayo_procedure = {
+    timeline: 
+    [Pre$2d$ensayo_timeline],
+    timeline_variables: test_stimuli_Pre$2d$ensayo,
+    };
+    timeline.push(Pre$2d$ensayo_procedure);
+  
+window.ExpBuilderNavigation?.registerTrial(1793304006966, Pre$2d$ensayo_procedure);
+
+
+
+    const test_stimuli_loop_1793578740463 = [
+  {
+    "components_Ensayo": [
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 0,
+          "y": 85.9023836549
+        },
+        "zIndex": 1,
+        "text": "La persona X nunca aprendió a recortar con tijeras sobre la línea.",
+        "font_color": "#000000",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_1",
+        "_font_size_runtime_vw": 3.28222222222
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": -82.6864438054,
+          "y": 54.8888888889
+        },
+        "zIndex": 12,
+        "text": "Malo",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 82.2222222222,
+          "y": 54.8888888889
+        },
+        "zIndex": 12,
+        "text": "Bueno",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": -82.6864438054,
+          "y": 14.2222222222
+        },
+        "zIndex": 13,
+        "text": "Incapaz",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy_2",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 85.2223126869,
+          "y": 14.2222222222
+        },
+        "zIndex": 14,
+        "text": "Capaz",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": -85.1579937267,
+          "y": -25.3333333333
+        },
+        "width": 17.3135561946,
+        "height": 10.5555555556,
+        "zIndex": 15,
+        "text": "Poco informativo",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy_2_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 85.2223126869,
+          "y": -25.6666666667
+        },
+        "width": 15.2223126869,
+        "height": 9.22222222222,
+        "zIndex": 16,
+        "text": "Muy informativo",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy_copy_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": -85.1579937267,
+          "y": -60.5555555556
+        },
+        "width": 9.84065826759,
+        "height": 13.4444444444,
+        "zIndex": 17,
+        "text": "Poco creíble",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy_2_copy_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 86.4468315207,
+          "y": -61.4444444444
+        },
+        "width": 13.9977033884,
+        "height": 9.22222222222,
+        "zIndex": 18,
+        "text": "Muy creíble",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy_copy_copy_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 0,
+          "y": 70
+        },
+        "zIndex": 20,
+        "text": "Moralidad",
+        "font_color": "#9e9e9e",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_3",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 0,
+          "y": 31.7777777778
+        },
+        "zIndex": 21,
+        "text": "Competencia",
+        "font_color": "#9e9e9e",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_3_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 0,
+          "y": -6.22222222222
+        },
+        "zIndex": 22,
+        "text": "Informatividad",
+        "font_color": "#9e9e9e",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_3_copy_2",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 0,
+          "y": -48
+        },
+        "zIndex": 23,
+        "text": "Credibilidad",
+        "font_color": "#9e9e9e",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_3_copy_3",
+        "_font_size_runtime_vw": 2.77777777778
+      }
+    ],
+    "response_components_Ensayo": [
+      {
+        "type": "SliderResponseComponent",
+        "coordinates": {
+          "x": 0,
+          "y": -24.3333333333
+        },
+        "width": 80,
+        "height": 14.350688309,
+        "zIndex": 2,
+        "min": 0,
+        "max": 8,
+        "slider_start": 4,
+        "labels": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8"
+        ],
+        "slider_width": 300,
+        "name": "Informatividad",
+        "require_movement": true,
+        "component_id": "SliderResponseComponent-1793579263031"
+      },
+      {
+        "type": "SliderResponseComponent",
+        "coordinates": {
+          "x": 0,
+          "y": 51.3333333333
+        },
+        "width": 80,
+        "height": 14.498685614,
+        "zIndex": 6,
+        "min": -4,
+        "max": 4,
+        "slider_start": 0,
+        "labels": [
+          "-4",
+          "-3",
+          "-2",
+          "-1",
+          "0",
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "slider_width": 300,
+        "name": "Moralidad",
+        "require_movement": true,
+        "component_id": "SliderResponseComponent-1793579266352"
+      },
+      {
+        "type": "SliderResponseComponent",
+        "coordinates": {
+          "x": 0,
+          "y": 14.2222222222
+        },
+        "width": 80,
+        "height": 14.1966844298,
+        "zIndex": 7,
+        "min": -4,
+        "max": 4,
+        "slider_start": 0,
+        "labels": [
+          "-4",
+          "-3",
+          "-2",
+          "-1",
+          "0",
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "slider_width": 300,
+        "name": "Competencia",
+        "require_movement": true,
+        "component_id": "SliderResponseComponent-1793579600220-0-w73weg"
+      },
+      {
+        "type": "SliderResponseComponent",
+        "coordinates": {
+          "x": 0,
+          "y": -62.3333333333
+        },
+        "width": 80,
+        "height": 14.350688309,
+        "zIndex": 8,
+        "min": 0,
+        "max": 8,
+        "slider_start": 4,
+        "labels": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8"
+        ],
+        "slider_width": 300,
+        "name": "Informatividad_copy",
+        "require_movement": true,
+        "component_id": "SliderResponseComponent-1793579777880-0-vopql6"
+      },
+      {
+        "type": "ButtonResponseComponent",
+        "coordinates": {
+          "x": 75.4444444444,
+          "y": -85
+        },
+        "width": 14.7663551652,
+        "height": 5,
+        "zIndex": 19,
+        "choices": [
+          "Siguiente"
+        ],
+        "button_color": "#A3B18A",
+        "button_text_color": "#000000",
+        "button_border_radius": 3,
+        "button_border_color": "#A3B18A",
+        "button_border_width": 1,
+        "button_padding": "6px 14px",
+        "name": "ButtonResponseComponent_1",
+        "_button_font_size_runtime_vw": 2.77777777778,
+        "component_id": "ButtonResponseComponent-1793639430344"
+      }
+    ],
+    "response_ends_trial_Ensayo": true,
+    "require_response_components_Ensayo": [
+      "SliderResponseComponent-1793579263031",
+      "SliderResponseComponent-1793579266352",
+      "SliderResponseComponent-1793579600220-0-w73weg",
+      "SliderResponseComponent-1793579777880-0-vopql6",
+      "ButtonResponseComponent-1793639430344"
+    ]
+  },
+  {
+    "components_Ensayo": [
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 0,
+          "y": 85.9023836549
+        },
+        "zIndex": 1,
+        "text": "La persona X resolvió una sopa de letras en el periódico.",
+        "font_color": "#000000",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_1",
+        "_font_size_runtime_vw": 3.28222222222
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": -82.6864438054,
+          "y": 54.8888888889
+        },
+        "zIndex": 12,
+        "text": "Malo",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 82.2222222222,
+          "y": 54.8888888889
+        },
+        "zIndex": 12,
+        "text": "Bueno",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": -82.6864438054,
+          "y": 14.2222222222
+        },
+        "zIndex": 13,
+        "text": "Incapaz",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy_2",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 85.2223126869,
+          "y": 14.2222222222
+        },
+        "zIndex": 14,
+        "text": "Capaz",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": -85.1579937267,
+          "y": -25.3333333333
+        },
+        "width": 17.3135561946,
+        "height": 10.5555555556,
+        "zIndex": 15,
+        "text": "Poco informativo",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy_2_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 85.2223126869,
+          "y": -25.6666666667
+        },
+        "width": 15.2223126869,
+        "height": 9.22222222222,
+        "zIndex": 16,
+        "text": "Muy informativo",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy_copy_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": -85.1579937267,
+          "y": -60.5555555556
+        },
+        "width": 9.84065826759,
+        "height": 13.4444444444,
+        "zIndex": 17,
+        "text": "Poco creíble",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy_2_copy_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 86.4468315207,
+          "y": -61.4444444444
+        },
+        "width": 13.9977033884,
+        "height": 9.22222222222,
+        "zIndex": 18,
+        "text": "Muy creíble",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy_copy_copy_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 0,
+          "y": 70
+        },
+        "zIndex": 20,
+        "text": "Moralidad",
+        "font_color": "#9e9e9e",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_3",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 0,
+          "y": 31.7777777778
+        },
+        "zIndex": 21,
+        "text": "Competencia",
+        "font_color": "#9e9e9e",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_3_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 0,
+          "y": -6.22222222222
+        },
+        "zIndex": 22,
+        "text": "Informatividad",
+        "font_color": "#9e9e9e",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_3_copy_2",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 0,
+          "y": -48
+        },
+        "zIndex": 23,
+        "text": "Credibilidad",
+        "font_color": "#9e9e9e",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_3_copy_3",
+        "_font_size_runtime_vw": 2.77777777778
+      }
+    ],
+    "response_components_Ensayo": [
+      {
+        "type": "SliderResponseComponent",
+        "coordinates": {
+          "x": 0,
+          "y": -24.3333333333
+        },
+        "width": 80,
+        "height": 14.350688309,
+        "zIndex": 2,
+        "min": 0,
+        "max": 8,
+        "slider_start": 4,
+        "labels": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8"
+        ],
+        "slider_width": 300,
+        "name": "Informatividad",
+        "require_movement": true,
+        "component_id": "SliderResponseComponent-1793579263031"
+      },
+      {
+        "type": "SliderResponseComponent",
+        "coordinates": {
+          "x": 0,
+          "y": 51.3333333333
+        },
+        "width": 80,
+        "height": 14.498685614,
+        "zIndex": 6,
+        "min": -4,
+        "max": 4,
+        "slider_start": 0,
+        "labels": [
+          "-4",
+          "-3",
+          "-2",
+          "-1",
+          "0",
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "slider_width": 300,
+        "name": "Moralidad",
+        "require_movement": true,
+        "component_id": "SliderResponseComponent-1793579266352"
+      },
+      {
+        "type": "SliderResponseComponent",
+        "coordinates": {
+          "x": 0,
+          "y": 14.2222222222
+        },
+        "width": 80,
+        "height": 14.1966844298,
+        "zIndex": 7,
+        "min": -4,
+        "max": 4,
+        "slider_start": 0,
+        "labels": [
+          "-4",
+          "-3",
+          "-2",
+          "-1",
+          "0",
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "slider_width": 300,
+        "name": "Competencia",
+        "require_movement": true,
+        "component_id": "SliderResponseComponent-1793579600220-0-w73weg"
+      },
+      {
+        "type": "SliderResponseComponent",
+        "coordinates": {
+          "x": 0,
+          "y": -62.3333333333
+        },
+        "width": 80,
+        "height": 14.350688309,
+        "zIndex": 8,
+        "min": 0,
+        "max": 8,
+        "slider_start": 4,
+        "labels": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8"
+        ],
+        "slider_width": 300,
+        "name": "Informatividad_copy",
+        "require_movement": true,
+        "component_id": "SliderResponseComponent-1793579777880-0-vopql6"
+      },
+      {
+        "type": "ButtonResponseComponent",
+        "coordinates": {
+          "x": 75.4444444444,
+          "y": -85
+        },
+        "width": 14.7663551652,
+        "height": 5,
+        "zIndex": 19,
+        "choices": [
+          "Siguiente"
+        ],
+        "button_color": "#A3B18A",
+        "button_text_color": "#000000",
+        "button_border_radius": 3,
+        "button_border_color": "#A3B18A",
+        "button_border_width": 1,
+        "button_padding": "6px 14px",
+        "name": "ButtonResponseComponent_1",
+        "_button_font_size_runtime_vw": 2.77777777778,
+        "component_id": "ButtonResponseComponent-1793639430344"
+      }
+    ],
+    "response_ends_trial_Ensayo": true,
+    "require_response_components_Ensayo": [
+      "SliderResponseComponent-1793579263031",
+      "SliderResponseComponent-1793579266352",
+      "SliderResponseComponent-1793579600220-0-w73weg",
+      "SliderResponseComponent-1793579777880-0-vopql6",
+      "ButtonResponseComponent-1793639430344"
+    ]
+  },
+  {
+    "components_Ensayo": [
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 0,
+          "y": 85.9023836549
+        },
+        "zIndex": 1,
+        "text": "La persona X hizo todas las reparaciones de su moto.",
+        "font_color": "#000000",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_1",
+        "_font_size_runtime_vw": 3.28222222222
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": -82.6864438054,
+          "y": 54.8888888889
+        },
+        "zIndex": 12,
+        "text": "Malo",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 82.2222222222,
+          "y": 54.8888888889
+        },
+        "zIndex": 12,
+        "text": "Bueno",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": -82.6864438054,
+          "y": 14.2222222222
+        },
+        "zIndex": 13,
+        "text": "Incapaz",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy_2",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 85.2223126869,
+          "y": 14.2222222222
+        },
+        "zIndex": 14,
+        "text": "Capaz",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": -85.1579937267,
+          "y": -25.3333333333
+        },
+        "width": 17.3135561946,
+        "height": 10.5555555556,
+        "zIndex": 15,
+        "text": "Poco informativo",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy_2_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 85.2223126869,
+          "y": -25.6666666667
+        },
+        "width": 15.2223126869,
+        "height": 9.22222222222,
+        "zIndex": 16,
+        "text": "Muy informativo",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy_copy_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": -85.1579937267,
+          "y": -60.5555555556
+        },
+        "width": 9.84065826759,
+        "height": 13.4444444444,
+        "zIndex": 17,
+        "text": "Poco creíble",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy_2_copy_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 86.4468315207,
+          "y": -61.4444444444
+        },
+        "width": 13.9977033884,
+        "height": 9.22222222222,
+        "zIndex": 18,
+        "text": "Muy creíble",
+        "font_color": "#8000FF",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_2_copy_copy_copy_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 0,
+          "y": 70
+        },
+        "zIndex": 20,
+        "text": "Moralidad",
+        "font_color": "#9e9e9e",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_3",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 0,
+          "y": 31.7777777778
+        },
+        "zIndex": 21,
+        "text": "Competencia",
+        "font_color": "#9e9e9e",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_3_copy",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 0,
+          "y": -6.22222222222
+        },
+        "zIndex": 22,
+        "text": "Informatividad",
+        "font_color": "#9e9e9e",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_3_copy_2",
+        "_font_size_runtime_vw": 2.77777777778
+      },
+      {
+        "type": "TextComponent",
+        "coordinates": {
+          "x": 0,
+          "y": -48
+        },
+        "zIndex": 23,
+        "text": "Credibilidad",
+        "font_color": "#9e9e9e",
+        "font_family": "sans-serif",
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_align": "center",
+        "line_height": 1.5,
+        "background_color": "transparent",
+        "padding": "0px",
+        "border_radius": 0,
+        "border_color": "transparent",
+        "border_width": 0,
+        "name": "TextComponent_3_copy_3",
+        "_font_size_runtime_vw": 2.77777777778
+      }
+    ],
+    "response_components_Ensayo": [
+      {
+        "type": "SliderResponseComponent",
+        "coordinates": {
+          "x": 0,
+          "y": -24.3333333333
+        },
+        "width": 80,
+        "height": 14.350688309,
+        "zIndex": 2,
+        "min": 0,
+        "max": 8,
+        "slider_start": 4,
+        "labels": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8"
+        ],
+        "slider_width": 300,
+        "name": "Informatividad",
+        "require_movement": true,
+        "component_id": "SliderResponseComponent-1793579263031"
+      },
+      {
+        "type": "SliderResponseComponent",
+        "coordinates": {
+          "x": 0,
+          "y": 51.3333333333
+        },
+        "width": 80,
+        "height": 14.498685614,
+        "zIndex": 6,
+        "min": -4,
+        "max": 4,
+        "slider_start": 0,
+        "labels": [
+          "-4",
+          "-3",
+          "-2",
+          "-1",
+          "0",
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "slider_width": 300,
+        "name": "Moralidad",
+        "require_movement": true,
+        "component_id": "SliderResponseComponent-1793579266352"
+      },
+      {
+        "type": "SliderResponseComponent",
+        "coordinates": {
+          "x": 0,
+          "y": 14.2222222222
+        },
+        "width": 80,
+        "height": 14.1966844298,
+        "zIndex": 7,
+        "min": -4,
+        "max": 4,
+        "slider_start": 0,
+        "labels": [
+          "-4",
+          "-3",
+          "-2",
+          "-1",
+          "0",
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "slider_width": 300,
+        "name": "Competencia",
+        "require_movement": true,
+        "component_id": "SliderResponseComponent-1793579600220-0-w73weg"
+      },
+      {
+        "type": "SliderResponseComponent",
+        "coordinates": {
+          "x": 0,
+          "y": -62.3333333333
+        },
+        "width": 80,
+        "height": 14.350688309,
+        "zIndex": 8,
+        "min": 0,
+        "max": 8,
+        "slider_start": 4,
+        "labels": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8"
+        ],
+        "slider_width": 300,
+        "name": "Informatividad_copy",
+        "require_movement": true,
+        "component_id": "SliderResponseComponent-1793579777880-0-vopql6"
+      },
+      {
+        "type": "ButtonResponseComponent",
+        "coordinates": {
+          "x": 75.4444444444,
+          "y": -85
+        },
+        "width": 14.7663551652,
+        "height": 5,
+        "zIndex": 19,
+        "choices": [
+          "Siguiente"
+        ],
+        "button_color": "#A3B18A",
+        "button_text_color": "#000000",
+        "button_border_radius": 3,
+        "button_border_color": "#A3B18A",
+        "button_border_width": 1,
+        "button_padding": "6px 14px",
+        "name": "ButtonResponseComponent_1",
+        "_button_font_size_runtime_vw": 2.77777777778,
+        "component_id": "ButtonResponseComponent-1793639430344"
+      }
+    ],
+    "response_ends_trial_Ensayo": true,
+    "require_response_components_Ensayo": [
+      "SliderResponseComponent-1793579263031",
+      "SliderResponseComponent-1793579266352",
+      "SliderResponseComponent-1793579600220-0-w73weg",
+      "SliderResponseComponent-1793579777880-0-vopql6",
+      "ButtonResponseComponent-1793639430344"
+    ]
+  }
+];
+    
+    
+    const Ensayo_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components_Ensayo"),
+response_components: jsPsych.timelineVariable("response_components_Ensayo"),
+response_ends_trial: jsPsych.timelineVariable("response_ends_trial_Ensayo"),
+require_response_components: jsPsych.timelineVariable("require_response_components_Ensayo"),
+data: {
+    rt: "rt_Ensayo",
+    trial_id: 1793304388942,
+    builder_id: 1793304388942,
+    trial_name: "Ensayo",
+    isInLoop: true,
+    branches: [1793579048529],
+    branchConditions: [],
+    defaultNextTrialId: 1793579048529,
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      const branchParameters = window.ExpBuilderNavigation?.takeParameters(trial.data?.builder_id ?? trial.data?.trial_id);
+
+      if (branchParameters && typeof branchParameters === 'object') {
+        Object.entries(branchParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Survey questions can live in a root "elements" array or
+                    // inside "pages"; survey-core ignores page questions when
+                    // both exist.
+                    const findSurveyQuestion = (surveyJson, questionName) => {
+                      if (!surveyJson) return undefined;
+                      const lists = [];
+                      if (Array.isArray(surveyJson.pages)) {
+                        for (const page of surveyJson.pages) {
+                          if (Array.isArray(page && page.elements)) lists.push(page.elements);
+                        }
+                      }
+                      if (Array.isArray(surveyJson.elements)) lists.push(surveyJson.elements);
+                      for (const list of lists) {
+                        const found = list.find((item) => item && item.name === questionName);
+                        if (found) return found;
+                      }
+                      return undefined;
+                    };
+                    const question = findSurveyQuestion(fieldArray[compIndex].survey_json, questionName);
+                    
+                    if (question) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        question.defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+      }
+      
+    },
+    
+    on_finish: function(data) {
+    
+    
+      const branchDecision = window.ExpBuilderBranching.decide(
+        data, [1793579048529], [], 1793579048529
+      );
+      window.ExpBuilderNavigation?.requestBranch(data, branchDecision);
+  
+  },};
+window.ExpBuilderNavigation?.registerTrial(1793304388942, Ensayo_timeline);
+
+    const loop_1793578740463_procedure = {
+      timeline: [Ensayo_timeline],
+      timeline_variables: test_stimuli_loop_1793578740463.length ? test_stimuli_loop_1793578740463 : [{}],
+      get repetitions() {
+    return window.ExpBuilderNavigation?.remainingLoopRepetitions("loop_1793578740463", 1) ?? 1;
+  },
+  randomize_order: false,
+  sample: { type: 'custom', fn: function(indices) {
+    if (window.ExpBuilderNavigation) {
+      return window.ExpBuilderNavigation.sampleLoop("loop_1793578740463", indices, true, false);
+    }
+    return jsPsych.randomization.shuffle(indices);
+  } },
+      
+
+  data: {
+    loop_id: "loop_1793578740463"
+  },
+};
+window.ExpBuilderNavigation?.registerLoop("loop_1793578740463", loop_1793578740463_procedure, {"entryItemId":1793304388942,"nextItemId":null});
+timeline.push(loop_1793578740463_procedure);
+
+
+
+const test_stimuli_Final$20$ensayo = [{components: [{ type: "TextComponent", coordinates: {"x":0,"y":42.4444444444}, zIndex: 1, text: "¡Buen ensayo!", font_color: "#000000", font_family: "sans-serif", font_weight: "bold", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_1", _font_size_runtime_vw: 4.44444444444 }, { type: "TextComponent", coordinates: {"x":0,"y":0}, zIndex: 2, text: "Ahora da click en el botón para iniciar el experimento", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_2", _font_size_runtime_vw: 3.22222222222 }],
+response_components: [{ type: "ButtonResponseComponent", coordinates: {"x":0,"y":-30}, width: 14.1635381112, height: 3.77777777778, zIndex: 3, choices: ["Iniciar experimento"], button_color: "#A3B18A", button_text_color: "#000000", button_border_radius: 3, button_border_color: "#A3B18A", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_1", _button_font_size_runtime_vw: 2.22222222222, component_id: "ButtonResponseComponent-1793642417899" }]}];
+    const Final$20$ensayo_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
+response_components: jsPsych.timelineVariable("response_components"),
+
+data: {
+    rt: "rt",
+    trial_id: 1793579048529,
+    builder_id: 1793579048529,
+    trial_name: "Final ensayo",
+    
+    branches: [1793642521181],
+    branchConditions: [],
+    defaultNextTrialId: 1793642521181,
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      const branchParameters = window.ExpBuilderNavigation?.takeParameters(trial.data?.builder_id ?? trial.data?.trial_id);
+
+      if (branchParameters && typeof branchParameters === 'object') {
+        Object.entries(branchParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Survey questions can live in a root "elements" array or
+                    // inside "pages"; survey-core ignores page questions when
+                    // both exist.
+                    const findSurveyQuestion = (surveyJson, questionName) => {
+                      if (!surveyJson) return undefined;
+                      const lists = [];
+                      if (Array.isArray(surveyJson.pages)) {
+                        for (const page of surveyJson.pages) {
+                          if (Array.isArray(page && page.elements)) lists.push(page.elements);
+                        }
+                      }
+                      if (Array.isArray(surveyJson.elements)) lists.push(surveyJson.elements);
+                      for (const list of lists) {
+                        const found = list.find((item) => item && item.name === questionName);
+                        if (found) return found;
+                      }
+                      return undefined;
+                    };
+                    const question = findSurveyQuestion(fieldArray[compIndex].survey_json, questionName);
+                    
+                    if (question) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        question.defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+      }
+      
+    },
+    
+    on_finish: function(data) {
+    
+    
+      const branchDecision = window.ExpBuilderBranching.decide(
+        data, [1793642521181], [], 1793642521181
+      );
+      window.ExpBuilderNavigation?.requestBranch(data, branchDecision);
+  
+  },};
+    const Final$20$ensayo_procedure = {
+    timeline: 
+    [Final$20$ensayo_timeline],
+    timeline_variables: test_stimuli_Final$20$ensayo,
+    };
+    timeline.push(Final$20$ensayo_procedure);
+  
+window.ExpBuilderNavigation?.registerTrial(1793579048529, Final$20$ensayo_procedure);
+
+
+    let test_stimuli_loop_1793650037960 = [];
+    
+        const test_stimuli_previous_loop_1793650037960 = (await Promise.all(
+      ["data/estimulos_001.json", "data/estimulos_002.json", "data/estimulos_003.json", "data/estimulos_004.json", "data/estimulos_005.json", "data/estimulos_006.json", "data/estimulos_007.json", "data/estimulos_008.json", "data/estimulos_009.json"].map(async (path) => {
+        const response = await fetch(path + '?corpus=final-listas-v1', {cache: 'default'});
+        if (!response.ok) throw new Error(`Failed to load ${path}: HTTP ${response.status}`);
+        const rows = await response.json();
+        if (!Array.isArray(rows)) throw new Error(`Invalid stimulus file: ${path}`);
+        return rows;
+      })
+    )).flat();
+    if (test_stimuli_previous_loop_1793650037960.length !== 480) {
+      throw new Error('Incomplete stimulus data: expected 480 records.');
+    }
+    // La columna Lista del corpus final es la unica fuente de asignacion.
+    const _metadataResponse = await fetch('data/main.json?corpus=final-listas-v1', {cache: 'default'});
+    if (!_metadataResponse.ok) throw new Error('No se pudo cargar la columna Lista del corpus final');
+    const _metadataFilas = await _metadataResponse.json();
+    if (!Array.isArray(_metadataFilas) || _metadataFilas.length !== test_stimuli_previous_loop_1793650037960.length) {
+      throw new Error('Las filas del corpus final no coinciden con los ensayos');
+    }
+    const _listasDesdeColumna = _metadataFilas.map((fila, indice) => {
+      const ensayo = test_stimuli_previous_loop_1793650037960[indice];
+      if (Number(fila.ID) !== ensayo.stimulus_id || String(fila['Versión Final']) !== ensayo.stimulus_texto) {
+        throw new Error('Desajuste entre la oracion y su ID en la fila ' + (indice + 2));
+      }
+      if (!/^Lista [1-6]$/.test(fila.Lista)) throw new Error('Lista no valida en la fila ' + (indice + 2));
+      if (Number(fila['ID Asociado']) !== ensayo.stimulus_id_asociado) {
+        throw new Error('ID asociado distinto en la fila ' + (indice + 2));
+      }
+      return 'List_' + fila.Lista.slice(-1);
+    });
+    const _countsPorLista = Array.from({length:6}, (_,i) => _listasDesdeColumna.filter(v => v === 'List_' + (i+1)).length);
+    if (_countsPorLista.some(n => n !== 80)) throw new Error('El corpus no tiene 80 oraciones por lista');
+
+    if (typeof participantNumber === "number" && Number.isInteger(participantNumber) && participantNumber > 0) {
+      const stimuliOrders = [];
+      const categoryData = _listasDesdeColumna;
+      
+      
+      if (categoryData.length > 0) {
+        // Get all unique categories
+        const allCategories = [...new Set(categoryData)];
+        
+        // Determine which category corresponds to this participant
+        const categoryIndex = (participantNumber - 1) % allCategories.length;
+        const participantCategory = allCategories[categoryIndex];
+        window.ValidacionAsignacion = {
+          participante: participantNumber,
+          lista: participantCategory.replace('List_', 'Lista '),
+          tamanoLista: 80,
+          modoPiloto: Boolean(VALIDACION_PRUEBA_ACTIVA)
+        };
+        console.info('[Validación] Lista asignada:', window.ValidacionAsignacion.lista,
+          '(participante', participantNumber + ')');
+        
+        // Find the indices that correspond to this category
+        const categoryIndices = [];
+        categoryData.forEach((category, index) => {
+          if (category === participantCategory) {
+            categoryIndices.push(index);
+          }
+        });
+        
+        // Filter stimuli by category
+        const categoryFilteredStimuli = categoryIndices.map(index => 
+          test_stimuli_previous_loop_1793650037960[index]
+        );
+
+        // Apply the order if it exists
+        if (stimuliOrders.length > 0) {
+          const orderIndex = (participantNumber - 1) % stimuliOrders.length;
+          const index_order = stimuliOrders[orderIndex];
+          
+          // Create mapping from original indices to filtered indices
+          const indexMapping = {};
+          categoryIndices.forEach((originalIndex, filteredIndex) => {
+            indexMapping[originalIndex] = filteredIndex;
+          });
+          
+          // Apply the order only to indices that exist in the filtered category
+          const orderedIndices = index_order
+            .filter(i => indexMapping.hasOwnProperty(i))
+            .map(i => indexMapping[i]);
+          
+          const orderedStimuli = orderedIndices
+            .filter(i => i >= 0 && i < categoryFilteredStimuli.length)
+            .map(i => categoryFilteredStimuli[i]);
+          test_stimuli_loop_1793650037960 = orderedStimuli.length > 0
+            ? orderedStimuli : categoryFilteredStimuli;
+        } else {
+          test_stimuli_loop_1793650037960 = categoryFilteredStimuli;
+        }
+      } else if (stimuliOrders.length > 0) {
+        // Original logic without categories
+        const orderIndex = (participantNumber - 1) % stimuliOrders.length;
+        const index_order = stimuliOrders[orderIndex];
+        
+        const orderedStimuli = index_order
+          .filter((i) => i !== -1 && i >= 0 && i < test_stimuli_previous_loop_1793650037960.length)
+          .map((i) => test_stimuli_previous_loop_1793650037960[i]);
+        test_stimuli_loop_1793650037960 = orderedStimuli.length > 0
+          ? orderedStimuli : test_stimuli_previous_loop_1793650037960;
+      } else {
+        test_stimuli_loop_1793650037960 = test_stimuli_previous_loop_1793650037960;
+      }
+    } else {
+      test_stimuli_loop_1793650037960 = test_stimuli_previous_loop_1793650037960;
+    }
+    window.ExpBuilderRuntime?.emit("stimuli-selected", {
+      loopId: "loop_1793650037960",
+      count: test_stimuli_loop_1793650037960.length,
+      orders: false,
+      categories: true
+    });
+    
+    
+    const Behavioral$20$Statements_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components_Behavioral$20$Statements"),
+response_components: jsPsych.timelineVariable("response_components_Behavioral$20$Statements"),
+response_ends_trial: jsPsych.timelineVariable("response_ends_trial_Behavioral$20$Statements"),
+require_response_components: jsPsych.timelineVariable("require_response_components_Behavioral$20$Statements"),
+data: {
+    rt: "rt_Behavioral$20$Statements",
+    trial_id: 1793642521181,
+    builder_id: 1793642521181,
+    trial_name: "Behavioral Statements",
+    isInLoop: true,
+    participant_number: participantNumber,
+    stimulus_id: jsPsych.timelineVariable("stimulus_id"),
+    stimulus_id_asociado: jsPsych.timelineVariable("stimulus_id_asociado"),
+    stimulus_lista: jsPsych.timelineVariable("stimulus_lista"),
+    stimulus_texto: jsPsych.timelineVariable("stimulus_texto"),
+    branches: [1793649983720],
+    branchConditions: [],
+    defaultNextTrialId: 1793649983720,
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      const branchParameters = window.ExpBuilderNavigation?.takeParameters(trial.data?.builder_id ?? trial.data?.trial_id);
+
+      if (branchParameters && typeof branchParameters === 'object') {
+        Object.entries(branchParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Survey questions can live in a root "elements" array or
+                    // inside "pages"; survey-core ignores page questions when
+                    // both exist.
+                    const findSurveyQuestion = (surveyJson, questionName) => {
+                      if (!surveyJson) return undefined;
+                      const lists = [];
+                      if (Array.isArray(surveyJson.pages)) {
+                        for (const page of surveyJson.pages) {
+                          if (Array.isArray(page && page.elements)) lists.push(page.elements);
+                        }
+                      }
+                      if (Array.isArray(surveyJson.elements)) lists.push(surveyJson.elements);
+                      for (const list of lists) {
+                        const found = list.find((item) => item && item.name === questionName);
+                        if (found) return found;
+                      }
+                      return undefined;
+                    };
+                    const question = findSurveyQuestion(fieldArray[compIndex].survey_json, questionName);
+                    
+                    if (question) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        question.defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+      }
+      
+    },
+    
+    on_finish: function(data) {
+    
+    
+      const branchDecision = window.ExpBuilderBranching.decide(
+        data, [1793649983720], [], 1793649983720
+      );
+      window.ExpBuilderNavigation?.requestBranch(data, branchDecision);
+  
+  },};
+window.ExpBuilderNavigation?.registerTrial(1793642521181, Behavioral$20$Statements_timeline);
+
+    // Limitar SOLO los estímulos que ejecuta el bloque principal. El catálogo,
+    // la selección por participante y los datos originales no se modifican.
+    const test_stimuli_principal_ejecutar = VALIDACION_PRUEBA_ACTIVA
+      ? test_stimuli_loop_1793650037960.slice(0, 3)
+      : test_stimuli_loop_1793650037960;
+    window.ValidacionPrueba.principal = test_stimuli_principal_ejecutar.length;
+    if (VALIDACION_PRUEBA_ACTIVA) {
+      console.info('[Validación] Bloque principal limitado a', test_stimuli_principal_ejecutar.length, 'ensayos.');
+    }
+
+    const loop_1793650037960_procedure = {
+      timeline: [Behavioral$20$Statements_timeline],
+      timeline_variables: test_stimuli_principal_ejecutar.length ? test_stimuli_principal_ejecutar : [{}],
+      get repetitions() {
+    return window.ExpBuilderNavigation?.remainingLoopRepetitions("loop_1793650037960", 1) ?? 1;
+  },
+  randomize_order: false,
+  sample: { type: 'custom', fn: function(indices) {
+    if (window.ExpBuilderNavigation) {
+      return window.ExpBuilderNavigation.sampleLoop("loop_1793650037960", indices, true, false);
+    }
+    return jsPsych.randomization.shuffle(indices);
+  } },
+      
+
+  data: {
+    loop_id: "loop_1793650037960"
+  },
+};
+window.ExpBuilderNavigation?.registerLoop("loop_1793650037960", loop_1793650037960_procedure, {"entryItemId":1793642521181,"nextItemId":1793649983720});
+timeline.push(loop_1793650037960_procedure);
+
+
+
+const test_stimuli_Final$20$Experimento = [{components: [{ type: "TextComponent", coordinates: {"x":0,"y":35.9023836549}, zIndex: 1, text: "¡Gracias por tu participación!", font_color: "#000000", font_family: "sans-serif", font_weight: "bold", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_1", _font_size_runtime_vw: 2.83777777778 }, { type: "TextComponent", coordinates: {"x":0,"y":0}, zIndex: 2, text: "El equipo de investigación y los organizadores agradecen mucho tu interés y el tiempo que dedicaste a este estudio.", font_color: "#000000", font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_2", _font_size_runtime_vw: 2.22222222222 }, { type: "TextComponent", coordinates: {"x":0,"y":-34.4444444444}, zIndex: 3, text: "¡Que tengas un buen dia!", font_color: "#000000", font_family: "sans-serif", font_weight: "bold", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_3", _font_size_runtime_vw: 2.77777777778 }, { type: "ImageComponent", coordinates: {"x":-70.336035877,"y":69.0297003772}, width: 19.6666666667, height: 20.3869128747, zIndex: 5, stimulus: "img/WhatsApp%20Image%202026-10-26%20at%2010.53.21.jpeg", name: "ImageComponent_1" }, { type: "ImageComponent", coordinates: {"x":-0.666666666667,"y":71.3471838577}, width: 20.7777777778, height: 20.3750150502, zIndex: 6, stimulus: "img/WhatsApp%20Image%202026-10-26%20at%2010.53.22.jpeg", name: "ImageComponent_2" }, { type: "ImageComponent", coordinates: {"x":69.8753489113,"y":70.1943910297}, width: 20.1111111111, height: 19.19424026, zIndex: 7, stimulus: "img/WhatsApp%20Image%202026-10-26%20at%2010.53.22%20(1).jpeg", name: "ImageComponent_3" }, { type: "ImageComponent", coordinates: {"x":-59.4444444444,"y":-75.1111111111}, width: 39.3659490487, height: 24.8888888889, zIndex: 8, stimulus: "img/Mona.png", name: "ImageComponent_4" }, { type: "ImageComponent", coordinates: {"x":66.6666666667,"y":-71.3333333333}, zIndex: 9, stimulus: "img/Mono.png", name: "ImageComponent_5" }],
+response_components: [{ type: "ButtonResponseComponent", coordinates: {"x":0,"y":-85}, height: 5, zIndex: 4, choices: ["Finalizar"], button_color: "#A3B18A", button_text_color: "#000000", button_border_radius: 3, button_border_color: "#A3B18A", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_1", _button_font_size_runtime_vw: 1.55555555556, component_id: "ButtonResponseComponent-1793650401129" }]}];
+    const Final$20$Experimento_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
+response_components: jsPsych.timelineVariable("response_components"),
+
+data: {
+    rt: "rt",
+    trial_id: 1793649983720,
+    builder_id: 1793649983720,
+    trial_name: "Final Experimento",
+    
+    branches: [],
+    branchConditions: [],
+    defaultNextTrialId: null,
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      const branchParameters = window.ExpBuilderNavigation?.takeParameters(trial.data?.builder_id ?? trial.data?.trial_id);
+
+      if (branchParameters && typeof branchParameters === 'object') {
+        Object.entries(branchParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Survey questions can live in a root "elements" array or
+                    // inside "pages"; survey-core ignores page questions when
+                    // both exist.
+                    const findSurveyQuestion = (surveyJson, questionName) => {
+                      if (!surveyJson) return undefined;
+                      const lists = [];
+                      if (Array.isArray(surveyJson.pages)) {
+                        for (const page of surveyJson.pages) {
+                          if (Array.isArray(page && page.elements)) lists.push(page.elements);
+                        }
+                      }
+                      if (Array.isArray(surveyJson.elements)) lists.push(surveyJson.elements);
+                      for (const list of lists) {
+                        const found = list.find((item) => item && item.name === questionName);
+                        if (found) return found;
+                      }
+                      return undefined;
+                    };
+                    const question = findSurveyQuestion(fieldArray[compIndex].survey_json, questionName);
+                    
+                    if (question) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        question.defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+      }
+      
+    },
+    
+    on_finish: function(data) {
+    
+    
+      const branchDecision = window.ExpBuilderBranching.decide(
+        data, [], [], null
+      );
+      window.ExpBuilderNavigation?.requestBranch(data, branchDecision);
+  
+  },};
+    const Final$20$Experimento_procedure = {
+    timeline: 
+    [Final$20$Experimento_timeline],
+    timeline_variables: test_stimuli_Final$20$Experimento,
+    };
+    timeline.push(Final$20$Experimento_procedure);
+  
+window.ExpBuilderNavigation?.registerTrial(1793649983720, Final$20$Experimento_procedure);
+
+    window.ValidacionBienvenida.install(timeline);
+    window.ValidacionConsentimiento.install(timeline);
+    window.ValidacionPantallas.install(timeline);
+    window.JuiciosSurvey.install(timeline);
+    window.JuiciosEvaluacion.install(timeline);
     window.ExpBuilderNavigation?.attach(jsPsych, timeline);
+    // Los metadatos de curso se asocian mediante la API publica de jsPsych.
+    // No se altera on_data_update, appendEvents, completeSession ni retryExport.
+    const _vmAccess = window.ValidacionGrupos.initialize(trialSessionId);
+    jsPsych.data.addProperties({
+      vm_modalidad: _vmAccess.modalidad,
+      vm_curso: _vmAccess.curso || '',
+      vm_etiqueta_curso: _vmAccess.etiquetaCurso || '',
+      vm_codigo_participacion: _vmAccess.codigo || '',
+      vm_prueba: Boolean(_vmAccess.piloto)
+    });
+    if (VALIDACION_PRUEBA_ACTIVA) {
+      jsPsych.data.addProperties({ modo_prueba: '3_ensayos', version_parche_prueba: VALIDACION_PRUEBA_VERSION });
+    }
     jsPsych.run(timeline);
 
     }
